@@ -46,16 +46,16 @@ public final class Toggle extends Element {
         int left = x + (width - WIDTH) / 2;
         int top = y + (height - HEIGHT) / 2;
         int track = Lerp.color(colors.ghostHovered(), colors.primary(), p);
-        canvas.smoothRect(left, top, WIDTH, HEIGHT, HEIGHT / 2f, track);
+        Theme.look().shape(canvas, left, top, WIDTH, HEIGHT, HEIGHT / 2f, track);
         if (p < 0.5f) {
-            canvas.smoothFrame(left, top, WIDTH, HEIGHT, HEIGHT / 2f, 1, colors.hairline());
+            Theme.look().outline(canvas, left, top, WIDTH, HEIGHT, HEIGHT / 2f, 1, colors.hairline());
         }
         // Stretch while travelling: widest half-way, normal at rest.
         float stretch = 1 + Motion.KNOB_STRETCH * (float) Math.sin(Math.PI * p);
         int knobWidth = Math.round(KNOB * stretch);
         int travel = WIDTH - 4 - knobWidth;
         int knobX = left + 2 + Math.round(travel * p);
-        canvas.smoothRect(knobX, top + 2, knobWidth, KNOB, KNOB / 2f, 0xFFFFFFFF);
+        Theme.look().shape(canvas, knobX, top + 2, knobWidth, KNOB, KNOB / 2f, 0xFFFFFFFF);
     }
 
     @Override

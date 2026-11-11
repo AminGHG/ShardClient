@@ -40,13 +40,10 @@ public final class ClickGuiScreen extends ShardScreen {
 
     private final ModuleManager modules;
     private final ClientConfig config;
-    private final String version;
-
-    public ClickGuiScreen(Screen parent, ModuleManager modules, ClientConfig config, String version) {
+    public ClickGuiScreen(Screen parent, ModuleManager modules, ClientConfig config) {
         super(Component.literal("ShardClient"), parent);
         this.modules = modules;
         this.config = config;
-        this.version = version;
     }
 
     @Override
@@ -136,7 +133,7 @@ public final class ClickGuiScreen extends ShardScreen {
             int contentTop = y + PADDING + 18;
             scroll.place(contentX, contentTop, width - SIDEBAR - PADDING * 2, height - (contentTop - y) - PADDING);
             Size button = editHud.measure();
-            editHud.place(x + PADDING, y + height - PADDING - button.height() - 10, SIDEBAR - PADDING * 2,
+            editHud.place(x + PADDING, y + height - PADDING - button.height(), SIDEBAR - PADDING * 2,
                     button.height());
         }
 
@@ -162,15 +159,13 @@ public final class ClickGuiScreen extends ShardScreen {
             indicator.set(selected);
             float at = indicator.get();
             int indicatorY = Math.round(tabY(0) + at * (TAB_HEIGHT + 2));
-            canvas.smoothRect(x + PADDING - 2, indicatorY, SIDEBAR - PADDING * 2 + 4, TAB_HEIGHT, 5f, colors.ghostHovered());
-            canvas.smoothRect(x + PADDING - 2, indicatorY + 5, 2, TAB_HEIGHT - 10, 1f, colors.accentStrong());
+            Theme.look().shape(canvas, x + PADDING - 2, indicatorY, SIDEBAR - PADDING * 2 + 4, TAB_HEIGHT, 5f, colors.ghostHovered());
+            Theme.look().shape(canvas, x + PADDING - 2, indicatorY + 5, 2, TAB_HEIGHT - 10, 1f, colors.accentStrong());
             for (int i = 0; i < tabs.size(); i++) {
                 boolean active = i == selected;
                 canvas.text(Theme.text(Component.literal(tabs.get(i).label()), active), x + PADDING + 6,
                         tabY(i) + 6, active ? colors.text() : colors.textMuted(), shadow);
             }
-            canvas.text(Theme.text(Component.literal("v" + version), false), x + PADDING, y + height - PADDING - 7,
-                    colors.textDisabled(), shadow);
 
             // Header of the open tab
             Tab tab = tabs.get(selected);
@@ -182,8 +177,6 @@ public final class ClickGuiScreen extends ShardScreen {
             }
             canvas.text(Theme.text(Component.literal(header), true), x + SIDEBAR + PADDING, y + PADDING + 4,
                     colors.text(), shadow);
-            canvas.textRight(Theme.text(Component.literal("Right Shift to close"), false), x + width - PADDING,
-                    y + PADDING + 4, colors.textDisabled(), shadow);
             super.render(canvas);
         }
 

@@ -64,6 +64,16 @@ public final class MinecraftLook implements Look {
     }
 
     @Override
+    public void shape(Canvas canvas, int x, int y, int width, int height, float radius, int argb) {
+        canvas.fill(x, y, width, height, argb);
+    }
+
+    @Override
+    public void outline(Canvas canvas, int x, int y, int width, int height, float radius, int thickness, int argb) {
+        canvas.frame(x, y, width, height, argb);
+    }
+
+    @Override
     public void button(Canvas canvas, int x, int y, int width, int height, boolean primary, float highlight,
                        boolean enabled, boolean focused) {
         if (!enabled) {

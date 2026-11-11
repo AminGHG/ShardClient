@@ -176,7 +176,7 @@ public final class MatchResultScreen extends ShardScreen {
             float grow = Motion.ENTER.apply(window(t, 420, 420));
             int lineWidth = Math.round(textWidth * scale * 0.5f * grow);
             if (lineWidth > 0) {
-                canvas.smoothRect(cx - lineWidth / 2, top + lineHeight + 6, lineWidth, 2, 1f, headingColor(colors));
+                Theme.look().shape(canvas, cx - lineWidth / 2, top + lineHeight + 6, lineWidth, 2, 1f, headingColor(colors));
             }
         }
 
@@ -211,7 +211,7 @@ public final class MatchResultScreen extends ShardScreen {
             int faceX = nameLeft ? left + nameWidth + 6 : left;
             int nameX = nameLeft ? left : left + face + 6;
             if (winner) {
-                canvas.smoothFrame(faceX - 3, y - 3, face + 6, face + 6, 5f, Math.max(2, guiScaleStroke()),
+                Theme.look().outline(canvas, faceX - 3, y - 3, face + 6, face + 6, 5f, Math.max(2, guiScaleStroke()),
                         colors.accentStrong());
             }
             canvas.face(skin, faceX, y, face);
@@ -261,7 +261,7 @@ public final class MatchResultScreen extends ShardScreen {
             int chipX = left + valueWidth + 6;
             canvas.push();
             canvas.scale(chipScale, chipX + chipWidth / 2f, y + 4);
-            canvas.smoothRect(chipX, y - 3, chipWidth, 14, 7f, colors.ghostHovered());
+            Theme.look().shape(canvas, chipX, y - 3, chipWidth, 14, 7f, colors.ghostHovered());
             canvas.text(delta, chipX + 5, y, changeColor, look.textShadow());
             canvas.pop();
             endSettle(canvas);
@@ -288,7 +288,7 @@ public final class MatchResultScreen extends ShardScreen {
             float badgeScale = pulse > 0 && pulse < 1 ? Lerp.of(1f, Motion.PULSE_SCALE, (float) Math.sin(Math.PI * pulse)) : 1f;
             canvas.push();
             canvas.scale(badgeScale, left + badgeWidth / 2f, y + 4);
-            canvas.smoothRect(left, y - 3, badgeWidth, 14, 7f, up ? colors.primary() : colors.negative());
+            Theme.look().shape(canvas, left, y - 3, badgeWidth, 14, 7f, up ? colors.primary() : colors.negative());
             canvas.text(badge, left + 6, y, colors.textOnPrimary(), look.textShadow());
             canvas.pop();
             canvas.text(rankText, left + badgeWidth + 6, y, colors.accentStrong(), look.textShadow());

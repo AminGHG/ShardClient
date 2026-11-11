@@ -132,7 +132,7 @@ public final class RankProgressBar {
         int headerLeft = cx - (ratingWidth + 6 + chipWidth) / 2;
         canvas.text(rating, headerLeft, y, colors.text(), shadow);
         int chipX = headerLeft + ratingWidth + 6;
-        canvas.smoothRect(chipX, y - 3, chipWidth, 14, 7f, colors.ghostHovered());
+        Theme.look().shape(canvas, chipX, y - 3, chipWidth, 14, 7f, colors.ghostHovered());
         canvas.text(delta, chipX + 5, y, changeColor, shadow);
 
         // The bar, pulsing slightly on a rank change.
@@ -154,7 +154,7 @@ public final class RankProgressBar {
         }
         if (frame.flash() > 0) {
             canvas.pushAlpha(frame.flash());
-            canvas.smoothRect(x, barY, width, BAR_HEIGHT, BAR_HEIGHT / 2f, colors.text());
+            Theme.look().shape(canvas, x, barY, width, BAR_HEIGHT, BAR_HEIGHT / 2f, colors.text());
             canvas.popAlpha();
         }
         canvas.pop();

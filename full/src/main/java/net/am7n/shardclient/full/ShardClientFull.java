@@ -54,7 +54,7 @@ public final class ShardClientFull implements ClientModInitializer {
     }
 
     public void openMenu(Minecraft mc) {
-        mc.gui.setScreen(new ClickGuiScreen(mc.gui.screen(), modules, config, runtime.version()));
+        mc.gui.setScreen(new ClickGuiScreen(mc.gui.screen(), modules, config));
     }
 
     public ModuleManager modules() {

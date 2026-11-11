@@ -66,8 +66,8 @@ public final class Pill extends Element {
         hover.set(contains(canvas.mouseX(), canvas.mouseY()) || active ? 1 : 0);
         int top = y + (height - HEIGHT) / 2;
         int fill = active ? colors.primary() : Lerp.color(colors.ghost(), colors.ghostHovered(), hover.get());
-        canvas.smoothRect(x, top, width, HEIGHT, HEIGHT / 2f, fill);
-        canvas.smoothFrame(x, top, width, HEIGHT, HEIGHT / 2f, 1, colors.hairline());
+        Theme.look().shape(canvas, x, top, width, HEIGHT, HEIGHT / 2f, fill);
+        Theme.look().outline(canvas, x, top, width, HEIGHT, HEIGHT / 2f, 1, colors.hairline());
 
         int textColor = active ? colors.textOnPrimary() : colors.text();
         float t = swap.get();

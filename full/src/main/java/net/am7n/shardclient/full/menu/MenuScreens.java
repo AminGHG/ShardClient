@@ -6,17 +6,22 @@ import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 /**
- * Which menu style is shown: ShardClient's title screen and server list, or Minecraft's. The vanilla title
+ * Which menu style is shown: ShardClient's title screen, server list and world list, or Minecraft's. The vanilla title
  * screen gets a button in its bottom-left corner to switch back, just like ShardClient's has one to switch away.
  */
 public final class MenuScreens {
+
+    /** ShardClient's logo, in Minecraft's GUI sprite atlas. */
+    private static final Identifier TOGGLE_SPRITE = Identifier.fromNamespaceAndPath("shardclient-shared", "icon/shardclient");
 
     private MenuScreens() {
     }
@@ -40,6 +45,10 @@ public final class MenuScreens {
                 Screen parent = ((ScreenParent) screen).shardclient$parent();
                 return new ShardServerListScreen(parent);
             }
+            if (screen.getClass() == SelectWorldScreen.class) {
+                Screen parent = ((ScreenParent) screen).shardclient$parent();
+                return new ShardWorldListScreen(parent);
+            }
         } catch (RuntimeException ex) {
             ShardClientRuntime.LOGGER.error("Could not open the ShardClient menu; showing Minecraft's", ex);
         }
@@ -59,8 +68,11 @@ public final class MenuScreens {
     public static void registerVanillaToggle() {
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             if (screen.getClass() == TitleScreen.class) {
-                Screens.getWidgets(screen).add(Button.builder(Component.literal("ShardClient style"),
-                        button -> toggle()).bounds(4, height - 36, 110, 20).build());
+                Component label = Component.literal("Switch to ShardClient's menu");
+                SpriteIconButton button = SpriteIconButton.builder(label, pressed -> toggle(), true)
+                        .sprite(TOGGLE_SPRITE, 16, 16).width(20).withTootip().build();
+                button.setPosition(4, height - 36);
+                Screens.getWidgets(screen).add(button);
             }
         });
     }

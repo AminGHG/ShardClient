@@ -187,6 +187,22 @@ public final class Canvas {
         }
     }
 
+    /** {@code texture} tinted by {@code argb} (multiplied), e.g. solid black for a silhouette. */
+    public void image(Identifier texture, int textureSize, int x, int y, int size, int argb) {
+        if (!faint()) {
+            SmoothShapes.image(graphics, texture, textureSize, x, y, size, tint(argb));
+        }
+    }
+
+    /**
+     * {@code texture} with a hard drop shadow: a solid black copy of its outline offset down and to the right,
+     * no blur (like a sticker or a print offset). Follows the image's transparency, not its box.
+     */
+    public void imageWithHardShadow(Identifier texture, int textureSize, int x, int y, int size, int offset) {
+        image(texture, textureSize, x + offset, y + offset, size, 0xFF000000);
+        image(texture, textureSize, x, y, size);
+    }
+
     /** A soft round glow (radial gradient) centred on {@code (cx, cy)}. */
     public void glow(int cx, int cy, int radiusX, int radiusY, int argb) {
         if (radiusX > 0 && radiusY > 0 && !faint()) {

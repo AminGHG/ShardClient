@@ -57,6 +57,21 @@ public final class SemiVanillaLook implements Look {
         canvas.roundFrame(x, y, width, height, Theme.RADIUS_PANEL, colors.hairline());
     }
 
+    /** The website's radius on Minecraft's pixel grid: about half, so corners show a few clean steps. */
+    private static int gridRadius(float radius) {
+        return Math.clamp(Math.round(radius / 2f), 0, Theme.RADIUS_PANEL);
+    }
+
+    @Override
+    public void shape(Canvas canvas, int x, int y, int width, int height, float radius, int argb) {
+        canvas.roundRect(x, y, width, height, gridRadius(radius), argb);
+    }
+
+    @Override
+    public void outline(Canvas canvas, int x, int y, int width, int height, float radius, int thickness, int argb) {
+        canvas.roundFrame(x, y, width, height, gridRadius(radius), argb);
+    }
+
     @Override
     public void button(Canvas canvas, int x, int y, int width, int height, boolean primary, float highlight,
                        boolean enabled, boolean focused) {
@@ -67,7 +82,20 @@ public final class SemiVanillaLook implements Look {
             return;
         }
         if (primary) {
-            canvas.roundRect(x, y, width, height, radius, Lerp.color(colors.primary(), colors.primaryHovered(), highlight));
+            // The same main-button styles as the website look, on the pixel grid.
+            switch (Theme.primaryStyle()) {
+                case LILAC -> canvas.roundRect(x, y, width, height, radius,
+                        Lerp.color(colors.primary(), colors.primaryHovered(), highlight));
+                case WHITE -> canvas.roundRect(x, y, width, height, radius,
+                        Lerp.color(0xFFF5F2FA, 0xFFFFFFFF, highlight));
+                case OUTLINE -> {
+                    canvas.roundRect(x, y, width, height, radius,
+                            Lerp.color(colors.ghost(), colors.ghostHovered(), highlight));
+                    canvas.roundFrame(x, y, width, height, radius, colors.accentStrong());
+                }
+                case SOFT -> canvas.roundRect(x, y, width, height, radius,
+                        Lerp.color(0x3DA266EB, 0x5CA266EB, highlight));
+            }
         } else {
             canvas.roundRect(x, y, width, height, radius, Lerp.color(colors.ghost(), colors.ghostHovered(), highlight));
             canvas.roundFrame(x, y, width, height, radius, colors.hairline());
@@ -82,7 +110,15 @@ public final class SemiVanillaLook implements Look {
         if (!enabled) {
             return colors.textDisabled();
         }
-        return primary ? colors.textOnPrimary() : colors.text();
+        if (!primary) {
+            return colors.text();
+        }
+        return switch (Theme.primaryStyle()) {
+            case LILAC -> colors.textOnPrimary();
+            case WHITE -> 0xFF161024;
+            case OUTLINE -> colors.accent();
+            case SOFT -> colors.text();
+        };
     }
 
     @Override

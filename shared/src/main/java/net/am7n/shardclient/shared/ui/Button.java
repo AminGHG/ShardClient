@@ -134,7 +134,7 @@ public final class Button extends Element implements Focusable {
                 int tipX = Math.max(2, Math.min(x + (width - tipWidth) / 2, canvas.width() - tipWidth - 2));
                 int tipY = y - 18 >= 2 ? y - 18 : y + height + 4;
                 canvas.pushAlpha(amount);
-                canvas.smoothRect(tipX, tipY, tipWidth, 14, 5f, look.colors().surface());
+                Theme.look().shape(canvas, tipX, tipY, tipWidth, 14, 5f, look.colors().surface());
                 canvas.text(text, tipX + 6, tipY + 3, look.colors().text(), look.textShadow());
                 canvas.popAlpha();
             }
@@ -160,7 +160,13 @@ public final class Button extends Element implements Focusable {
             return false;
         }
         pressScale.snap(Motion.PRESS_SCALE);
+        Object screenBefore = Minecraft.getInstance().gui.screen();
         activate();
+        if (Minecraft.getInstance().gui.screen() != screenBefore) {
+            // The release goes to the new screen; without this the button stays pressed (scaled down and
+            // clipped) when its screen comes back.
+            pressScale.snap(1);
+        }
         return true;
     }
 

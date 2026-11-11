@@ -103,8 +103,8 @@ final class ModuleCard extends Container {
         canvas.push();
         canvas.translate(0, (1 - appear) * 6);
         canvas.pushAlpha(appear);
-        canvas.smoothRect(x, y, width, height, 6f, Lerp.color(colors.ghost(), colors.ghostHovered(), hover.get() * 0.6f));
-        canvas.smoothFrame(x, y, width, height, 6f, 1, module.isEnabled() ? withAlpha(colors.accentStrong(), 0x66)
+        Theme.look().shape(canvas, x, y, width, height, 6f, Lerp.color(colors.ghost(), colors.ghostHovered(), hover.get() * 0.6f));
+        Theme.look().outline(canvas, x, y, width, height, 6f, 1, module.isEnabled() ? withAlpha(colors.accentStrong(), 0x66)
                 : colors.hairline());
 
         Component name = Theme.text(Component.literal(module.name()), true);

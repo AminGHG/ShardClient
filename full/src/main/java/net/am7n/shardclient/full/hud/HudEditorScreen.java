@@ -104,7 +104,7 @@ public final class HudEditorScreen extends ShardScreen {
                 boolean hovered = canvas.mouseX() >= mx && canvas.mouseX() < mx + w && canvas.mouseY() >= my
                         && canvas.mouseY() < my + h;
                 module.render(canvas);
-                canvas.smoothFrame(mx - 1, my - 1, w + 2, h + 2, 4f, 1,
+                Theme.look().outline(canvas, mx - 1, my - 1, w + 2, h + 2, 4f, 1,
                         module == held || hovered ? colors.accentStrong() : colors.hairline());
             }
             canvas.textCentered(Theme.text(Component.literal("Drag to move · Scroll to resize"), false), width / 2,

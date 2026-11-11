@@ -120,7 +120,7 @@ public final class NotificationToasts implements Overlay {
             canvas.pushAlpha(progress);
             Theme.look().panel(canvas, x, top, WIDTH, height);
             int stripeColor = levelColor(card.notification.level(), colors);
-            canvas.smoothRect(x + PADDING, top + PADDING, STRIPE, height - PADDING * 2, STRIPE / 2f, stripeColor);
+            Theme.look().shape(canvas, x + PADDING, top + PADDING, STRIPE, height - PADDING * 2, STRIPE / 2f, stripeColor);
             int textX = x + PADDING + STRIPE + 4;
             canvas.text(title, textX, top + PADDING, colors.text(), Theme.look().textShadow());
             int lineY = top + PADDING + lineHeight;

@@ -5,7 +5,10 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "GuiScreenMixin",
-    "JoinMultiplayerScreenMixin"
+    "JoinMultiplayerScreenMixin",
+    "SelectWorldScreenMixin",
+    "WorldListEntryAccessor",
+    "WorldSelectionListAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

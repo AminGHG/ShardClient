@@ -89,7 +89,7 @@ public abstract class HudModule extends Module {
 
     protected void drawBackground(Canvas canvas, int x, int y, int width, int height) {
         if (background.on()) {
-            canvas.smoothRect(x, y, width, height, 4f, Theme.colors().surface());
+            Theme.look().shape(canvas, x, y, width, height, 4f, Theme.colors().surface());
         }
     }
 

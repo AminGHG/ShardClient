@@ -32,6 +32,19 @@ public interface Look {
     void panel(Canvas canvas, int x, int y, int width, int height);
 
     /**
+     * A filled rounded shape (cards, highlights, tracks) in this look's shape language: smooth for the website
+     * look, pixel-stepped for Semi Vanilla, square for Minecraft. {@code radius} is the website's radius.
+     */
+    default void shape(Canvas canvas, int x, int y, int width, int height, float radius, int argb) {
+        canvas.smoothRect(x, y, width, height, radius, argb);
+    }
+
+    /** The outline matching {@link #shape}. */
+    default void outline(Canvas canvas, int x, int y, int width, int height, float radius, int thickness, int argb) {
+        canvas.smoothFrame(x, y, width, height, radius, thickness, argb);
+    }
+
+    /**
      * A button background.
      *
      * @param highlight 0 at rest, 1 hovered or focused, animated in between

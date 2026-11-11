@@ -66,11 +66,11 @@ public final class Slider extends Element {
 
         canvas.textRight(Theme.text(Component.literal(label.get()), false), left - 6, mid - 4, colors.textMuted(),
                 look.textShadow());
-        canvas.smoothRect(left, mid - 2, TRACK_WIDTH, 4, 2f, colors.ghostHovered());
-        canvas.smoothRect(left, mid - 2, Math.max(4, knobX - left + KNOB / 2), 4, 2f, colors.primary());
+        Theme.look().shape(canvas, left, mid - 2, TRACK_WIDTH, 4, 2f, colors.ghostHovered());
+        Theme.look().shape(canvas, left, mid - 2, Math.max(4, knobX - left + KNOB / 2), 4, 2f, colors.primary());
         float grow = dragging ? 1.15f : 1f;
         int knob = Math.round(KNOB * grow);
-        canvas.smoothRect(knobX + (KNOB - knob) / 2, mid - knob / 2, knob, knob, knob / 2f, 0xFFFFFFFF);
+        Theme.look().shape(canvas, knobX + (KNOB - knob) / 2, mid - knob / 2, knob, knob, knob / 2f, 0xFFFFFFFF);
     }
 
     @Override

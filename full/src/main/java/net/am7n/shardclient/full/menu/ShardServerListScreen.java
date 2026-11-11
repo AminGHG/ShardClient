@@ -33,6 +33,9 @@ import net.minecraft.client.multiplayer.ServerList;
 import net.minecraft.client.multiplayer.ServerStatusPinger;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.network.EventLoopGroupHolder;
 import net.minecraft.util.Util;
@@ -44,6 +47,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ShardClient's server list: tabs for favourites, all servers and recently joined ones; the servers as cards
@@ -53,13 +57,10 @@ import java.util.Map;
 public final class ShardServerListScreen extends ShardScreen {
 
     private static final int CARD_HEIGHT = 46;
+    /** Hard drop shadow behind icons: solid black, this many GUI pixels down and right, no blur. */
+    private static final int ICON_SHADOW = 2;
     private static final int PADDING = 10;
     private static final int COLUMN = 440;
-    /** Width of the MOTD in Minecraft's list: its 305 px row less 4 px padding, the 32 px icon and a 2 px gap. */
-    private static final int VANILLA_MOTD_WIDTH = 267;
-    private static final int VANILLA_ROW_WIDTH = 305;
-    /** Where the MOTD starts in a vanilla row: 2 px padding, the 32 px icon, a 3 px gap. */
-    private static final int VANILLA_TEXT_OFFSET = 37;
     private static final Identifier[] PING = sprites("server_list/ping_", 5);
     private static final Identifier[] PINGING = sprites("server_list/pinging_", 5);
     private static final Identifier INCOMPATIBLE = Identifier.withDefaultNamespace("server_list/incompatible");
@@ -259,6 +260,67 @@ public final class ShardServerListScreen extends ShardScreen {
         });
     }
 
+    /**
+     * The MOTD split at its line breaks, each line without the spaces before its first and after its last
+     * character. Colours and formatting stay as the server sent them.
+     */
+    static List<Component> motdLines(Component motd) {
+        record Part(Style style, String text) {
+        }
+        List<List<Part>> lines = new ArrayList<>();
+        lines.add(new ArrayList<>());
+        if (motd != null) {
+            motd.visit((style, text) -> {
+                String[] pieces = text.split("\n", -1);
+                for (int i = 0; i < pieces.length; i++) {
+                    if (i > 0) {
+                        lines.add(new ArrayList<>());
+                    }
+                    if (!pieces[i].isEmpty()) {
+                        lines.getLast().add(new Part(style, pieces[i]));
+                    }
+                }
+                return Optional.empty();
+            }, Style.EMPTY);
+        }
+        List<Component> out = new ArrayList<>();
+        for (List<Part> parts : lines) {
+            // Trim the start: drop leading whitespace across parts.
+            while (!parts.isEmpty()) {
+                String stripped = parts.getFirst().text().stripLeading();
+                if (stripped.isEmpty()) {
+                    parts.removeFirst();
+                } else {
+                    parts.set(0, new Part(parts.getFirst().style(), stripped));
+                    break;
+                }
+            }
+            // Trim the end the same way.
+            while (!parts.isEmpty()) {
+                String stripped = parts.getLast().text().stripTrailing();
+                if (stripped.isEmpty()) {
+                    parts.removeLast();
+                } else {
+                    parts.set(parts.size() - 1, new Part(parts.getLast().style(), stripped));
+                    break;
+                }
+            }
+            MutableComponent line = Component.empty();
+            for (Part part : parts) {
+                line.append(Component.literal(part.text()).withStyle(part.style()));
+            }
+            out.add(line);
+        }
+        // Blank lines at the very start or end would only push the text off centre.
+        while (!out.isEmpty() && out.getFirst().getString().isEmpty()) {
+            out.removeFirst();
+        }
+        while (!out.isEmpty() && out.getLast().getString().isEmpty()) {
+            out.removeLast();
+        }
+        return out;
+    }
+
     /** The servers the open tab shows, ShardPvP first where it belongs. */
     private List<ServerData> entries() {
         List<ServerData> saved = new ArrayList<>();
@@ -412,15 +474,16 @@ public final class ShardServerListScreen extends ShardScreen {
             // Tabs: one highlight that slides to the open tab.
             int tabsTop = tabsTop();
             int trackWidth = TAB_WIDTH * Tab.values().length + 6;
-            canvas.smoothRect(x, tabsTop, trackWidth, TAB_HEIGHT, 7f, colors.ghost());
+            Theme.look().shape(canvas, x, tabsTop, trackWidth, TAB_HEIGHT, 7f, colors.ghost());
             tabIndicator.set(tab.ordinal());
             int indicatorX = Math.round(x + 3 + tabIndicator.get() * TAB_WIDTH);
-            canvas.smoothRect(indicatorX, tabsTop + 3, TAB_WIDTH, TAB_HEIGHT - 6, 4f, colors.ghostHovered());
+            Theme.look().shape(canvas, indicatorX, tabsTop + 3, TAB_WIDTH, TAB_HEIGHT - 6, 4f, colors.ghostHovered());
             for (Tab each : Tab.values()) {
                 String label = each == Tab.ALL ? each.label + "  " + (servers.size() + 1) : each.label;
-                canvas.textCentered(Theme.text(Component.literal(label), each == tab),
+                // Tab names in Minecraft's own font, like the server info.
+                canvas.textCentered(Component.literal(label),
                         x + 3 + each.ordinal() * TAB_WIDTH + TAB_WIDTH / 2, tabsTop + 7,
-                        each == tab ? colors.text() : colors.textMuted(), shadow);
+                        each == tab ? colors.text() : colors.textMuted(), true);
             }
 
             if (list.children().isEmpty()) {
@@ -485,8 +548,8 @@ public final class ShardServerListScreen extends ShardScreen {
             canvas.translate(0, (1 - appear) * 6);
             int fill = Lerp.color(Lerp.color(colors.ghost(), colors.ghostHovered(), hover.get()),
                     0x2E << 24 | (colors.primary() & 0xFFFFFF), sel);
-            canvas.smoothRect(x, y, width, height, 8f, fill);
-            canvas.smoothFrame(x, y, width, height, 8f, 1,
+            Theme.look().shape(canvas, x, y, width, height, 8f, fill);
+            Theme.look().outline(canvas, x, y, width, height, 8f, 1,
                     Lerp.color(colors.hairline(), colors.accentStrong(), sel));
 
             // Icon: inner radius = card radius - padding gap.
@@ -495,9 +558,10 @@ public final class ShardServerListScreen extends ShardScreen {
             int iconY = y + (height - icon) / 2;
             Icon texture = icons.computeIfAbsent(server, Icon::new);
             if (texture.update(server.getIconBytes())) {
-                canvas.image(texture.texture.textureLocation(), 64, iconX, iconY, icon);
+                canvas.imageWithHardShadow(texture.texture.textureLocation(), 64, iconX, iconY, icon, ICON_SHADOW);
             } else {
-                canvas.smoothRect(iconX, iconY, icon, icon, 4f, colors.inset());
+                Theme.look().shape(canvas, iconX + ICON_SHADOW, iconY + ICON_SHADOW, icon, icon, 4f, 0xFF000000);
+                Theme.look().shape(canvas, iconX, iconY, icon, icon, 4f, colors.inset());
                 canvas.textCentered(Theme.text(Component.literal(server.name.isEmpty() ? "?"
                         : server.name.substring(0, 1).toUpperCase()), true), iconX + icon / 2, iconY + 12,
                         colors.textMuted(), shadow);
@@ -505,23 +569,37 @@ public final class ShardServerListScreen extends ShardScreen {
 
             int textX = iconX + icon + 9;
             canvas.text(Theme.text(Component.literal(server.name), true), textX, y + 9, colors.text(), shadow);
-            int statusLeft = drawStatus(canvas, colors, shadow);
-            // The MOTD in Minecraft's own font and at Minecraft's own line width (271), so a MOTD the server
-            // centred with spaces for the vanilla list stays centred here.
-            var lines = canvas.wrap(server.motd == null ? Component.empty() : server.motd, VANILLA_MOTD_WIDTH);
-            // The MOTD keeps its vanilla-width block, centred in this wider card, so a centred MOTD looks centred.
-            // Servers centre their MOTD for Minecraft's whole 305 px row, where the text starts 37 px in (after
-            // the icon). Place it exactly there relative to a vanilla row centred on this card.
-            int motdX = Math.max(textX, x + width / 2 - VANILLA_ROW_WIDTH / 2 + VANILLA_TEXT_OFFSET);
-            if (!lines.isEmpty()) {
-                canvas.line(lines.get(0), motdX, y + 22, colors.textMuted(), true);
+            drawStatus(canvas, colors, shadow);
+            // The MOTD in Minecraft's own font. Servers pad lines with spaces to centre them in Minecraft's list;
+            // here each line is trimmed and centred in the space left of the player count instead.
+            // A fixed reserve for the player count, so the MOTD does not shift when the ping answers.
+            int reserve = Math.max(maxPlayersWidth(canvas), canvas.textWidth(Component.literal("000 / 000")));
+            int motdRight = statusRight() - reserve - 8;
+            int motdWidth = Math.max(40, motdRight - textX);
+            List<FormattedCharSequence> lines = new ArrayList<>();
+            for (Component line : motdLines(server.motd)) {
+                for (FormattedCharSequence part : canvas.wrap(line, motdWidth)) {
+                    if (lines.size() < 2) {
+                        lines.add(part);
+                    }
+                }
             }
-            if (lines.size() > 1) {
-                canvas.line(lines.get(1), motdX, y + 32, colors.textMuted(), true);
+            for (int i = 0; i < lines.size(); i++) {
+                int lineWidth = font.width(lines.get(i));
+                canvas.line(lines.get(i), textX + Math.max(0, (motdWidth - lineWidth) / 2), y + 22 + i * 10,
+                        colors.textMuted(), true);
             }
 
             canvas.pop();
             canvas.popAlpha();
+        }
+
+        /** The width the player count takes (or would take), so the MOTD never runs under it. */
+        private int maxPlayersWidth(Canvas canvas) {
+            if (server.players == null || server.state() != ServerData.State.SUCCESSFUL) {
+                return 0;
+            }
+            return canvas.textWidth(Component.literal(server.players.online() + " / " + server.players.max()));
         }
 
         /**
