@@ -38,8 +38,14 @@ Work in progress. What exists today:
   players and the arena, and notification cards, each with its own sound. All of them follow server events and
   never cover the middle of the screen, because a fight can start the moment the server teleports you.
 
-Coming next: server menus in place of chest GUIs, full-screen transitions for ranked, then the Full Client's
-module system, ClickGUI and Fullbright.
+- **Ranked match flow.** A full-screen transition into the arena and back to the lobby (only where the server
+  guarantees nobody can be hit meanwhile), round start and round result banners, and a result card with the
+  score, the rating counting to its new value and the rank.
+- **No duplicates.** For players with the mod the server leaves out its own titles, action bars and sounds for
+  these events; chat messages stay. Players without the mod see the server exactly as before.
+
+Coming next: server menus in place of chest GUIs, custom transition sounds, then the Full Client's module
+system, ClickGUI and Fullbright.
 
 ## Install
 

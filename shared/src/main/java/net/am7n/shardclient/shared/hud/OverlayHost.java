@@ -31,6 +31,12 @@ public final class OverlayHost {
         }
     }
 
+    /** Adds {@code overlay}, or moves it, to the top: drawn after (over) every other overlay. */
+    public void addOnTop(Overlay overlay) {
+        overlays.remove(overlay);
+        overlays.add(overlay);
+    }
+
     public boolean contains(Overlay overlay) {
         return overlays.contains(overlay);
     }

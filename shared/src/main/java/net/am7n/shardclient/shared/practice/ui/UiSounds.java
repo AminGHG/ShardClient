@@ -36,6 +36,29 @@ public final class UiSounds {
         play(SoundEvents.AMETHYST_BLOCK_RESONATE, 1.2f, 0.7f, MATCH_ARPEGGIO.length * ARPEGGIO_STEP_TICKS);
     }
 
+    public static void roundWon() {
+        notes(new int[]{7, 12}, 0.5f);
+    }
+
+    public static void roundLost() {
+        notes(new int[]{0, -5}, 0.4f);
+    }
+
+    public static void matchWon() {
+        notes(new int[]{0, 4, 7, 12, 16}, 0.55f);
+        play(SoundEvents.AMETHYST_BLOCK_RESONATE, 1.3f, 0.7f, 5 * ARPEGGIO_STEP_TICKS);
+    }
+
+    public static void matchLost() {
+        notes(new int[]{0, -3, -7}, 0.45f);
+    }
+
+    private static void notes(int[] semitones, float volume) {
+        for (int i = 0; i < semitones.length; i++) {
+            play(SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE.value(), pitch(semitones[i]), volume, i * ARPEGGIO_STEP_TICKS);
+        }
+    }
+
     public static void queueJoined() {
         play(SoundEvents.AMETHYST_BLOCK_CHIME, 1.4f, 0.8f, 0);
     }

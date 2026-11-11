@@ -2,12 +2,17 @@ package net.am7n.shardclient.shared.practice;
 
 import net.am7n.shardclient.protocol.packet.ArenaTransition;
 import net.am7n.shardclient.protocol.packet.ClientboundPacket;
+import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.protocol.packet.MatchFound;
+import net.am7n.shardclient.protocol.packet.MatchStarted;
 import net.am7n.shardclient.protocol.packet.Notification;
 import net.am7n.shardclient.protocol.packet.QueueJoined;
 import net.am7n.shardclient.protocol.packet.QueueLeft;
 import net.am7n.shardclient.protocol.packet.QueueUpdate;
 import net.am7n.shardclient.protocol.packet.Rejected;
+import net.am7n.shardclient.protocol.packet.ReturnToLobby;
+import net.am7n.shardclient.protocol.packet.RoundEnded;
+import net.am7n.shardclient.protocol.packet.TransitionStart;
 import net.am7n.shardclient.protocol.packet.Welcome;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 
@@ -73,6 +78,17 @@ public final class PracticeSession {
             }
             case ArenaTransition transition -> fire(listener -> listener.onArenaTransition(transition.arena()));
             case Notification notification -> fire(listener -> listener.onNotification(notification));
+            case TransitionStart start -> fire(listener -> listener.onTransitionStart(start.kind()));
+            case MatchStarted started -> {
+                queue = null;
+                fire(listener -> listener.onRoundStarted(started));
+            }
+            case RoundEnded ended -> fire(listener -> listener.onRoundEnded(ended));
+            case MatchEnded ended -> fire(listener -> listener.onMatchEnded(ended));
+            case ReturnToLobby ignored -> {
+                match = null;
+                fire(PracticeListener::onReturnToLobby);
+            }
             case Welcome ignored -> {
                 // Handshake packets belong to PracticeLink.
             }

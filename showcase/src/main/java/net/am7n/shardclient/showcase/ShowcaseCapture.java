@@ -56,6 +56,15 @@ final class ShowcaseCapture {
         steps.add(new Step(t += 50, () -> Theme.use(MinecraftLook.INSTANCE)));
         steps.add(new Step(t += 300, () -> shot("12-overlays-minecraft")));
         steps.add(new Step(t += 50, () -> Theme.use(ShardPvpLook.DARK)));
+        steps.add(new Step(t += 100, screen::previewResult));
+        steps.add(new Step(t += 450, () -> shot("13-result-counting")));
+        steps.add(new Step(t += 900, () -> shot("14-result")));
+        steps.add(new Step(t += 50, screen::previewTransition));
+        steps.add(new Step(t += 90, () -> shot("15-transition-covering")));
+        steps.add(new Step(t += 200, () -> shot("16-transition-covered")));
+        steps.add(new Step(t += 50, screen::previewReveal));
+        steps.add(new Step(t += 400, () -> shot("17-transition-revealing")));
+        steps.add(new Step(t += 600, () -> shot("18-round-banner")));
         steps.add(new Step(t += 400, screen::onClose));
         steps.add(new Step(t += 90, () -> shot("5-exiting")));
         steps.add(new Step(t += 600, minecraft::stop));

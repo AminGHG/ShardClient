@@ -173,6 +173,13 @@ public final class Canvas {
         }
     }
 
+    /** A square texture of {@code textureSize} pixels, {@code size} GUI pixels wide. */
+    public void image(Identifier texture, int textureSize, int x, int y, int size) {
+        if (!faint()) {
+            SmoothShapes.image(graphics, texture, textureSize, x, y, size, tint(0xFFFFFFFF));
+        }
+    }
+
     /** A soft shadow outside a rounded rectangle, like CSS {@code box-shadow}; sizes in GUI pixels. */
     public void smoothShadow(int x, int y, int width, int height, float radius, float blur, float offsetY, int argb) {
         if (width > 0 && height > 0 && !faint()) {

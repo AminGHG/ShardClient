@@ -3,13 +3,18 @@ package net.am7n.shardclient.protocol;
 import net.am7n.shardclient.protocol.packet.ArenaTransition;
 import net.am7n.shardclient.protocol.packet.ClientboundPacket;
 import net.am7n.shardclient.protocol.packet.Hello;
+import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.protocol.packet.MatchFound;
+import net.am7n.shardclient.protocol.packet.MatchStarted;
 import net.am7n.shardclient.protocol.packet.Notification;
 import net.am7n.shardclient.protocol.packet.QueueJoined;
 import net.am7n.shardclient.protocol.packet.QueueLeft;
 import net.am7n.shardclient.protocol.packet.QueueUpdate;
 import net.am7n.shardclient.protocol.packet.Rejected;
+import net.am7n.shardclient.protocol.packet.ReturnToLobby;
+import net.am7n.shardclient.protocol.packet.RoundEnded;
 import net.am7n.shardclient.protocol.packet.ServerboundPacket;
+import net.am7n.shardclient.protocol.packet.TransitionStart;
 import net.am7n.shardclient.protocol.packet.Welcome;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +40,12 @@ class PacketRoundTripTest {
             new MatchFound(UUID.fromString("0f6f2f0e-7a51-4c1e-9d0b-1f0c2b3a4d5e"), "Opponent_16chars",
                     "1v1", "", "badlands", false, ""),
             new ArenaTransition("badlands"),
-            new Notification(Notification.Category.PLAYER, Notification.Level.WARNING, "Duel", "ä ö ü → 😀"));
+            new Notification(Notification.Category.PLAYER, Notification.Level.WARNING, "Duel", "ä ö ü → 😀"),
+            new TransitionStart(TransitionStart.Kind.ARENA),
+            new MatchStarted(2, 2, 1, 0),
+            new RoundEnded(true, 2, 1),
+            new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1180, 1204, "Gold II", true),
+            new ReturnToLobby());
 
     @Test
     void everyClientboundPacketSurvivesTheWire() throws ProtocolException {

@@ -110,6 +110,19 @@ final class SmoothShapes {
         end(graphics);
     }
 
+    /**
+     * A square image of {@code textureSize} pixels drawn {@code size} GUI pixels wide at screen resolution, so a
+     * large texture shrinks by the smallest possible factor.
+     */
+    static void image(GuiGraphicsExtractor graphics, Identifier texture, int textureSize, int x, int y, int size,
+                      int argb) {
+        int g = guiScale();
+        begin(graphics, g);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x * g, y * g, 0, 0, size * g, size * g,
+                textureSize, textureSize, textureSize, textureSize, argb);
+        end(graphics);
+    }
+
     private static void begin(GuiGraphicsExtractor graphics, int g) {
         graphics.pose().pushMatrix();
         graphics.pose().scale(1f / g, 1f / g);

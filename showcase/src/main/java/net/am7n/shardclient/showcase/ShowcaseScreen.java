@@ -16,7 +16,11 @@ import net.am7n.shardclient.protocol.packet.Notification;
 import net.am7n.shardclient.shared.hud.OverlayHost;
 import net.am7n.shardclient.shared.practice.MatchInfo;
 import net.am7n.shardclient.shared.practice.QueueState;
+import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.shared.practice.ui.MatchFoundCard;
+import net.am7n.shardclient.shared.practice.ui.MatchResultCard;
+import net.am7n.shardclient.shared.practice.ui.ScreenTransition;
+import net.am7n.shardclient.shared.practice.ui.TopBanner;
 import net.am7n.shardclient.shared.practice.ui.NotificationToasts;
 import net.am7n.shardclient.shared.practice.ui.QueueIndicator;
 import net.am7n.shardclient.shared.render.Canvas;
@@ -36,6 +40,7 @@ final class ShowcaseScreen extends ShardScreen {
     /** Overlay previews drawn over the screen, with sample data; nothing goes through the network. */
     private final OverlayHost previews = new OverlayHost();
     private boolean previewing;
+    private final ScreenTransition transition = new ScreenTransition();
 
     ShowcaseScreen(Screen parent, boolean capture) {
         super(Component.literal("ShardClient components"), parent);
@@ -112,6 +117,26 @@ final class ShowcaseScreen extends ShardScreen {
         toasts.push(new Notification(Notification.Category.ANNOUNCEMENT, Notification.Level.SUCCESS, "",
                 "Ranked season 3 starts this weekend."));
         previews.add(toasts);
+    }
+
+    /** Shows the match result card and a round banner with sample data. */
+    void previewResult() {
+        previewing = true;
+        previews.clear();
+        previews.add(new MatchResultCard(new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1180, 1204, "Gold II", true)));
+    }
+
+    /** Covers the screen like an arena transition; {@link #previewReveal()} lifts it. */
+    void previewTransition() {
+        previewing = true;
+        previews.clear();
+        previews.add(new TopBanner("Round 1", "First to 2", Theme.colors().accentStrong(), 60_000));
+        transition.cover();
+        previews.addOnTop(transition);
+    }
+
+    void previewReveal() {
+        transition.reveal();
     }
 
     /** Item stacks only exist once a world is loaded; on the title screen the slots stay empty. */

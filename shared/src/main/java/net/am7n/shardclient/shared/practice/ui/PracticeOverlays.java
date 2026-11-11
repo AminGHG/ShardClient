@@ -1,6 +1,11 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.protocol.packet.MatchEnded;
+import net.am7n.shardclient.protocol.packet.MatchStarted;
 import net.am7n.shardclient.protocol.packet.Notification;
+import net.am7n.shardclient.protocol.packet.RoundEnded;
+import net.am7n.shardclient.protocol.packet.TransitionStart;
+import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.protocol.packet.QueueLeft;
 import net.am7n.shardclient.shared.hud.OverlayHost;
 import net.am7n.shardclient.shared.practice.MatchInfo;
@@ -27,13 +32,24 @@ public final class PracticeOverlays implements PracticeListener {
 
         @Override
         public int bottom() {
+            if (resultCard != null && resultCard.isShown()) {
+                return MatchResultCard.TOP + MatchResultCard.HEIGHT;
+            }
             if (matchCard != null && matchCard.isShown()) {
                 return MatchFoundCard.BOTTOM;
+            }
+            if (banner != null && banner.isShown()) {
+                return TopBanner.TOP + TopBanner.HEIGHT;
             }
             return queue.isShown() ? QueueIndicator.BOTTOM : 0;
         }
     });
     private MatchFoundCard matchCard;
+    private final ScreenTransition transition = new ScreenTransition();
+    private TopBanner banner;
+    private MatchResultCard resultCard;
+    /** The last match result, shown once the player is back in the lobby. */
+    private MatchEnded pendingResult;
 
     public PracticeOverlays(OverlayHost host) {
         this.host = host;
@@ -45,7 +61,11 @@ public final class PracticeOverlays implements PracticeListener {
             host.clear();
             queue.reset();
             toasts.clear();
+            transition.reset();
             matchCard = null;
+            banner = null;
+            resultCard = null;
+            pendingResult = null;
         }
     }
 
@@ -86,6 +106,82 @@ public final class PracticeOverlays implements PracticeListener {
     public void onArenaTransition(String arena) {
         if (matchCard != null) {
             matchCard.enteringArena(arena);
+        }
+    }
+
+    @Override
+    public void onTransitionStart(TransitionStart.Kind kind) {
+        // The cover hides everything; what was on screen has been seen.
+        if (matchCard != null) {
+            matchCard.dismiss();
+        }
+        dismissBanner();
+        transition.cover();
+        host.addOnTop(transition);
+    }
+
+    @Override
+    public void onRoundStarted(MatchStarted round) {
+        queue.hide();
+        transition.reveal();
+        String detail = round.round() == 1
+                ? "First to " + round.winsNeeded()
+                : round.scoreSelf() + "  –  " + round.scoreOpponent();
+        showBanner(new TopBanner("Round " + round.round(), detail, Theme.colors().accentStrong(), 2200));
+    }
+
+    @Override
+    public void onRoundEnded(RoundEnded round) {
+        String score = round.scoreSelf() + "  –  " + round.scoreOpponent();
+        if (round.won()) {
+            showBanner(new TopBanner("Round won", score, Theme.colors().positive(), 2600).pulse());
+            UiSounds.roundWon();
+        } else {
+            showBanner(new TopBanner("Round lost", score, Theme.colors().negative(), 2600));
+            UiSounds.roundLost();
+        }
+    }
+
+    @Override
+    public void onMatchEnded(MatchEnded result) {
+        pendingResult = result;
+    }
+
+    @Override
+    public void onReturnToLobby() {
+        transition.reveal();
+        dismissBanner();
+        if (pendingResult == null) {
+            return;
+        }
+        if (resultCard != null) {
+            resultCard.dismiss();
+        }
+        resultCard = new MatchResultCard(pendingResult);
+        host.add(resultCard);
+        if (transition.isActive()) {
+            host.addOnTop(transition);
+        }
+        switch (pendingResult.result()) {
+            case WIN -> UiSounds.matchWon();
+            case LOSS -> UiSounds.matchLost();
+            default -> UiSounds.queueLeft();
+        }
+        pendingResult = null;
+    }
+
+    private void showBanner(TopBanner next) {
+        dismissBanner();
+        banner = next;
+        host.add(banner);
+        if (transition.isActive()) {
+            host.addOnTop(transition);
+        }
+    }
+
+    private void dismissBanner() {
+        if (banner != null) {
+            banner.dismiss();
         }
     }
 

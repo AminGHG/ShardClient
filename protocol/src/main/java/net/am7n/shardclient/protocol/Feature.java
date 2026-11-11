@@ -9,7 +9,9 @@ public enum Feature {
     /** Queue joined / left / update, match found, arena transition. */
     MATCHMAKING(0),
     /** Server notifications. */
-    NOTIFICATIONS(1);
+    NOTIFICATIONS(1),
+    /** Full-screen transitions, match start, round and match results, return to lobby (ranked). */
+    MATCH_FLOW(2);
 
     private final long mask;
 

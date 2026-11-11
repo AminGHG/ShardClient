@@ -29,6 +29,10 @@ public final class QueueIndicator implements Overlay {
     private final Transition transition = Motion.transition(Motion.POPOVER_MS);
     private final Cycle sweep = new Cycle(1600);
     private QueueState queue;
+    /** When the server's wait time last arrived; the shown time counts on from it until the next one. */
+    private long updatedAt;
+    /** The local count never runs further ahead of the server than this. */
+    private static final int MAX_AHEAD_SECONDS = 3;
 
     public static final int BOTTOM = TOP + HEIGHT;
     public static final int CARD_WIDTH = WIDTH;
@@ -39,11 +43,13 @@ public final class QueueIndicator implements Overlay {
 
     public void show(QueueState queue) {
         this.queue = queue;
+        updatedAt = net.am7n.shardclient.shared.anim.Clock.SYSTEM.nanos();
         transition.show();
     }
 
     public void update(QueueState queue) {
         this.queue = queue;
+        updatedAt = net.am7n.shardclient.shared.anim.Clock.SYSTEM.nanos();
     }
 
     public void hide() {
@@ -75,7 +81,9 @@ public final class QueueIndicator implements Overlay {
             Component count = Theme.text(Component.literal(queue.playersQueued() + " in queue"), false);
             canvas.text(count, x + PADDING + canvas.textWidth(name) + 6, y + 7, colors.textMuted(), look.textShadow());
         }
-        Component time = Theme.text(Component.literal(format(queue.waitSeconds())), false);
+        long ahead = (net.am7n.shardclient.shared.anim.Clock.SYSTEM.nanos() - updatedAt) / 1_000_000_000L;
+        int seconds = queue.waitSeconds() + (int) Math.min(ahead, MAX_AHEAD_SECONDS);
+        Component time = Theme.text(Component.literal(format(seconds)), false);
         canvas.textRight(time, x + WIDTH - PADDING, y + 7, colors.textMuted(), look.textShadow());
 
         int barWidth = WIDTH - PADDING * 2;

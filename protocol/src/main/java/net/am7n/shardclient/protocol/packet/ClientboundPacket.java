@@ -8,7 +8,8 @@ import net.am7n.shardclient.protocol.ProtocolException;
 
 /** A message from the server to a client. */
 public sealed interface ClientboundPacket
-        permits Welcome, Rejected, QueueJoined, QueueLeft, QueueUpdate, MatchFound, ArenaTransition, Notification {
+        permits Welcome, Rejected, QueueJoined, QueueLeft, QueueUpdate, MatchFound, ArenaTransition, Notification,
+        TransitionStart, MatchStarted, RoundEnded, MatchEnded, ReturnToLobby {
 
     int id();
 
@@ -38,6 +39,11 @@ public sealed interface ClientboundPacket
             case MatchFound.ID -> MatchFound.read(in);
             case ArenaTransition.ID -> ArenaTransition.read(in);
             case Notification.ID -> Notification.read(in);
+            case TransitionStart.ID -> TransitionStart.read(in);
+            case MatchStarted.ID -> MatchStarted.read(in);
+            case RoundEnded.ID -> RoundEnded.read(in);
+            case MatchEnded.ID -> MatchEnded.read(in);
+            case ReturnToLobby.ID -> ReturnToLobby.read(in);
             default -> null;
         };
     }
