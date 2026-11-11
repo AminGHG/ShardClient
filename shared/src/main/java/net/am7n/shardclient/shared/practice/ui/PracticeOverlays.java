@@ -50,6 +50,8 @@ public final class PracticeOverlays implements PracticeListener {
     private MatchResultCard resultCard;
     /** The last match result, shown once the player is back in the lobby. */
     private MatchEnded pendingResult;
+    /** The match as it was found, for the opponent on the result screen. */
+    private MatchInfo lastMatch;
 
     public PracticeOverlays(OverlayHost host) {
         this.host = host;
@@ -66,6 +68,8 @@ public final class PracticeOverlays implements PracticeListener {
             banner = null;
             resultCard = null;
             pendingResult = null;
+            lastMatch = null;
+            closeResultScreen();
         }
     }
 
@@ -97,6 +101,8 @@ public final class PracticeOverlays implements PracticeListener {
         if (matchCard != null) {
             matchCard.dismiss();
         }
+        closeResultScreen();
+        lastMatch = match;
         matchCard = new MatchFoundCard(match, self.getUUID(), self.getScoreboardName());
         host.add(matchCard);
         UiSounds.matchFound();
@@ -116,6 +122,7 @@ public final class PracticeOverlays implements PracticeListener {
             matchCard.dismiss();
         }
         dismissBanner();
+        closeResultScreen();
         transition.cover();
         host.addOnTop(transition);
     }
@@ -154,13 +161,21 @@ public final class PracticeOverlays implements PracticeListener {
         if (pendingResult == null) {
             return;
         }
-        if (resultCard != null) {
-            resultCard.dismiss();
-        }
-        resultCard = new MatchResultCard(pendingResult);
-        host.add(resultCard);
-        if (transition.isActive()) {
-            host.addOnTop(transition);
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer self = minecraft.player;
+        if (minecraft.gui.screen() == null && self != null) {
+            // The full-screen result, only when nothing else is open: it never replaces a menu or chat.
+            minecraft.gui.setScreen(new MatchResultScreen(null, pendingResult, lastMatch, self.getUUID(),
+                    self.getScoreboardName()));
+        } else {
+            if (resultCard != null) {
+                resultCard.dismiss();
+            }
+            resultCard = new MatchResultCard(pendingResult);
+            host.add(resultCard);
+            if (transition.isActive()) {
+                host.addOnTop(transition);
+            }
         }
         switch (pendingResult.result()) {
             case WIN -> UiSounds.matchWon();
@@ -168,6 +183,14 @@ public final class PracticeOverlays implements PracticeListener {
             default -> UiSounds.queueLeft();
         }
         pendingResult = null;
+    }
+
+    /** A new match, transition or lost connection ends the result screen at once. */
+    private static void closeResultScreen() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.gui.screen() instanceof MatchResultScreen) {
+            minecraft.gui.setScreen(null);
+        }
     }
 
     private void showBanner(TopBanner next) {

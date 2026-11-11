@@ -5,6 +5,9 @@ import net.am7n.shardclient.shared.render.SemiVanillaLook;
 import net.am7n.shardclient.shared.render.ShardPvpLook;
 import net.am7n.shardclient.shared.render.Theme;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.am7n.shardclient.protocol.packet.MatchEnded;
+import net.am7n.shardclient.shared.practice.MatchInfo;
+import net.am7n.shardclient.shared.practice.ui.MatchResultScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.input.KeyEvent;
@@ -66,7 +69,14 @@ final class ShowcaseCapture {
         steps.add(new Step(t += 400, () -> shot("17-transition-revealing")));
         steps.add(new Step(t += 600, () -> shot("18-round-banner")));
         steps.add(new Step(t += 400, screen::onClose));
-        steps.add(new Step(t += 90, () -> shot("5-exiting")));
+        steps.add(new Step(t += 400, () -> minecraft.gui.setScreen(new MatchResultScreen(null,
+                new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1180, 1204, "Gold II", true),
+                new MatchInfo(java.util.UUID.fromString("00000000-0000-0000-0000-000000000002"), "Alex_02", "Sword",
+                        "", "Badlands", true, "Gold I"),
+                java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"), "Steve_01"))));
+        steps.add(new Step(t += 450, () -> shot("19-result-screen-rising")));
+        steps.add(new Step(t += 1200, () -> shot("20-result-screen-counting")));
+        steps.add(new Step(t += 1300, () -> shot("21-result-screen")));
         steps.add(new Step(t += 600, minecraft::stop));
         // The screen stops drawing once it has closed, so the tick keeps the script going to the end.
         ClientTickEvents.END_CLIENT_TICK.register(client -> frame());
