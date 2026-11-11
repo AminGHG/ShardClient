@@ -30,8 +30,9 @@ Work in progress. What exists today:
 - **Server connection.** Detects the ShardPvP server, completes a versioned handshake and receives queue,
   match-found and notification events. Confirmed working against the live server.
 - **Interface foundation.** Animation engine, layout system and components (panels, buttons, progress bars,
-  scroll areas, item icons, player faces) with three looks: *ShardPvP Dark* (default), *ShardPvP Light* and
-  *Minecraft*.
+  scroll areas, item icons, player faces) with four looks: *ShardPvP Dark* (default) and *ShardPvP Light*,
+  which match the website with smooth rounded shapes; *Semi Vanilla*, the website's colours on Minecraft's
+  pixel grid; and *Minecraft*, the game's own textures.
 
 Coming next: the in-game screens (queue, match found, notifications, server menus), then the Full Client's
 module system, ClickGUI and Fullbright.

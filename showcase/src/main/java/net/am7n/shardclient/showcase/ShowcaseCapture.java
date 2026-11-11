@@ -1,7 +1,8 @@
 package net.am7n.shardclient.showcase;
 
 import net.am7n.shardclient.shared.render.MinecraftLook;
-import net.am7n.shardclient.shared.render.WebsiteLook;
+import net.am7n.shardclient.shared.render.SemiVanillaLook;
+import net.am7n.shardclient.shared.render.ShardPvpLook;
 import net.am7n.shardclient.shared.render.Theme;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
@@ -40,11 +41,13 @@ final class ShowcaseCapture {
         steps.add(new Step(t += 50, () -> scale(3)));
         steps.add(new Step(t += 400, () -> shot("4-gui-scale-3")));
         steps.add(new Step(t += 50, () -> scale(originalScale)));
-        steps.add(new Step(t += 300, () -> Theme.use(WebsiteLook.LIGHT)));
-        steps.add(new Step(t += 300, () -> shot("6-light")));
+        steps.add(new Step(t += 300, () -> Theme.use(ShardPvpLook.LIGHT)));
+        steps.add(new Step(t += 300, () -> shot("6-shardpvp-light")));
+        steps.add(new Step(t += 50, () -> Theme.use(SemiVanillaLook.INSTANCE)));
+        steps.add(new Step(t += 300, () -> shot("7-semi-vanilla")));
         steps.add(new Step(t += 50, () -> Theme.use(MinecraftLook.INSTANCE)));
-        steps.add(new Step(t += 300, () -> shot("7-minecraft")));
-        steps.add(new Step(t += 50, () -> Theme.use(WebsiteLook.DARK)));
+        steps.add(new Step(t += 300, () -> shot("8-minecraft")));
+        steps.add(new Step(t += 50, () -> Theme.use(ShardPvpLook.DARK)));
         steps.add(new Step(t += 400, screen::onClose));
         steps.add(new Step(t += 90, () -> shot("5-exiting")));
         steps.add(new Step(t += 600, minecraft::stop));

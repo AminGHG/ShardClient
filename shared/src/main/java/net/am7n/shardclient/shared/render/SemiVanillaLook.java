@@ -2,41 +2,28 @@ package net.am7n.shardclient.shared.render;
 
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FontDescription;
-import net.minecraft.resources.Identifier;
 
 /**
- * The ShardPvP website's design (shardpvp.xyz): flat rounded surfaces with a hairline border, a purple primary
- * button, slim rounded bars and the Inter Tight typeface. Comes in the site's dark and light mode.
+ * Between the website and the game: the website's dark colours and typeface, but shapes snapped to Minecraft's
+ * GUI pixel grid, so rounded corners show their pixel steps like the rest of the game.
  */
-public final class WebsiteLook implements Look {
+public final class SemiVanillaLook implements Look {
 
-    public static final WebsiteLook DARK = new WebsiteLook("website-dark", "ShardPvP Dark", Palette.DARK);
-    public static final WebsiteLook LIGHT = new WebsiteLook("website-light", "ShardPvP Light", Palette.LIGHT);
+    public static final SemiVanillaLook INSTANCE = new SemiVanillaLook();
 
-    private static final FontDescription REGULAR =
-            new FontDescription.Resource(Identifier.fromNamespaceAndPath("shardclient-shared", "inter"));
-    private static final FontDescription SEMIBOLD =
-            new FontDescription.Resource(Identifier.fromNamespaceAndPath("shardclient-shared", "inter_semibold"));
+    private final Palette colors = Palette.DARK;
 
-    private final String id;
-    private final String displayName;
-    private final Palette colors;
-
-    private WebsiteLook(String id, String displayName, Palette colors) {
-        this.id = id;
-        this.displayName = displayName;
-        this.colors = colors;
+    private SemiVanillaLook() {
     }
 
     @Override
     public String id() {
-        return id;
+        return "semi-vanilla";
     }
 
     @Override
     public String displayName() {
-        return displayName;
+        return "Semi Vanilla";
     }
 
     @Override
@@ -46,8 +33,7 @@ public final class WebsiteLook implements Look {
 
     @Override
     public Component styled(Component text, boolean emphasis) {
-        FontDescription font = emphasis ? SEMIBOLD : REGULAR;
-        return text.copy().withStyle(style -> style.withFont(font));
+        return Fonts.inter(text, emphasis);
     }
 
     @Override

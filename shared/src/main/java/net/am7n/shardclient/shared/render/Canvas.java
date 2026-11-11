@@ -156,6 +156,27 @@ public final class Canvas {
         graphics.fill(x + width - 1, y + r, x + width, y + height - r, color);
     }
 
+    /** An anti-aliased rounded rectangle drawn at full screen resolution; {@code radius} in GUI pixels. */
+    public void smoothRect(int x, int y, int width, int height, float radius, int argb) {
+        if (width > 0 && height > 0) {
+            SmoothShapes.fill(graphics, x, y, width, height, radius, tint(argb));
+        }
+    }
+
+    /** An anti-aliased rounded outline, {@code stroke} screen pixels thick, just inside the rectangle. */
+    public void smoothFrame(int x, int y, int width, int height, float radius, int stroke, int argb) {
+        if (width > 0 && height > 0) {
+            SmoothShapes.frame(graphics, x, y, width, height, radius, stroke, tint(argb));
+        }
+    }
+
+    /** A soft shadow outside a rounded rectangle, like CSS {@code box-shadow}; sizes in GUI pixels. */
+    public void smoothShadow(int x, int y, int width, int height, float radius, float blur, float offsetY, int argb) {
+        if (width > 0 && height > 0 && !faint()) {
+            SmoothShapes.shadow(graphics, x, y, width, height, radius, blur, offsetY, tint(argb));
+        }
+    }
+
     /** How far row {@code row} (0 = outermost) of a corner of radius {@code r} starts from the edge. */
     private static int cornerInset(int r, int row) {
         double dy = r - row - 0.5;

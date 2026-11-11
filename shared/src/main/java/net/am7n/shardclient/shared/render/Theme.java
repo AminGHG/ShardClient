@@ -11,9 +11,10 @@ import java.util.List;
 public final class Theme {
 
     /** Every look a player can pick, default first. */
-    public static final List<Look> LOOKS = List.of(WebsiteLook.DARK, WebsiteLook.LIGHT, MinecraftLook.INSTANCE);
+    public static final List<Look> LOOKS =
+            List.of(ShardPvpLook.DARK, ShardPvpLook.LIGHT, SemiVanillaLook.INSTANCE, MinecraftLook.INSTANCE);
 
-    private static Look look = WebsiteLook.DARK;
+    private static Look look = ShardPvpLook.DARK;
 
     private Theme() {
     }
