@@ -34,7 +34,11 @@ Work in progress. What exists today:
   which match the website with smooth rounded shapes; *Semi Vanilla*, the website's colours on Minecraft's
   pixel grid; and *Minecraft*, the game's own textures.
 
-Coming next: the in-game screens (queue, match found, notifications, server menus), then the Full Client's
+- **In-game overlays.** A queue indicator (queue, players waiting, time waited), a Match Found card with both
+  players and the arena, and notification cards, each with its own sound. All of them follow server events and
+  never cover the middle of the screen, because a fight can start the moment the server teleports you.
+
+Coming next: server menus in place of chest GUIs, full-screen transitions for ranked, then the Full Client's
 module system, ClickGUI and Fullbright.
 
 ## Install

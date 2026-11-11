@@ -8,7 +8,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
 
 /**
  * What components draw on for one frame. It is the only class that touches Minecraft's drawing API, and it adds
@@ -220,6 +223,22 @@ public final class Canvas {
         if (!faint()) {
             graphics.text(font, text, x, y, tint(argb), shadow);
         }
+    }
+
+    /** {@code text} broken into lines no wider than {@code width}. */
+    public List<FormattedCharSequence> wrap(Component text, int width) {
+        return font.split(text, Math.max(1, width));
+    }
+
+    /** One line produced by {@link #wrap}. */
+    public void line(FormattedCharSequence line, int x, int y, int argb, boolean shadow) {
+        if (!faint()) {
+            graphics.text(font, line, x, y, tint(argb), shadow);
+        }
+    }
+
+    public void textRight(Component text, int right, int y, int argb, boolean shadow) {
+        text(text, right - font.width(text), y, argb, shadow);
     }
 
     public void textCentered(Component text, int centerX, int y, int argb, boolean shadow) {

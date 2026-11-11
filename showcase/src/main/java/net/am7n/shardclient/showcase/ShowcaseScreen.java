@@ -12,6 +12,14 @@ import net.am7n.shardclient.shared.ui.ScrollArea;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Spacer;
 import net.am7n.shardclient.shared.ui.Stack;
+import net.am7n.shardclient.protocol.packet.Notification;
+import net.am7n.shardclient.shared.hud.OverlayHost;
+import net.am7n.shardclient.shared.practice.MatchInfo;
+import net.am7n.shardclient.shared.practice.QueueState;
+import net.am7n.shardclient.shared.practice.ui.MatchFoundCard;
+import net.am7n.shardclient.shared.practice.ui.NotificationToasts;
+import net.am7n.shardclient.shared.practice.ui.QueueIndicator;
+import net.am7n.shardclient.shared.render.Canvas;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -25,6 +33,9 @@ import java.util.UUID;
 final class ShowcaseScreen extends ShardScreen {
 
     private final ShowcaseCapture capture;
+    /** Overlay previews drawn over the screen, with sample data; nothing goes through the network. */
+    private final OverlayHost previews = new OverlayHost();
+    private boolean previewing;
 
     ShowcaseScreen(Screen parent, boolean capture) {
         super(Component.literal("ShardClient components"), parent);
@@ -74,6 +85,35 @@ final class ShowcaseScreen extends ShardScreen {
         return new Panel(content).minWidth(264);
     }
 
+    /** Shows the Practice Server overlays with sample data in place of the component gallery. */
+    void previewOverlays() {
+        previewing = true;
+        previews.clear();
+        QueueIndicator queue = new QueueIndicator();
+        queue.show(new QueueState("1v1", "1v1", false, 42, 3));
+        previews.add(queue);
+        previews.add(new MatchFoundCard(
+                new MatchInfo(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Alex_02", "1v1", "",
+                        "badlands", false, ""),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"), "Steve_01"));
+        NotificationToasts toasts = new NotificationToasts(new NotificationToasts.TopCenter() {
+            @Override
+            public int width() {
+                return MatchFoundCard.CARD_WIDTH;
+            }
+
+            @Override
+            public int bottom() {
+                return MatchFoundCard.BOTTOM;
+            }
+        });
+        toasts.push(new Notification(Notification.Category.PLAYER, Notification.Level.INFO, "Duel request",
+                "Alex_02 wants to duel you. Type /duelaccept to fight."));
+        toasts.push(new Notification(Notification.Category.ANNOUNCEMENT, Notification.Level.SUCCESS, "",
+                "Ranked season 3 starts this weekend."));
+        previews.add(toasts);
+    }
+
     /** Item stacks only exist once a world is loaded; on the title screen the slots stay empty. */
     private ItemStack item(Item item) {
         return minecraft.level == null ? ItemStack.EMPTY : new ItemStack(item);
@@ -81,7 +121,11 @@ final class ShowcaseScreen extends ShardScreen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+        if (previewing) {
+            previews.render(new Canvas(graphics, font, mouseX, mouseY));
+        } else {
+            super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+        }
         if (capture != null) {
             capture.frame();
         }

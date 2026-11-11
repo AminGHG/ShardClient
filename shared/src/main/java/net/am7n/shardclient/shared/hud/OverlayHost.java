@@ -24,9 +24,15 @@ public final class OverlayHost {
         HudElementRegistry.addLast(id, this::render);
     }
 
-    /** Client thread only. */
+    /** Adds {@code overlay} on top of the others, unless it is already shown. Client thread only. */
     public void add(Overlay overlay) {
-        overlays.add(overlay);
+        if (!overlays.contains(overlay)) {
+            overlays.add(overlay);
+        }
+    }
+
+    public boolean contains(Overlay overlay) {
+        return overlays.contains(overlay);
     }
 
     public void remove(Overlay overlay) {
@@ -41,11 +47,22 @@ public final class OverlayHost {
         return overlays.isEmpty();
     }
 
+    /** Draws every overlay onto {@code canvas}; used by the HUD layer, and by previews outside a world. */
+    public void render(Canvas canvas) {
+        if (overlays.isEmpty()) {
+            return;
+        }
+        draw(canvas);
+    }
+
     private void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
         if (overlays.isEmpty()) {
             return;
         }
-        Canvas canvas = new Canvas(graphics, Minecraft.getInstance().font, -1, -1);
+        draw(new Canvas(graphics, Minecraft.getInstance().font, -1, -1));
+    }
+
+    private void draw(Canvas canvas) {
         // Iterate over a copy: an overlay may add or remove overlays while drawing.
         for (Overlay overlay : List.copyOf(overlays)) {
             boolean alive;

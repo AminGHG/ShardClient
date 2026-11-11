@@ -30,10 +30,11 @@ public final class PlayerFace extends Element {
 
     @Override
     public void render(Canvas canvas) {
-        canvas.face(skin(), x + (width - size) / 2, y + (height - size) / 2, size);
+        canvas.face(skinOf(playerId), x + (width - size) / 2, y + (height - size) / 2, size);
     }
 
-    private PlayerSkin skin() {
+    /** The skin the game has for {@code playerId} on this server, or its default skin. */
+    public static PlayerSkin skinOf(UUID playerId) {
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
         if (connection != null) {
             PlayerInfo info = connection.getPlayerInfo(playerId);
