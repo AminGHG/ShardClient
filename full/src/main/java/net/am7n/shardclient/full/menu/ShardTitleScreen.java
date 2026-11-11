@@ -72,12 +72,12 @@ public final class ShardTitleScreen extends ShardScreen {
 
         private final Button multiplayer = new Button("Multiplayer",
                 () -> minecraft.gui.setScreen(new JoinMultiplayerScreen(ShardTitleScreen.this)))
-                .style(Button.Style.PRIMARY).icon(Icons.PEOPLE).tall();
+                .style(Button.Style.PRIMARY).tall();
         private final Button singleplayer = new Button("Singleplayer",
-                () -> minecraft.gui.setScreen(new SelectWorldScreen(ShardTitleScreen.this))).icon(Icons.PERSON).tall();
+                () -> minecraft.gui.setScreen(new SelectWorldScreen(ShardTitleScreen.this))).tall();
         private final Button options = new Button("Options",
-                () -> minecraft.gui.setScreen(new OptionsScreen(ShardTitleScreen.this, minecraft.options, false))).icon(Icons.GEAR);
-        private final Button quit = new Button("Quit", minecraft::stop).icon(Icons.POWER);
+                () -> minecraft.gui.setScreen(new OptionsScreen(ShardTitleScreen.this, minecraft.options, false)));
+        private final Button quit = new Button("Quit", minecraft::stop);
         private final Button style = new Button("Switch to Minecraft's menu", MenuScreens::toggle).iconOnly(Icons.SWAP);
         private final Button client = new Button("Client menu · Right Shift",
                 () -> ShardClientFull.get().openMenu(minecraft)).iconOnly(Icons.GRID);

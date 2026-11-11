@@ -57,6 +57,9 @@ public final class ShardServerListScreen extends ShardScreen {
     private static final int COLUMN = 440;
     /** Width of the MOTD in Minecraft's list: its 305 px row less 4 px padding, the 32 px icon and a 2 px gap. */
     private static final int VANILLA_MOTD_WIDTH = 267;
+    private static final int VANILLA_ROW_WIDTH = 305;
+    /** Where the MOTD starts in a vanilla row: 2 px padding, the 32 px icon, a 3 px gap. */
+    private static final int VANILLA_TEXT_OFFSET = 37;
     private static final Identifier[] PING = sprites("server_list/ping_", 5);
     private static final Identifier[] PINGING = sprites("server_list/pinging_", 5);
     private static final Identifier INCOMPATIBLE = Identifier.withDefaultNamespace("server_list/incompatible");
@@ -323,13 +326,13 @@ public final class ShardServerListScreen extends ShardScreen {
         private final Stack list = Stack.column(4);
         private final ScrollArea scroll = new ScrollArea(list, 100);
         private final Tween tabIndicator = new Tween(Tab.ALL.ordinal(), Motion.POPOVER_MS, Motion.MOVE);
-        private final Button join = new Button("Join Server", () -> join(selected)).style(Button.Style.PRIMARY).icon(Icons.PLAY);
-        private final Button direct = new Button("Direct Connection", ShardServerListScreen.this::directConnect).icon(Icons.LINK);
-        private final Button add = new Button("Add Server", ShardServerListScreen.this::add).icon(Icons.PLUS);
-        private final Button edit = new Button("Edit", ShardServerListScreen.this::edit).icon(Icons.PENCIL);
-        private final Button delete = new Button("Delete", ShardServerListScreen.this::delete).icon(Icons.TRASH);
-        private final Button refresh = new Button("Refresh", ShardServerListScreen.this::refresh).icon(Icons.REFRESH);
-        private final Button back = new Button("Back", ShardServerListScreen.this::onClose).icon(Icons.BACK);
+        private final Button join = new Button("Join Server", () -> join(selected)).style(Button.Style.PRIMARY);
+        private final Button direct = new Button("Direct Connection", ShardServerListScreen.this::directConnect);
+        private final Button add = new Button("Add Server", ShardServerListScreen.this::add);
+        private final Button edit = new Button("Edit", ShardServerListScreen.this::edit);
+        private final Button delete = new Button("Delete", ShardServerListScreen.this::delete);
+        private final Button refresh = new Button("Refresh", ShardServerListScreen.this::refresh);
+        private final Button back = new Button("Back", ShardServerListScreen.this::onClose);
         private final List<Button> topRow = List.of(join, direct, add);
         private final List<Button> bottomRow = List.of(edit, delete, refresh, back);
 
@@ -506,11 +509,15 @@ public final class ShardServerListScreen extends ShardScreen {
             // The MOTD in Minecraft's own font and at Minecraft's own line width (271), so a MOTD the server
             // centred with spaces for the vanilla list stays centred here.
             var lines = canvas.wrap(server.motd == null ? Component.empty() : server.motd, VANILLA_MOTD_WIDTH);
+            // The MOTD keeps its vanilla-width block, centred in this wider card, so a centred MOTD looks centred.
+            // Servers centre their MOTD for Minecraft's whole 305 px row, where the text starts 37 px in (after
+            // the icon). Place it exactly there relative to a vanilla row centred on this card.
+            int motdX = Math.max(textX, x + width / 2 - VANILLA_ROW_WIDTH / 2 + VANILLA_TEXT_OFFSET);
             if (!lines.isEmpty()) {
-                canvas.line(lines.get(0), textX, y + 22, colors.textMuted(), true);
+                canvas.line(lines.get(0), motdX, y + 22, colors.textMuted(), true);
             }
             if (lines.size() > 1) {
-                canvas.line(lines.get(1), textX, y + 32, colors.textMuted(), true);
+                canvas.line(lines.get(1), motdX, y + 32, colors.textMuted(), true);
             }
 
             canvas.pop();

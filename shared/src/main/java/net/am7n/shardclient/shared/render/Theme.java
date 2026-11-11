@@ -16,6 +16,29 @@ public final class Theme {
 
     private static Look look = ShardPvpLook.DARK;
 
+    /** How the main action button is filled. Outline is the default. */
+    public enum PrimaryStyle { LILAC, WHITE, OUTLINE, SOFT }
+
+    private static PrimaryStyle primaryStyle = PrimaryStyle.OUTLINE;
+    /** Button labels in Minecraft's own font instead of the look's. */
+    private static boolean minecraftButtonFont = true;
+
+    public static PrimaryStyle primaryStyle() {
+        return primaryStyle;
+    }
+
+    public static void usePrimaryStyle(PrimaryStyle style) {
+        primaryStyle = style;
+    }
+
+    public static boolean minecraftButtonFont() {
+        return minecraftButtonFont;
+    }
+
+    public static void useMinecraftButtonFont(boolean value) {
+        minecraftButtonFont = value;
+    }
+
     private Theme() {
     }
 

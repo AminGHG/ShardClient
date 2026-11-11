@@ -95,7 +95,7 @@ public final class Button extends Element implements Focusable {
         if (iconOnly) {
             return new Size(height, height);
         }
-        int textWidth = Minecraft.getInstance().font.width(Theme.text(label, true));
+        int textWidth = Minecraft.getInstance().font.width(labelText());
         int iconSpace = icon != null ? ICON + ICON_GAP : 0;
         return new Size(textWidth + iconSpace + PADDING * 2, height);
     }
@@ -123,7 +123,8 @@ public final class Button extends Element implements Focusable {
         look.button(canvas, x, y, width, height, primary, amount, enabled, enabled && focused);
         int color = look.buttonTextColor(primary, amount, enabled);
         int muted = enabled && !primary ? Lerp.color(look.colors().textMuted(), color, amount) : color;
-        Component text = Theme.text(label, true);
+        Component text = labelText();
+        boolean shadow = look.textShadow() || (Theme.minecraftButtonFont() && !(primary && Theme.primaryStyle() == Theme.PrimaryStyle.WHITE));
         int textY = y + (height - 8) / 2;
 
         if (iconOnly) {
@@ -142,10 +143,15 @@ public final class Button extends Element implements Focusable {
         if (icon != null) {
             int nudge = Math.round(amount * 2);
             canvas.icon(icon, x + PADDING + nudge, y + (height - ICON) / 2, ICON, muted);
-            canvas.text(text, x + PADDING + ICON + ICON_GAP, textY, color, look.textShadow());
+            canvas.text(text, x + PADDING + ICON + ICON_GAP, textY, color, shadow);
         } else {
-            canvas.textCentered(text, x + width / 2, textY, color, look.textShadow());
+            canvas.textCentered(text, x + width / 2, textY, color, shadow);
         }
+    }
+
+    /** The label in the look's font, or Minecraft's when that is chosen for buttons. */
+    private Component labelText() {
+        return Theme.minecraftButtonFont() ? label : Theme.text(label, true);
     }
 
     @Override

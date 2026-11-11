@@ -90,8 +90,20 @@ public final class ShardPvpLook implements Look {
             return;
         }
         if (primary) {
-            canvas.smoothRect(x, y, width, height, RADIUS_BUTTON,
-                    Lerp.color(colors.primary(), colors.primaryHovered(), highlight));
+            switch (Theme.primaryStyle()) {
+                case LILAC -> canvas.smoothRect(x, y, width, height, RADIUS_BUTTON,
+                        Lerp.color(colors.primary(), colors.primaryHovered(), highlight));
+                case WHITE -> canvas.smoothRect(x, y, width, height, RADIUS_BUTTON,
+                        Lerp.color(0xFFF5F2FA, 0xFFFFFFFF, highlight));
+                case OUTLINE -> {
+                    canvas.smoothRect(x, y, width, height, RADIUS_BUTTON,
+                            Lerp.color(colors.ghost(), colors.ghostHovered(), highlight));
+                    canvas.smoothFrame(x, y, width, height, RADIUS_BUTTON, Math.max(1, SmoothShapes.guiScale()),
+                            colors.accentStrong());
+                }
+                case SOFT -> canvas.smoothRect(x, y, width, height, RADIUS_BUTTON,
+                        Lerp.color(0x3DA266EB, 0x5CA266EB, highlight));
+            }
         } else {
             canvas.smoothRect(x, y, width, height, RADIUS_BUTTON,
                     Lerp.color(colors.ghost(), colors.ghostHovered(), highlight));
@@ -108,7 +120,15 @@ public final class ShardPvpLook implements Look {
         if (!enabled) {
             return colors.textDisabled();
         }
-        return primary ? colors.textOnPrimary() : colors.text();
+        if (!primary) {
+            return colors.text();
+        }
+        return switch (Theme.primaryStyle()) {
+            case LILAC -> colors.textOnPrimary();
+            case WHITE -> 0xFF161024;
+            case OUTLINE -> colors.accent();
+            case SOFT -> colors.text();
+        };
     }
 
     @Override
