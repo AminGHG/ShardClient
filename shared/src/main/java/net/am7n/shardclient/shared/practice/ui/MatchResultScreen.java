@@ -31,12 +31,16 @@ import java.util.UUID;
 public final class MatchResultScreen extends ShardScreen {
 
     private static final long AUTO_CLOSE_MS = 9000;
+    /** When the rank bar starts moving, once the parts above it have settled. */
+    private static final long BAR_START_MS = 1250;
 
     private final MatchEnded result;
     private final MatchInfo match;
     private final UUID selfId;
     private final String selfName;
     private final long shownAt = Clock.SYSTEM.nanos();
+    /** Rating as progress through the rank, when the server sent the rank ranges. */
+    private final RankProgressBar bar;
 
     /**
      * @param match the match as it was found (opponent); null if this client did not see it start
@@ -47,6 +51,7 @@ public final class MatchResultScreen extends ShardScreen {
         this.match = match;
         this.selfId = selfId;
         this.selfName = selfName;
+        this.bar = result.hasRankProgress() ? new RankProgressBar(result) : null;
     }
 
     private long elapsedMs() {
@@ -114,11 +119,21 @@ public final class MatchResultScreen extends ShardScreen {
             heading(canvas, t, colors, cx, top);
             players(canvas, t, look, cx, top + 52);
             score(canvas, t, look, cx, top + 86);
-            if (result.ratingBefore() != 0 || result.ratingAfter() != 0) {
-                rating(canvas, t, look, cx, top + 120);
-            }
-            if (!result.rankAfter().isEmpty()) {
-                rank(canvas, t, look, cx, top + 150);
+            if (bar != null) {
+                if (settle(canvas, t, BAR_START_MS - 200) > 0) {
+                    bar.render(canvas, cx, top + 118, Math.min(260, width - 40), Math.max(0, t - BAR_START_MS));
+                    endSettle(canvas);
+                }
+                if (result.rankChanged()) {
+                    rank(canvas, t, look, cx, top + 160, BAR_START_MS + bar.durationMs());
+                }
+            } else {
+                if (result.rated()) {
+                    rating(canvas, t, look, cx, top + 120);
+                }
+                if (!result.rankAfter().isEmpty()) {
+                    rank(canvas, t, look, cx, top + 150, 1300);
+                }
             }
             autoContinue(canvas, t, colors);
             super.render(canvas);
@@ -234,8 +249,8 @@ public final class MatchResultScreen extends ShardScreen {
             endSettle(canvas);
         }
 
-        private void rank(Canvas canvas, long t, Look look, int cx, int y) {
-            float amount = settle(canvas, t, 1300);
+        private void rank(Canvas canvas, long t, Look look, int cx, int y, long startMs) {
+            float amount = settle(canvas, t, startMs);
             if (amount <= 0) {
                 return;
             }
@@ -251,7 +266,7 @@ public final class MatchResultScreen extends ShardScreen {
             int badgeWidth = canvas.textWidth(badge) + 12;
             int total = badgeWidth + 6 + canvas.textWidth(rankText);
             int left = cx - total / 2;
-            float pulse = window(t, 1500, 360);
+            float pulse = window(t, startMs + 200, 360);
             float badgeScale = pulse > 0 && pulse < 1 ? Lerp.of(1f, Motion.PULSE_SCALE, (float) Math.sin(Math.PI * pulse)) : 1f;
             canvas.push();
             canvas.scale(badgeScale, left + badgeWidth / 2f, y + 4);

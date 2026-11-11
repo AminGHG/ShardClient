@@ -59,6 +59,21 @@ public final class UiSounds {
         }
     }
 
+    /** A quiet tick while a progress bar moves; higher further along, lower when draining. */
+    public static void barTick(float progress, boolean rising) {
+        float pitch = rising ? 0.8f + progress * 0.8f : 1.2f - progress * 0.2f;
+        play(SoundEvents.NOTE_BLOCK_HAT.value(), pitch, 0.18f, 0);
+    }
+
+    /** The rank-progress bar crossed into another rank. */
+    public static void rankChanged(boolean up) {
+        if (up) {
+            play(SoundEvents.PLAYER_LEVELUP, 1.0f, 0.6f, 0);
+        } else {
+            play(SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE.value(), pitch(-7), 0.5f, 0);
+        }
+    }
+
     public static void queueJoined() {
         play(SoundEvents.AMETHYST_BLOCK_CHIME, 1.4f, 0.8f, 0);
     }

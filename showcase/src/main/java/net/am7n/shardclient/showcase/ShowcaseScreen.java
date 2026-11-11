@@ -123,7 +123,7 @@ final class ShowcaseScreen extends ShardScreen {
     void previewResult() {
         previewing = true;
         previews.clear();
-        previews.add(new MatchResultCard(new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1180, 1204, "Gold II", true)));
+        previews.add(new MatchResultCard(new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1172, 1214, "Gold I", 1100, 1200, "Gold II", 1200, 1300)));
     }
 
     /** Covers the screen like an arena transition; {@link #previewReveal()} lifts it. */

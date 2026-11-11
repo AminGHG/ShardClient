@@ -44,7 +44,7 @@ class PacketRoundTripTest {
             new TransitionStart(TransitionStart.Kind.ARENA),
             new MatchStarted(2, 2, 1, 0),
             new RoundEnded(true, 2, 1),
-            new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1180, 1204, "Gold II", true),
+            new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1172, 1214, "Gold I", 1100, 1200, "Gold II", 1200, 1300),
             new ReturnToLobby());
 
     @Test

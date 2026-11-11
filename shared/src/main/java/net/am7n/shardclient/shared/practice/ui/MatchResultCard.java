@@ -65,7 +65,7 @@ public final class MatchResultCard implements Overlay {
         int y = TOP;
         int center = x + WIDTH / 2;
         float linear = Math.clamp(elapsedMs / (float) parts.totalMs(), 0f, 1f);
-        boolean rated = result.ratingBefore() != 0 || result.ratingAfter() != 0;
+        boolean rated = result.rated();
 
         canvas.push();
         canvas.scale(Lerp.of(Motion.POPOVER_START_SCALE, 1f, progress), center, y + HEIGHT / 2f);
