@@ -87,6 +87,10 @@ your jar with the released one.
 ./gradlew :showcase:runClient -Pcapture  # saves screenshots to showcase/run/screenshots and quits
 ```
 
+## Licence
+
+ShardClient is licensed under the [GNU General Public License v3.0](LICENSE) (GPL-3.0-only).
+
 ## Credits
 
 - [Inter Tight](https://github.com/rsms/inter-tight) by The Inter Project Authors, SIL Open Font License 1.1

@@ -5,6 +5,7 @@
   "name": "ShardClient Shared",
   "description": "Shared library of the ShardClient Full Client and Light Version: rendering, animation, GUI and the Practice Server integration.",
   "icon": "assets/shardclient-shared/icon.png",
+  "license": "GPL-3.0-only",
   "environment": "client",
   "depends": {
     "fabricloader": ">=${loader_min_version}",
