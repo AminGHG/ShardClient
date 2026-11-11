@@ -42,6 +42,11 @@ public final class Theme {
         return LOOKS.get(0);
     }
 
+    /** {@code text} in the active look's font, for drawing {@code sizeFactor} times its normal size. */
+    public static Component text(Component text, boolean emphasis, float sizeFactor) {
+        return look.styled(text, emphasis, sizeFactor);
+    }
+
     /** {@code text} in the active look's font. */
     public static Component text(Component text, boolean emphasis) {
         return look.styled(text, emphasis);

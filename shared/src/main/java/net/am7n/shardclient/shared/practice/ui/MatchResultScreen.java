@@ -149,6 +149,8 @@ public final class MatchResultScreen extends ShardScreen {
             int textWidth = Math.max(1, canvas.textWidth(text));
             float scale = Math.min(4f, (width - 40) / (float) textWidth);
             int lineHeight = Math.round(9 * scale);
+            // Rendered at the size it is drawn, so the big headline stays sharp.
+            Component sharp = Theme.text(Component.literal(headingText()), true, scale);
             float rise = Motion.ENTER.apply(window(t, 100, 520));
 
             int textPixels = Math.round(textWidth * scale);
@@ -160,7 +162,7 @@ public final class MatchResultScreen extends ShardScreen {
                 canvas.push();
                 canvas.translate(0, (1 - rise) * lineHeight);
                 canvas.scale(scale, cx, top);
-                canvas.textCentered(text, cx, top, color, Theme.look().textShadow());
+                canvas.textCentered(sharp, cx, top, color, Theme.look().textShadow());
                 canvas.pop();
             };
             canvas.clip(0, top, width, lineHeight + 2);
@@ -226,7 +228,7 @@ public final class MatchResultScreen extends ShardScreen {
             if (amount <= 0) {
                 return;
             }
-            Component text = Theme.text(Component.literal(result.scoreSelf() + "  –  " + result.scoreOpponent()), true);
+            Component text = Theme.text(Component.literal(result.scoreSelf() + "  –  " + result.scoreOpponent()), true, 2f);
             canvas.push();
             canvas.scale(2f, cx, y);
             canvas.textCentered(text, cx, y, look.colors().text(), look.textShadow());

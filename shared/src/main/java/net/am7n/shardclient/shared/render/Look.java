@@ -19,6 +19,11 @@ public interface Look {
     /** {@code text} in this look's font; {@code emphasis} for headings and button labels. */
     Component styled(Component text, boolean emphasis);
 
+    /** {@code text} for drawing {@code sizeFactor} times its normal size, rendered sharp at that size. */
+    default Component styled(Component text, boolean emphasis, float sizeFactor) {
+        return styled(text, emphasis);
+    }
+
     boolean textShadow();
 
     /** Whether screens blur the world behind them (honours Minecraft's own blur setting). */

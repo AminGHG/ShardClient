@@ -1,0 +1,6 @@
+{
+  "providers": [
+    { "type": "ttf", "file": "shardclient-shared:inter_tight_regular.ttf", "size": 10.0, "oversample": 6.0, "shift": [0.0, 1.0] },
+    { "type": "reference", "id": "minecraft:default" }
+  ]
+}

@@ -129,7 +129,7 @@ public final class ShardTitleScreen extends ShardScreen {
             canvas.push();
             canvas.translate(0, (1 - brand) * 8);
             canvas.image(LOGO, 256, center - 24, brandTop, 48);
-            Component name = Theme.text(Component.literal("ShardClient"), true);
+            Component name = Theme.text(Component.literal("ShardClient"), true, 2f);
             canvas.push();
             canvas.scale(2f, center, brandTop + 56);
             canvas.textCentered(name, center, brandTop + 56, colors.text(), shadow);

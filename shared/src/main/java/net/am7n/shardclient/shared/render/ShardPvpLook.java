@@ -55,6 +55,11 @@ public final class ShardPvpLook implements Look {
     }
 
     @Override
+    public Component styled(Component text, boolean emphasis, float sizeFactor) {
+        return Fonts.inter(text, emphasis, sizeFactor);
+    }
+
+    @Override
     public boolean textShadow() {
         return false;
     }

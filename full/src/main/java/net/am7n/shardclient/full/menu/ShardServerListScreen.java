@@ -403,7 +403,7 @@ public final class ShardServerListScreen extends ShardScreen {
 
             canvas.push();
             canvas.scale(1.5f, x, y + 4);
-            canvas.text(Theme.text(Component.literal("Multiplayer"), true), x, y + 4, colors.text(), shadow);
+            canvas.text(Theme.text(Component.literal("Multiplayer"), true, 1.5f), x, y + 4, colors.text(), shadow);
             canvas.pop();
 
             // Tabs: one highlight that slides to the open tab.
@@ -548,13 +548,13 @@ public final class ShardServerListScreen extends ShardScreen {
                 }
             }
             canvas.sprite(sprite, right - 10, y + 9, 10, 8);
-            Component status = Theme.text(Component.literal(text), false);
-            canvas.textRight(status, right - 14, y + 9, colors.textMuted(), shadow);
+            // Server info in Minecraft's own font, like the MOTD.
+            Component status = Component.literal(text);
+            canvas.textRight(status, right - 14, y + 9, colors.textMuted(), true);
             int left = right - 14 - canvas.textWidth(status);
             if (server.players != null && server.state() == ServerData.State.SUCCESSFUL) {
-                Component players = Theme.text(Component.literal(server.players.online() + " / "
-                        + server.players.max()), true);
-                canvas.textRight(players, right, y + 26, colors.text(), shadow);
+                Component players = Component.literal(server.players.online() + " / " + server.players.max());
+                canvas.textRight(players, right, y + 26, colors.text(), true);
                 left = Math.min(left, right - canvas.textWidth(players));
             }
             return left;
