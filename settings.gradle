@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'ShardClient'
+
+// protocol: wire format shared with the ShardCore plugin (plain Java, no Minecraft).
+// shared:   rendering, animation, GUI, networking and the Practice Server integration (nested in both products).
+// full:     the Full Client (module framework, ClickGUI, standalone modules) + shared.
+// light:    the Light Version (shared only).
+// showcase: development only, never shipped: opens a gallery of the shared components to check how they look.
+include 'protocol', 'shared', 'full', 'light', 'showcase'

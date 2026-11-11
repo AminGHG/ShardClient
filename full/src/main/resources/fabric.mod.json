@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "shardclient",
+  "version": "${version}",
+  "name": "ShardClient",
+  "description": "The ShardClient Full Client: standalone client features plus the complete Practice Server integration.",
+  "icon": "assets/shardclient/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["net.am7n.shardclient.full.ShardClientFull"]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_min_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": "*",
+    "shardclient-shared": "${version}"
+  },
+  "breaks": {
+    "shardclient-light": "*"
+  }
+}

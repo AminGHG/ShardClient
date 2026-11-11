@@ -1,0 +1,12 @@
+base {
+    archivesName = 'shardclient-shared'
+}
+
+dependencies {
+    api project(':protocol')
+}
+
+// The protocol classes travel inside the shared jar, so a product jar only ever nests one library.
+jar {
+    from project(':protocol').sourceSets.main.output
+}

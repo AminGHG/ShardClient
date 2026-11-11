@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "shardclient-showcase",
+  "version": "${version}",
+  "name": "ShardClient Showcase",
+  "description": "Development only: a gallery of the shared ShardClient components.",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["net.am7n.shardclient.showcase.ShowcaseMod"]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_min_version}",
+    "minecraft": "~${minecraft_version}",
+    "fabric-api": "*",
+    "shardclient-shared": "*"
+  }
+}

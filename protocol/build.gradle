@@ -1,0 +1,32 @@
+// Plain Java: no Minecraft, Fabric or Bukkit types. The ShardCore plugin compiles against these same classes,
+// so both ends of the connection share one definition of every packet.
+base {
+    archivesName = 'shardclient-protocol'
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'ShardClient Protocol',
+                'Implementation-Version': project.version
+    }
+}
+
+// Copies the protocol jar into the ShardCore plugin's libs folder (versionless name, so its build file never
+// changes). The folder is machine-specific: set shardcore_libs_dir in local.properties (git-ignored) or pass
+// -Pshardcore_libs_dir=...
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.isFile()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+def shardcoreLibsDir = providers.gradleProperty('shardcore_libs_dir')
+        .orElse(provider { localProperties.getProperty('shardcore_libs_dir') })
+
+tasks.register('installToShardCore', Copy) {
+    group = 'distribution'
+    description = 'Copies the protocol jar into ShardCore/libs.'
+    onlyIf('shardcore_libs_dir is set') { shardcoreLibsDir.isPresent() }
+    from tasks.named('jar')
+    into shardcoreLibsDir.orElse(layout.buildDirectory.dir('shardcore-libs').map { it.asFile.path })
+    rename { 'shardclient-protocol.jar' }
+}

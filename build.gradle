@@ -1,0 +1,141 @@
+import java.util.zip.ZipFile
+
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+}
+
+def javaVersion = (rootProject.java_version as String).toInteger()
+
+subprojects {
+    apply plugin: 'java-library'
+
+    group = rootProject.maven_group
+    version = rootProject.mod_version
+
+    repositories {
+        mavenCentral()
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(javaVersion)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = javaVersion
+    }
+
+    dependencies {
+        testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events 'passed', 'failed', 'skipped'
+        }
+    }
+}
+
+// The Fabric mods. `protocol` stays a plain Java library so the ShardCore plugin can use the same classes.
+configure(subprojects.findAll { it.name in ['shared', 'full', 'light', 'showcase'] }) {
+    apply plugin: 'net.fabricmc.fabric-loom'
+
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+        implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    }
+
+    processResources {
+        def props = [
+                version          : project.version,
+                minecraft_version: rootProject.minecraft_version,
+                loader_min_version: rootProject.loader_min_version,
+                java_version     : rootProject.java_version
+        ]
+        inputs.properties props
+        filteringCharset = 'UTF-8'
+        filesMatching('fabric.mod.json') {
+            expand props
+        }
+    }
+}
+
+// A product = its own code + the shared library nested inside its jar (Jar-in-Jar). Nothing else.
+configure(subprojects.findAll { it.name in ['full', 'light'] }) {
+    dependencies {
+        implementation project(':shared')
+        include project(':shared')
+    }
+
+    base {
+        archivesName = "shardclient-${project.name}"
+    }
+
+    jar {
+        archiveVersion = "${project.version}+mc${rootProject.minecraft_version}"
+    }
+}
+
+/**
+ * Guards the product split: fails the build if a product jar carries the other product's classes, or if the
+ * Light jar carries anything from the Full Client. Looks inside the nested shared jar as well.
+ */
+def classEntries = { File jarFile ->
+    def names = [] as Set
+    new ZipFile(jarFile).withCloseable { zip ->
+        zip.entries().each { entry ->
+            if (entry.name.endsWith('.class')) {
+                names << entry.name
+            } else if (entry.name.startsWith('META-INF/jars/') && entry.name.endsWith('.jar')) {
+                def nested = File.createTempFile('shardclient-nested', '.jar')
+                try {
+                    nested.bytes = zip.getInputStream(entry).bytes
+                    new ZipFile(nested).withCloseable { inner ->
+                        inner.entries().each { if (it.name.endsWith('.class')) names << it.name }
+                    }
+                } finally {
+                    nested.delete()
+                }
+            }
+        }
+    }
+    names
+}
+
+tasks.register('verifyProductJars') {
+    group = 'verification'
+    description = 'Checks that the Full and Light jars are self-contained and do not contain each other.'
+    def fullJar = project(':full').tasks.named('jar')
+    def lightJar = project(':light').tasks.named('jar')
+    dependsOn fullJar, lightJar
+    doLast {
+        def base = 'net/am7n/shardclient/'
+        def check = { String product, File jarFile, List<String> required, List<String> forbidden ->
+            def names = classEntries(jarFile)
+            required.each { pkg ->
+                if (!names.any { it.startsWith(base + pkg + '/') }) {
+                    throw new GradleException("${jarFile.name}: missing ${pkg} classes")
+                }
+            }
+            forbidden.each { pkg ->
+                def leaked = names.findAll { it.startsWith(base + pkg + '/') }
+                if (!leaked.isEmpty()) {
+                    throw new GradleException("${jarFile.name}: contains ${pkg} classes: ${leaked.take(5)}")
+                }
+            }
+            println "${product}: ${jarFile.name} (${jarFile.length()} bytes, ${names.size()} classes) OK"
+        }
+        check('Full Client', fullJar.get().archiveFile.get().asFile, ['full', 'shared', 'protocol'], ['light'])
+        check('Light Version', lightJar.get().archiveFile.get().asFile, ['light', 'shared', 'protocol'], ['full'])
+    }
+}

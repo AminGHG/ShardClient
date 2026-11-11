@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "shardclient-light",
+  "version": "${version}",
+  "name": "ShardClient Light",
+  "description": "The ShardClient Light Version: the Practice Server integration only.",
+  "icon": "assets/shardclient-light/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["net.am7n.shardclient.light.ShardClientLight"]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_min_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": "*",
+    "shardclient-shared": "${version}"
+  },
+  "breaks": {
+    "shardclient": "*"
+  }
+}

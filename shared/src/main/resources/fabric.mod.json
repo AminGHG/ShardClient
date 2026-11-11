@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "shardclient-shared",
+  "version": "${version}",
+  "name": "ShardClient Shared",
+  "description": "Shared library of the ShardClient Full Client and Light Version: rendering, animation, GUI and the Practice Server integration.",
+  "icon": "assets/shardclient-shared/icon.png",
+  "environment": "client",
+  "depends": {
+    "fabricloader": ">=${loader_min_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["library"]
+    }
+  }
+}
