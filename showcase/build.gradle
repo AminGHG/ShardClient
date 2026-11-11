@@ -9,6 +9,8 @@ base {
 
 dependencies {
     implementation project(':shared')
+    // The Full Client too, so its menus can be captured (-Pmenus).
+    implementation project(':full')
 }
 
 loom {
@@ -16,6 +18,9 @@ loom {
         client {
             if (project.hasProperty('capture')) {
                 property 'shardclient.showcase.capture', 'true'
+            }
+            if (project.hasProperty('menus')) {
+                property 'shardclient.showcase.menus', 'true'
             }
         }
     }

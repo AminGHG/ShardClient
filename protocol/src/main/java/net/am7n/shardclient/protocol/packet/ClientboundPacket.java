@@ -9,7 +9,7 @@ import net.am7n.shardclient.protocol.ProtocolException;
 /** A message from the server to a client. */
 public sealed interface ClientboundPacket
         permits Welcome, Rejected, QueueJoined, QueueLeft, QueueUpdate, MatchFound, ArenaTransition, Notification,
-        TransitionStart, MatchStarted, RoundEnded, MatchEnded, ReturnToLobby {
+        TransitionStart, MatchStarted, RoundEnded, MatchEnded, ReturnToLobby, ClientUsers {
 
     int id();
 
@@ -44,6 +44,7 @@ public sealed interface ClientboundPacket
             case RoundEnded.ID -> RoundEnded.read(in);
             case MatchEnded.ID -> MatchEnded.read(in);
             case ReturnToLobby.ID -> ReturnToLobby.read(in);
+            case ClientUsers.ID -> ClientUsers.read(in);
             default -> null;
         };
     }

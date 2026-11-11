@@ -1,22 +1,25 @@
 package net.am7n.shardclient.shared.ui;
 
 import net.am7n.shardclient.shared.anim.Easing;
-import net.am7n.shardclient.shared.render.Look;
+import net.am7n.shardclient.shared.anim.Lerp;
 import net.am7n.shardclient.shared.anim.Motion;
 import net.am7n.shardclient.shared.anim.Tween;
 import net.am7n.shardclient.shared.render.Canvas;
+import net.am7n.shardclient.shared.render.Look;
 import net.am7n.shardclient.shared.render.Theme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 
 import java.util.List;
 
 /**
- * A rounded button in the website's two styles: {@link Style#PRIMARY} (filled purple, for the one
- * main action) and {@link Style#GHOST} (a quiet tinted surface, for everything else). Hover and focus fade in.
- * Clickable with the mouse and, when focused, with Enter or Space.
+ * A button drawn by the active look. {@link Style#PRIMARY} is the one main action, {@link Style#GHOST} everything
+ * else. It may carry an icon (then icon and label sit left-aligned) or be icon-only (square, with its label as a
+ * tooltip). Hover and focus fade in and nudge the icon toward the label; pressing scales it to 0.97 at once
+ * (nothing tweens while held) and it eases back on release.
  */
 public final class Button extends Element implements Focusable {
 
@@ -25,14 +28,18 @@ public final class Button extends Element implements Focusable {
         GHOST
     }
 
-    private static final int HORIZONTAL_PADDING = 10;
+    private static final int PADDING = 10;
+    private static final int ICON = 10;
+    private static final int ICON_GAP = 7;
 
     private Component label;
     private final Runnable onPress;
     private final Tween highlight = new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC);
-    /** 1 at rest; jumps to the pressed scale on press (nothing tweens while held) and eases back on release. */
     private final Tween pressScale = new Tween(1, Motion.PRESS_RELEASE_MS, Motion.ENTER);
     private Style style = Style.GHOST;
+    private Identifier icon;
+    private boolean iconOnly;
+    private int height = Theme.BUTTON_HEIGHT;
     private boolean enabled = true;
     private boolean focused;
 
@@ -55,6 +62,25 @@ public final class Button extends Element implements Focusable {
         return this;
     }
 
+    /** An icon from {@link net.am7n.shardclient.shared.render.Icons} before the label. */
+    public Button icon(Identifier icon) {
+        this.icon = icon;
+        return this;
+    }
+
+    /** Shows only the icon; the label becomes the tooltip. */
+    public Button iconOnly(Identifier icon) {
+        this.icon = icon;
+        this.iconOnly = true;
+        return this;
+    }
+
+    /** A taller button for a screen's main actions. */
+    public Button tall() {
+        this.height = 26;
+        return this;
+    }
+
     public Button enabled(boolean enabled) {
         this.enabled = enabled;
         return this;
@@ -66,8 +92,12 @@ public final class Button extends Element implements Focusable {
 
     @Override
     public Size measure() {
+        if (iconOnly) {
+            return new Size(height, height);
+        }
         int textWidth = Minecraft.getInstance().font.width(Theme.text(label, true));
-        return new Size(textWidth + HORIZONTAL_PADDING * 2, Theme.BUTTON_HEIGHT);
+        int iconSpace = icon != null ? ICON + ICON_GAP : 0;
+        return new Size(textWidth + iconSpace + PADDING * 2, height);
     }
 
     @Override
@@ -92,7 +122,30 @@ public final class Button extends Element implements Focusable {
 
         look.button(canvas, x, y, width, height, primary, amount, enabled, enabled && focused);
         int color = look.buttonTextColor(primary, amount, enabled);
-        canvas.textCentered(Theme.text(label, true), x + width / 2, y + (height - 8) / 2, color, look.textShadow());
+        int muted = enabled && !primary ? Lerp.color(look.colors().textMuted(), color, amount) : color;
+        Component text = Theme.text(label, true);
+        int textY = y + (height - 8) / 2;
+
+        if (iconOnly) {
+            canvas.icon(icon, x + (width - ICON - 2) / 2, y + (height - ICON - 2) / 2, ICON + 2, muted);
+            if (hovered) {
+                int tipWidth = canvas.textWidth(text) + 12;
+                int tipX = Math.max(2, Math.min(x + (width - tipWidth) / 2, canvas.width() - tipWidth - 2));
+                int tipY = y - 18 >= 2 ? y - 18 : y + height + 4;
+                canvas.pushAlpha(amount);
+                canvas.smoothRect(tipX, tipY, tipWidth, 14, 5f, look.colors().surface());
+                canvas.text(text, tipX + 6, tipY + 3, look.colors().text(), look.textShadow());
+                canvas.popAlpha();
+            }
+            return;
+        }
+        if (icon != null) {
+            int nudge = Math.round(amount * 2);
+            canvas.icon(icon, x + PADDING + nudge, y + (height - ICON) / 2, ICON, muted);
+            canvas.text(text, x + PADDING + ICON + ICON_GAP, textY, color, look.textShadow());
+        } else {
+            canvas.textCentered(text, x + width / 2, textY, color, look.textShadow());
+        }
     }
 
     @Override

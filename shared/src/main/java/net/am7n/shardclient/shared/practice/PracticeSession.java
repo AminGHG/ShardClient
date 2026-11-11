@@ -1,6 +1,7 @@
 package net.am7n.shardclient.shared.practice;
 
 import net.am7n.shardclient.protocol.packet.ArenaTransition;
+import net.am7n.shardclient.protocol.packet.ClientUsers;
 import net.am7n.shardclient.protocol.packet.ClientboundPacket;
 import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.protocol.packet.MatchFound;
@@ -89,6 +90,7 @@ public final class PracticeSession {
                 match = null;
                 fire(PracticeListener::onReturnToLobby);
             }
+            case ClientUsers users -> ClientBadges.apply(users);
             case Welcome ignored -> {
                 // Handshake packets belong to PracticeLink.
             }
@@ -99,6 +101,7 @@ public final class PracticeSession {
 
     /** Forgets everything: the connection ended or the server stopped talking to this client. */
     void clear() {
+        ClientBadges.clear();
         queue = null;
         match = null;
     }

@@ -7,6 +7,7 @@
   "icon": "assets/shardclient-shared/icon.png",
   "license": "GPL-3.0-only",
   "environment": "client",
+  "mixins": ["shardclient-shared.mixins.json"],
   "depends": {
     "fabricloader": ">=${loader_min_version}",
     "minecraft": "~${minecraft_version}",

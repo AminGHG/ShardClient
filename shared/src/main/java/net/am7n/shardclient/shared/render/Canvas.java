@@ -173,6 +173,13 @@ public final class Canvas {
         }
     }
 
+    /** A white-on-transparent icon from {@link Icons}, tinted {@code argb}, {@code size} GUI pixels square. */
+    public void icon(Identifier icon, int x, int y, int size, int argb) {
+        if (!faint()) {
+            SmoothShapes.image(graphics, icon, 64, x, y, size, tint(argb));
+        }
+    }
+
     /** A square texture of {@code textureSize} pixels, {@code size} GUI pixels wide. */
     public void image(Identifier texture, int textureSize, int x, int y, int size) {
         if (!faint()) {

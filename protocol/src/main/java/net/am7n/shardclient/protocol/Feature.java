@@ -11,7 +11,9 @@ public enum Feature {
     /** Server notifications. */
     NOTIFICATIONS(1),
     /** Full-screen transitions, match start, round and match results, return to lobby (ranked). */
-    MATCH_FLOW(2);
+    MATCH_FLOW(2),
+    /** Which players on the server run ShardClient, for the badge in front of their names. */
+    CLIENT_BADGES(3);
 
     private final long mask;
 

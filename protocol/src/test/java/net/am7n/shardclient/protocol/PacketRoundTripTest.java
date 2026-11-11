@@ -45,7 +45,9 @@ class PacketRoundTripTest {
             new MatchStarted(2, 2, 1, 0),
             new RoundEnded(true, 2, 1),
             new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1172, 1214, "Gold I", 1100, 1200, "Gold II", 1200, 1300),
-            new ReturnToLobby());
+            new ReturnToLobby(),
+            new net.am7n.shardclient.protocol.packet.ClientUsers(true,
+                    List.of(UUID.fromString("0f6f2f0e-7a51-4c1e-9d0b-1f0c2b3a4d5e")), List.of()));
 
     @Test
     void everyClientboundPacketSurvivesTheWire() throws ProtocolException {

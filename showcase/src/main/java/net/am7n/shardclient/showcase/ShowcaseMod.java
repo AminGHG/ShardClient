@@ -15,6 +15,10 @@ public final class ShowcaseMod implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         boolean capture = Boolean.getBoolean("shardclient.showcase.capture");
+        if (Boolean.getBoolean("shardclient.showcase.menus")) {
+            MenuCapture.register();
+            return;
+        }
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!opened && client.gui.overlay() == null && client.gui.screen() instanceof TitleScreen title) {
                 opened = true;

@@ -42,6 +42,13 @@ public final class ClientConfig {
 
     private MenuStyle menuStyle = MenuStyle.SHARD;
     private boolean uiSounds = true;
+    /** A server the player joined: its name, address and when. */
+    public record RecentServer(String name, String address, long joinedAt) {
+    }
+
+    private static final int MAX_RECENT = 30;
+    /** Joined servers by address (lower case), saved ones and direct connections alike. */
+    private final java.util.Map<String, RecentServer> recent = new java.util.HashMap<>();
 
     public ClientConfig(ModuleManager modules) {
         this.modules = modules;
@@ -63,6 +70,22 @@ public final class ClientConfig {
     public void setUiSounds(boolean value) {
         this.uiSounds = value;
         UiSounds.setEnabled(value);
+    }
+
+    /** Recently joined servers, newest first. */
+    public java.util.List<RecentServer> recentServers() {
+        return recent.values().stream()
+                .sorted(java.util.Comparator.comparingLong(RecentServer::joinedAt).reversed())
+                .toList();
+    }
+
+    /** Remembers that the server at {@code address} was joined now, keeping the newest ones. */
+    public void markJoined(String name, String address) {
+        recent.put(address.toLowerCase(java.util.Locale.ROOT),
+                new RecentServer(name, address, System.currentTimeMillis()));
+        recentServers().stream().skip(MAX_RECENT)
+                .forEach(old -> recent.remove(old.address().toLowerCase(java.util.Locale.ROOT)));
+        save();
     }
 
     public void load() {
@@ -96,6 +119,19 @@ public final class ClientConfig {
                 uiSounds = sounds.getAsBoolean();
             }
         }
+        if (json.get("servers") instanceof JsonObject servers) {
+            if (servers.get("recent") instanceof com.google.gson.JsonArray list) {
+                for (JsonElement entry : list) {
+                    if (entry instanceof JsonObject server && string(server.get("address")) instanceof String address
+                            && server.get("at") instanceof JsonElement at && at.isJsonPrimitive()
+                            && at.getAsJsonPrimitive().isNumber()) {
+                        String name = string(server.get("name"));
+                        recent.put(address.toLowerCase(java.util.Locale.ROOT),
+                                new RecentServer(name == null ? address : name, address, at.getAsLong()));
+                    }
+                }
+            }
+        }
         if (json.get("modules") instanceof JsonObject stored) {
             for (Module module : modules.all()) {
                 if (stored.get(module.id()) instanceof JsonObject moduleJson) {
@@ -122,6 +158,17 @@ public final class ClientConfig {
         client.addProperty("menuStyle", menuStyle == MenuStyle.VANILLA ? "vanilla" : "shard");
         client.addProperty("uiSounds", uiSounds);
         json.add("client", client);
+        JsonObject servers = new JsonObject();
+        com.google.gson.JsonArray recentList = new com.google.gson.JsonArray();
+        for (RecentServer server : recentServers()) {
+            JsonObject entry = new JsonObject();
+            entry.addProperty("name", server.name());
+            entry.addProperty("address", server.address());
+            entry.addProperty("at", server.joinedAt());
+            recentList.add(entry);
+        }
+        servers.add("recent", recentList);
+        json.add("servers", servers);
         JsonObject stored = new JsonObject();
         for (Module module : modules.all()) {
             stored.add(module.id(), module.toJson());
