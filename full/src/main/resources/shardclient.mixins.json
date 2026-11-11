@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.am7n.shardclient.full.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "GuiScreenMixin",
+    "JoinMultiplayerScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

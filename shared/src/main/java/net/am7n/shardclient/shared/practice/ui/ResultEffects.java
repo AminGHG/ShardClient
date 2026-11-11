@@ -9,7 +9,7 @@ import net.am7n.shardclient.shared.render.Palette;
  * drifting through the screen, a burst of shards when a victory lands, and a light sheen across the headline.
  * Everything is a pure function of time and a fixed seed, so there is no state to update and nothing to clean up.
  */
-final class ResultEffects {
+public final class ResultEffects {
 
     private static final int DRIFT_COUNT = 42;
     private static final int BURST_COUNT = 28;
@@ -18,12 +18,12 @@ final class ResultEffects {
 
     private final boolean victory;
 
-    ResultEffects(boolean victory) {
+    public ResultEffects(boolean victory) {
         this.victory = victory;
     }
 
     /** Squares drifting up (victory) or slowly down (defeat), fading in as the screen opens. */
-    void drift(Canvas canvas, Palette colors, long t, float opacity) {
+    public void drift(Canvas canvas, Palette colors, long t, float opacity) {
         int width = canvas.width();
         int height = canvas.height();
         int count = victory ? DRIFT_COUNT : DRIFT_COUNT / 2;

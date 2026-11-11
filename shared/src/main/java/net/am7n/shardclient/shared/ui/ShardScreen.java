@@ -158,6 +158,10 @@ public abstract class ShardScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        // Controls first: a keybind field must be able to take Esc before it closes the screen.
+        if (!closing && root != null && root.keyPressed(event.key())) {
+            return true;
+        }
         if (event.isEscape() && shouldCloseOnEsc()) {
             onClose();
             return true;

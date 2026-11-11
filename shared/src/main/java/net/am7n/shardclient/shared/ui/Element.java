@@ -90,6 +90,11 @@ public abstract class Element {
         return false;
     }
 
+    /** A key was pressed while this element's screen is open. @return true when it was used */
+    public boolean keyPressed(int key) {
+        return false;
+    }
+
     /** Adds every element inside this one that can take keyboard focus, in reading order. */
     public void collectFocusable(List<Focusable> into) {
     }

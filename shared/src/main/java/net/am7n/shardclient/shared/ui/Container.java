@@ -71,6 +71,17 @@ public abstract class Container extends Element {
     }
 
     @Override
+    public boolean keyPressed(int key) {
+        for (int i = children.size() - 1; i >= 0; i--) {
+            Element child = children.get(i);
+            if (child.isVisible() && child.keyPressed(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public void collectFocusable(List<Focusable> into) {
         for (Element child : children) {
             if (child.isVisible()) {

@@ -18,6 +18,11 @@ public final class ScrollArea extends Container {
     private int contentHeight;
 
     /** @param viewHeight the height this area asks for; its content may be any height */
+    /** Jumps back to the top, e.g. when the content is replaced. */
+    public void scrollToTop() {
+        scroll.snap(0);
+    }
+
     public ScrollArea(Element content, int viewHeight) {
         children.add(content);
         this.viewHeight = viewHeight;
@@ -32,7 +37,11 @@ public final class ScrollArea extends Container {
     @Override
     protected void layout() {
         contentHeight = children.get(0).measure().height();
-        scroll.snap(Math.clamp(scroll.target(), 0, maxScroll()));
+        // Keep a running scroll animation; only pull the target back if the content got shorter.
+        float clamped = Math.clamp(scroll.target(), 0, maxScroll());
+        if (clamped != scroll.target()) {
+            scroll.set(clamped);
+        }
         placeContent();
     }
 
