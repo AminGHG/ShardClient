@@ -74,10 +74,10 @@ final class ShowcaseCapture {
                 new MatchInfo(java.util.UUID.fromString("00000000-0000-0000-0000-000000000002"), "Alex_02", "Sword",
                         "", "Badlands", true, "Gold I"),
                 java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"), "Steve_01"))));
-        steps.add(new Step(t += 450, () -> shot("19-result-screen-rising")));
-        steps.add(new Step(t += 1200, () -> shot("20-bar-filling")));
-        steps.add(new Step(t += 600, () -> shot("21-bar-rank-up")));
-        steps.add(new Step(t += 1600, () -> shot("22-result-screen")));
+        steps.add(new Step(t += 720, () -> shot("19-result-burst")));
+        steps.add(new Step(t += 400, () -> shot("20-result-sheen")));
+        steps.add(new Step(t += 1180, () -> shot("21-bar-rank-up")));
+        steps.add(new Step(t += 1500, () -> shot("22-result-screen")));
         steps.add(new Step(t += 600, minecraft::stop));
         // The screen stops drawing once it has closed, so the tick keeps the script going to the end.
         ClientTickEvents.END_CLIENT_TICK.register(client -> frame());

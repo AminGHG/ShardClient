@@ -16,6 +16,7 @@ import net.am7n.shardclient.shared.ui.Element;
 import net.am7n.shardclient.shared.ui.PlayerFace;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
@@ -39,6 +40,7 @@ public final class MatchResultScreen extends ShardScreen {
     private final UUID selfId;
     private final String selfName;
     private final long shownAt = Clock.SYSTEM.nanos();
+    private final ResultEffects effects;
     /** Rating as progress through the rank, when the server sent the rank ranges. */
     private final RankProgressBar bar;
 
@@ -52,6 +54,7 @@ public final class MatchResultScreen extends ShardScreen {
         this.selfId = selfId;
         this.selfName = selfName;
         this.bar = result.hasRankProgress() ? new RankProgressBar(result) : null;
+        this.effects = new ResultEffects(result.result() == MatchEnded.Result.WIN);
     }
 
     private long elapsedMs() {
@@ -116,6 +119,7 @@ public final class MatchResultScreen extends ShardScreen {
             int cx = x + width / 2;
             int top = Math.max(16, Math.round(height * 0.22f));
 
+            effects.drift(canvas, colors, t, openProgress());
             heading(canvas, t, colors, cx, top);
             players(canvas, t, look, cx, top + 52);
             score(canvas, t, look, cx, top + 86);
@@ -147,13 +151,25 @@ public final class MatchResultScreen extends ShardScreen {
             int lineHeight = Math.round(9 * scale);
             float rise = Motion.ENTER.apply(window(t, 100, 520));
 
+            int textPixels = Math.round(textWidth * scale);
+            // A soft glow of the result colour behind the headline, growing in with it.
+            canvas.glow(cx, top + lineHeight / 2, Math.round(textPixels * 0.75f), Math.round(lineHeight * 1.9f),
+                    withAlpha(headingColor(colors), victory() ? 0x5C : 0x3A), rise);
+
+            java.util.function.IntConsumer draw = color -> {
+                canvas.push();
+                canvas.translate(0, (1 - rise) * lineHeight);
+                canvas.scale(scale, cx, top);
+                canvas.textCentered(text, cx, top, color, Theme.look().textShadow());
+                canvas.pop();
+            };
             canvas.clip(0, top, width, lineHeight + 2);
-            canvas.push();
-            canvas.translate(0, (1 - rise) * lineHeight);
-            canvas.scale(scale, cx, top);
-            canvas.textCentered(text, cx, top, headingColor(colors), Theme.look().textShadow());
-            canvas.pop();
+            draw.accept(headingColor(colors));
             canvas.unclip();
+            // Once it has landed, a light sheen crosses it.
+            effects.sheen(canvas, window(t, 760, 700), cx - textPixels / 2, top, textPixels, lineHeight + 2,
+                    colors.text(), draw);
+            effects.burst(canvas, colors, t - 560, cx, top + lineHeight / 2);
 
             float grow = Motion.ENTER.apply(window(t, 420, 420));
             int lineWidth = Math.round(textWidth * scale * 0.5f * grow);
@@ -299,6 +315,32 @@ public final class MatchResultScreen extends ShardScreen {
             canvas.popAlpha();
             canvas.pop();
         }
+    }
+
+    private boolean victory() {
+        return result.result() == MatchEnded.Result.WIN;
+    }
+
+    private static int withAlpha(int argb, int alpha) {
+        return alpha << 24 | (argb & 0xFFFFFF);
+    }
+
+    /**
+     * See-through: the world stays visible behind a gradient that darkens towards the bottom and a soft dark
+     * glow behind the content that keeps the text readable. No blur.
+     */
+    @Override
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        if (minecraft.level == null) {
+            extractPanorama(graphics, partialTick);
+        }
+        Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+        int bg = Theme.colors().bg0();
+        canvas.pushAlpha(openProgress());
+        canvas.gradient(0, 0, width, height, withAlpha(bg, 0x38), withAlpha(bg, 0x9E));
+        canvas.glow(width / 2, Math.round(height * 0.45f), Math.round(width * 0.42f), Math.round(height * 0.48f),
+                withAlpha(bg, 0xA8), 1f);
+        canvas.popAlpha();
     }
 
     /** Linear progress 0..1 of a step that starts at {@code startMs} and lasts {@code durationMs}. */

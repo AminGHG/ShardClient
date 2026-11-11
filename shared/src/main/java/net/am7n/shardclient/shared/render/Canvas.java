@@ -180,6 +180,26 @@ public final class Canvas {
         }
     }
 
+    /** A soft round glow (radial gradient) centred on {@code (cx, cy)}. */
+    public void glow(int cx, int cy, int radiusX, int radiusY, int argb) {
+        if (radiusX > 0 && radiusY > 0 && !faint()) {
+            SmoothShapes.glow(graphics, cx, cy, radiusX, radiusY, tint(argb));
+        }
+    }
+
+    /** {@link #glow(int, int, int, int, int)} scaled by {@code amount} (0..1) in size and strength. */
+    public void glow(int cx, int cy, int radiusX, int radiusY, int argb, float amount) {
+        float a = Math.clamp(amount, 0f, 1f);
+        pushAlpha(a);
+        glow(cx, cy, Math.round(radiusX * (0.6f + 0.4f * a)), Math.round(radiusY * (0.6f + 0.4f * a)), argb);
+        popAlpha();
+    }
+
+    /** A vertical gradient from {@code top} to {@code bottom}. */
+    public void gradient(int x, int y, int width, int height, int top, int bottom) {
+        graphics.fillGradient(x, y, x + width, y + height, tint(top), tint(bottom));
+    }
+
     /** A soft shadow outside a rounded rectangle, like CSS {@code box-shadow}; sizes in GUI pixels. */
     public void smoothShadow(int x, int y, int width, int height, float radius, float blur, float offsetY, int argb) {
         if (width > 0 && height > 0 && !faint()) {

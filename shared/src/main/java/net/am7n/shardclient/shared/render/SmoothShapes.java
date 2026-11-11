@@ -123,6 +123,38 @@ final class SmoothShapes {
         end(graphics);
     }
 
+    /** Size of the soft glow mask; large enough that stretching it never shows steps. */
+    private static final int GLOW_SIZE = 256;
+
+    /**
+     * A soft round glow centred on {@code (cx, cy)} with radii {@code rx}, {@code ry} (GUI pixels), fading out
+     * smoothly to nothing at its edge, like a CSS radial gradient.
+     */
+    static void glow(GuiGraphicsExtractor graphics, int cx, int cy, int rx, int ry, int argb) {
+        int g = guiScale();
+        Identifier mask = mask("glow", GLOW_SIZE, 0, SmoothShapes::glowMask);
+        begin(graphics, g);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, mask, (cx - rx) * g, (cy - ry) * g, 0, 0, 2 * rx * g, 2 * ry * g,
+                GLOW_SIZE, GLOW_SIZE, GLOW_SIZE, GLOW_SIZE, argb);
+        end(graphics);
+    }
+
+    private static NativeImage glowMask() {
+        NativeImage image = new NativeImage(GLOW_SIZE, GLOW_SIZE, true);
+        float c = GLOW_SIZE / 2f;
+        for (int py = 0; py < GLOW_SIZE; py++) {
+            for (int px = 0; px < GLOW_SIZE; px++) {
+                float dx = (px + 0.5f - c) / c;
+                float dy = (py + 0.5f - c) / c;
+                float d2 = dx * dx + dy * dy;
+                // Gaussian falloff, pinned to exactly zero at the edge so the quad's border never shows.
+                float alpha = d2 >= 1 ? 0 : (float) (Math.exp(-3.5 * d2) - Math.exp(-3.5)) / (float) (1 - Math.exp(-3.5));
+                image.setPixel(px, py, white(alpha));
+            }
+        }
+        return image;
+    }
+
     private static void begin(GuiGraphicsExtractor graphics, int g) {
         graphics.pose().pushMatrix();
         graphics.pose().scale(1f / g, 1f / g);

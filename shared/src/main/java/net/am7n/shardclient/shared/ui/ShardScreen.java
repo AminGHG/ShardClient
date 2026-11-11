@@ -112,6 +112,11 @@ public abstract class ShardScreen extends Screen {
         transition.hide();
     }
 
+    /** How far the screen has opened, 0 (hidden) to 1, for screens that draw their own backdrop. */
+    protected float openProgress() {
+        return Math.clamp(transition.progress(), 0f, 1f);
+    }
+
     /** Cancels a close in progress: the screen animates back in from wherever it was. */
     public void reopen() {
         closing = false;
