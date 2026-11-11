@@ -40,6 +40,8 @@ final class ShowcaseScreen extends ShardScreen {
     /** Overlay previews drawn over the screen, with sample data; nothing goes through the network. */
     private final OverlayHost previews = new OverlayHost();
     private boolean previewing;
+    /** A bright flat background behind the previews, to judge shadows and edges on light scenery. */
+    private boolean brightBackdrop;
     private final ScreenTransition transition = new ScreenTransition();
 
     ShowcaseScreen(Screen parent, boolean capture) {
@@ -91,8 +93,14 @@ final class ShowcaseScreen extends ShardScreen {
     }
 
     /** Shows the Practice Server overlays with sample data in place of the component gallery. */
+    void previewOverlaysOnLight() {
+        previewOverlays();
+        brightBackdrop = true;
+    }
+
     void previewOverlays() {
         previewing = true;
+        brightBackdrop = false;
         previews.clear();
         QueueIndicator queue = new QueueIndicator();
         queue.show(new QueueState("1v1", "1v1", false, 42, 3));
@@ -147,7 +155,12 @@ final class ShowcaseScreen extends ShardScreen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (previewing) {
-            previews.render(new Canvas(graphics, font, mouseX, mouseY));
+            Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+            if (brightBackdrop) {
+                canvas.fill(0, 0, width, height / 2, 0xFFE8742C);
+                canvas.fill(0, height / 2, width, height - height / 2, 0xFFF2F2F2);
+            }
+            previews.render(canvas);
         } else {
             super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         }

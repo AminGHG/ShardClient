@@ -68,6 +68,8 @@ final class ShowcaseCapture {
         steps.add(new Step(t += 50, screen::previewReveal));
         steps.add(new Step(t += 400, () -> shot("17-transition-revealing")));
         steps.add(new Step(t += 600, () -> shot("18-round-banner")));
+        steps.add(new Step(t += 50, screen::previewOverlaysOnLight));
+        steps.add(new Step(t += 900, () -> shot("23-shadows-on-light")));
         steps.add(new Step(t += 400, screen::onClose));
         steps.add(new Step(t += 400, () -> minecraft.gui.setScreen(new MatchResultScreen(null,
                 new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1172, 1214, "Gold I", 1100, 1200, "Gold II", 1200, 1300),

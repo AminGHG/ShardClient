@@ -97,16 +97,22 @@ final class SmoothShapes {
         begin(graphics, g);
         Identifier mask = mask("shadow", r, b, () -> shadowMask(finalR, b));
         int c = r + b;
-        // Corners: quadrants of the mask around its centre pixel c (which sits on the corner's arc centre).
+        // The mask is the shadow of one rounded corner shape around its centre pixel c. Each corner of the
+        // rectangle takes a c-square quadrant whose inner corner sits on that corner's arc centre.
         blit(graphics, mask, px - b, py - b, 0, 0, c, c, size, argb);
-        blit(graphics, mask, px + pw - r, py - b, c, 0, c, c, size, argb);
-        blit(graphics, mask, px - b, py + ph - r, 0, c, c, c, size, argb);
-        blit(graphics, mask, px + pw - r, py + ph - r, c, c, c, c, size, argb);
-        // Edges: the mask's centre column or row, stretched along the edge.
-        stretch(graphics, mask, px + r, py - b, pw - 2 * r, b, c, 0, 1, b, size, argb);
-        stretch(graphics, mask, px + r, py + ph, pw - 2 * r, b, c, c + r, 1, b, size, argb);
-        stretch(graphics, mask, px - b, py + r, b, ph - 2 * r, 0, c, b, 1, size, argb);
-        stretch(graphics, mask, px + pw, py + r, b, ph - 2 * r, c + r, c, b, 1, size, argb);
+        blit(graphics, mask, px + pw - r, py - b, c + 1, 0, c, c, size, argb);
+        blit(graphics, mask, px - b, py + ph - r, 0, c + 1, c, c, size, argb);
+        blit(graphics, mask, px + pw - r, py + ph - r, c + 1, c + 1, c, c, size, argb);
+        // The straight parts: the mask's centre column or row, stretched along each side.
+        stretch(graphics, mask, px + r, py - b, pw - 2 * r, c, c, 0, 1, c, size, argb);
+        stretch(graphics, mask, px + r, py + ph - r, pw - 2 * r, c, c, c + 1, 1, c, size, argb);
+        stretch(graphics, mask, px - b, py + r, c, ph - 2 * r, 0, c, c, 1, size, argb);
+        stretch(graphics, mask, px + pw - r, py + r, c, ph - 2 * r, c + 1, c, c, 1, size, argb);
+        // The middle is as dark as the mask's centre.
+        if (pw > 2 * r && ph > 2 * r) {
+            int centre = Math.round(shadowAlpha(-r, b) * 255) << 24 | 0xFFFFFF;
+            graphics.fill(px + r, py + r, px + pw - r, py + ph - r, multiply(argb, centre));
+        }
         end(graphics);
     }
 
@@ -244,8 +250,9 @@ final class SmoothShapes {
     }
 
     /**
-     * The shadow of a point-sized rounded square (corner {@code r}) blurred over {@code b}: opacity falls off
-     * smoothly with distance from the shape and is zero inside it, so it never darkens a translucent panel.
+     * The shadow of a rounded corner shape of radius {@code r} blurred over {@code b}, centred in the image. Like
+     * CSS {@code box-shadow}: full strength well inside the shape, half at its edge, gone {@code b / 2} outside.
+     * It is solid under the shape, so an offset shadow shows no gap or hard line under its card.
      */
     private static NativeImage shadowMask(int r, int b) {
         int size = 2 * (r + b) + 1;
@@ -256,13 +263,22 @@ final class SmoothShapes {
                 float dx = px + 0.5f - c;
                 float dy = py + 0.5f - c;
                 float distance = (float) Math.sqrt(dx * dx + dy * dy) - r;
-                float t = Math.clamp(distance / b, 0f, 1f);
-                float falloff = 1 - t * t * (3 - 2 * t);
-                float outside = 1 - coverage(px, py, c, c, r, 0);
-                image.setPixel(px, py, white(falloff * outside * SHADOW_STRENGTH));
+                image.setPixel(px, py, white(shadowAlpha(distance, b) * SHADOW_STRENGTH));
             }
         }
         return image;
+    }
+
+    /** Shadow strength at {@code distance} outside the shape's edge (negative inside), blurred over {@code blur}. */
+    private static float shadowAlpha(float distance, float blur) {
+        float t = Math.clamp((distance + blur / 2f) / blur, 0f, 1f);
+        return 1 - t * t * (3 - 2 * t);
+    }
+
+    /** {@code argb} with its alpha multiplied by the alpha of {@code mask}. */
+    private static int multiply(int argb, int mask) {
+        int alpha = Math.round((argb >>> 24) * ((mask >>> 24) / 255f));
+        return alpha << 24 | (argb & 0xFFFFFF);
     }
 
     private static int white(float alpha) {
