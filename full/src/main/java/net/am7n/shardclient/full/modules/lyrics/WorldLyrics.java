@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class WorldLyrics {
-    private static final int FULL_BRIGHT = 0xF000F0;
+    private static final int FULL_BRIGHT = 0xE800F0;
 
     private static final float BASE_SCALE = 0.075f;
 
