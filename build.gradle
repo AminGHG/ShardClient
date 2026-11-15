@@ -41,7 +41,6 @@ subprojects {
     }
 }
 
-// The Fabric mods. `protocol` stays a plain Java library so the ShardCore plugin can use the same classes.
 configure(subprojects.findAll { it.name in ['shared', 'full', 'light', 'showcase'] }) {
     apply plugin: 'net.fabricmc.fabric-loom'
 
@@ -70,7 +69,6 @@ configure(subprojects.findAll { it.name in ['shared', 'full', 'light', 'showcase
     }
 }
 
-// A product = its own code + the shared library nested inside its jar (Jar-in-Jar). Nothing else.
 configure(subprojects.findAll { it.name in ['full', 'light'] }) {
     dependencies {
         implementation project(':shared')
@@ -86,10 +84,6 @@ configure(subprojects.findAll { it.name in ['full', 'light'] }) {
     }
 }
 
-/**
- * Guards the product split: fails the build if a product jar carries the other product's classes, or if the
- * Light jar carries anything from the Full Client. Looks inside the nested shared jar as well.
- */
 def classEntries = { File jarFile ->
     def names = [] as Set
     new ZipFile(jarFile).withCloseable { zip ->

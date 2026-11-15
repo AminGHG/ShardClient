@@ -3,12 +3,7 @@ package net.am7n.shardclient.shared.render;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-/**
- * Plain Minecraft: the game's own GUI textures and pixel font, with the server's lilac as the accent. For players
- * who want ShardClient screens to look like the rest of the game.
- */
 public final class MinecraftLook implements Look {
-
     public static final MinecraftLook INSTANCE = new MinecraftLook();
 
     private static final Identifier PANEL = Identifier.withDefaultNamespace("popup/background");

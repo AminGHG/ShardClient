@@ -14,13 +14,7 @@ import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-/**
- * Which menu style is shown: ShardClient's title screen, server list and world list, or Minecraft's. The vanilla title
- * screen gets a button in its bottom-left corner to switch back, just like ShardClient's has one to switch away.
- */
 public final class MenuScreens {
-
-    /** ShardClient's logo, in Minecraft's GUI sprite atlas. */
     private static final Identifier TOGGLE_SPRITE = Identifier.fromNamespaceAndPath("shardclient-shared", "icon/shardclient");
 
     private MenuScreens() {
@@ -32,7 +26,6 @@ public final class MenuScreens {
                 && client.config().menuStyle() == ClientConfig.MenuStyle.SHARD;
     }
 
-    /** The screen to show instead of {@code screen}; {@code screen} itself in vanilla style or if anything fails. */
     public static Screen replace(Screen screen) {
         if (screen == null || !shardStyle()) {
             return screen;
@@ -55,7 +48,6 @@ public final class MenuScreens {
         return screen;
     }
 
-    /** Switches the style and shows the matching title screen right away. */
     public static void toggle() {
         ShardClientFull client = ShardClientFull.get();
         ClientConfig config = client.config();
@@ -64,7 +56,6 @@ public final class MenuScreens {
         Minecraft.getInstance().gui.setScreen(new TitleScreen());
     }
 
-    /** Adds the style switch to Minecraft's own title screen. */
     public static void registerVanillaToggle() {
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             if (screen.getClass() == TitleScreen.class) {
@@ -77,7 +68,6 @@ public final class MenuScreens {
         });
     }
 
-    /** Lets the server list replacement keep the screen the vanilla list would have returned to. */
     public interface ScreenParent {
         Screen shardclient$parent();
     }

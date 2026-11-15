@@ -15,13 +15,7 @@ import net.am7n.shardclient.shared.practice.QueueState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
-/**
- * Turns what the server says into what the player sees: the queue indicator, the Match Found card and
- * notifications. Nothing here starts on its own; every change follows a server event. When the connection to the
- * Practice Server goes away or is refused, everything is cleared at once so nothing is left on screen.
- */
 public final class PracticeOverlays implements PracticeListener {
-
     private final OverlayHost host;
     private final QueueIndicator queue = new QueueIndicator();
     private final NotificationToasts toasts = new NotificationToasts(new NotificationToasts.TopCenter() {
@@ -48,9 +42,9 @@ public final class PracticeOverlays implements PracticeListener {
     private final ScreenTransition transition = new ScreenTransition();
     private TopBanner banner;
     private MatchResultCard resultCard;
-    /** The last match result, shown once the player is back in the lobby. */
+
     private MatchEnded pendingResult;
-    /** The match as it was found, for the opponent on the result screen. */
+
     private MatchInfo lastMatch;
 
     public PracticeOverlays(OverlayHost host) {
@@ -117,7 +111,6 @@ public final class PracticeOverlays implements PracticeListener {
 
     @Override
     public void onTransitionStart(TransitionStart.Kind kind) {
-        // The cover hides everything; what was on screen has been seen.
         if (matchCard != null) {
             matchCard.dismiss();
         }
@@ -164,7 +157,6 @@ public final class PracticeOverlays implements PracticeListener {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer self = minecraft.player;
         if (minecraft.gui.screen() == null && self != null) {
-            // The full-screen result, only when nothing else is open: it never replaces a menu or chat.
             minecraft.gui.setScreen(new MatchResultScreen(null, pendingResult, lastMatch, self.getUUID(),
                     self.getScoreboardName()));
         } else {
@@ -185,7 +177,6 @@ public final class PracticeOverlays implements PracticeListener {
         pendingResult = null;
     }
 
-    /** A new match, transition or lost connection ends the result screen at once. */
     private static void closeResultScreen() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.gui.screen() instanceof MatchResultScreen) {

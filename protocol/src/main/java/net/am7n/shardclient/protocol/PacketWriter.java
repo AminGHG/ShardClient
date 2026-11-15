@@ -4,9 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
 
-/** Builds a message body. Big-endian, strings as {@code [byte length: 2 bytes][UTF-8]}. */
 public final class PacketWriter {
-
     private byte[] buffer = new byte[64];
     private int size;
 
@@ -39,10 +37,6 @@ public final class PacketWriter {
         return writeLong(value.getLeastSignificantBits());
     }
 
-    /**
-     * Writes {@code value}, cut to {@code maxChars} UTF-16 units (never through a surrogate pair). Cutting rather
-     * than failing keeps an over-long name or message from ever breaking the sender.
-     */
     public PacketWriter writeString(String value, int maxChars) {
         byte[] utf8 = truncate(value == null ? "" : value, maxChars).getBytes(StandardCharsets.UTF_8);
         ensure(2 + utf8.length);

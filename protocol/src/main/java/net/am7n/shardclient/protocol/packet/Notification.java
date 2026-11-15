@@ -5,15 +5,8 @@ import net.am7n.shardclient.protocol.PacketReader;
 import net.am7n.shardclient.protocol.PacketWriter;
 import net.am7n.shardclient.protocol.ProtocolException;
 
-/**
- * Something the server wants the player to notice. Plain text: how it looks is the client's business.
- *
- * @param title   short headline; may be empty
- * @param message the text
- */
 public record Notification(Category category, Level level, String title, String message)
         implements ClientboundPacket {
-
     public static final int ID = 0x20;
     public static final int MAX_TITLE_CHARS = 64;
     public static final int MAX_MESSAGE_CHARS = 256;

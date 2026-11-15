@@ -15,14 +15,7 @@ import net.minecraft.sounds.SoundEvents;
 
 import java.util.List;
 
-/**
- * A button drawn by the active look. {@link Style#PRIMARY} is the one main action, {@link Style#GHOST} everything
- * else. It may carry an icon (then icon and label sit left-aligned) or be icon-only (square, with its label as a
- * tooltip). Hover and focus fade in and nudge the icon toward the label; pressing scales it to 0.97 at once
- * (nothing tweens while held) and it eases back on release.
- */
 public final class Button extends Element implements Focusable {
-
     public enum Style {
         PRIMARY,
         GHOST
@@ -36,6 +29,7 @@ public final class Button extends Element implements Focusable {
     private final Runnable onPress;
     private final Tween highlight = new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC);
     private final Tween pressScale = new Tween(1, Motion.PRESS_RELEASE_MS, Motion.ENTER);
+    private final Hover hover = new Hover();
     private Style style = Style.GHOST;
     private Identifier icon;
     private boolean iconOnly;
@@ -62,20 +56,17 @@ public final class Button extends Element implements Focusable {
         return this;
     }
 
-    /** An icon from {@link net.am7n.shardclient.shared.render.Icons} before the label. */
     public Button icon(Identifier icon) {
         this.icon = icon;
         return this;
     }
 
-    /** Shows only the icon; the label becomes the tooltip. */
     public Button iconOnly(Identifier icon) {
         this.icon = icon;
         this.iconOnly = true;
         return this;
     }
 
-    /** A taller button for a screen's main actions. */
     public Button tall() {
         this.height = 26;
         return this;
@@ -102,12 +93,16 @@ public final class Button extends Element implements Focusable {
 
     @Override
     public void render(Canvas canvas) {
-        float scale = pressScale.get();
-        if (scale == 1f) {
+        hover.update(enabled && contains(canvas.mouseX(), canvas.mouseY()));
+
+        float lifted = Hover.lift(highlight.get());
+        float scale = pressScale.get() * Hover.scale(highlight.get(), 0.03f);
+        if (scale == 1f && lifted == 0f) {
             draw(canvas);
             return;
         }
         canvas.push();
+        canvas.translate(0, -lifted);
         canvas.scale(scale, x + width / 2f, y + height / 2f);
         draw(canvas);
         canvas.pop();
@@ -124,7 +119,8 @@ public final class Button extends Element implements Focusable {
         int color = look.buttonTextColor(primary, amount, enabled);
         int muted = enabled && !primary ? Lerp.color(look.colors().textMuted(), color, amount) : color;
         Component text = labelText();
-        boolean shadow = look.textShadow() || (Theme.minecraftButtonFont() && !(primary && Theme.primaryStyle() == Theme.PrimaryStyle.WHITE));
+        boolean shadow = look.textShadow() || (Theme.minecraftButtonFont() && Theme.mcShadow()
+                && !(primary && Theme.primaryStyle() == Theme.PrimaryStyle.WHITE));
         int textY = y + (height - 8) / 2;
 
         if (iconOnly) {
@@ -149,7 +145,6 @@ public final class Button extends Element implements Focusable {
         }
     }
 
-    /** The label in the look's font, or Minecraft's when that is chosen for buttons. */
     private Component labelText() {
         return Theme.minecraftButtonFont() ? label : Theme.text(label, true);
     }
@@ -163,8 +158,6 @@ public final class Button extends Element implements Focusable {
         Object screenBefore = Minecraft.getInstance().gui.screen();
         activate();
         if (Minecraft.getInstance().gui.screen() != screenBefore) {
-            // The release goes to the new screen; without this the button stays pressed (scaled down and
-            // clipped) when its screen comes back.
             pressScale.snap(1);
         }
         return true;

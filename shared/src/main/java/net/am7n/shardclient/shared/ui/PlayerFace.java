@@ -9,12 +9,7 @@ import net.minecraft.world.entity.player.PlayerSkin;
 
 import java.util.UUID;
 
-/**
- * A player's face. The skin is the one the game already has for that player on the current server (everyone in
- * the player list); for anyone else it is the default skin Minecraft assigns to that id. Nothing is downloaded.
- */
 public final class PlayerFace extends Element {
-
     private final UUID playerId;
     private final int size;
 
@@ -33,7 +28,6 @@ public final class PlayerFace extends Element {
         canvas.face(skinOf(playerId), x + (width - size) / 2, y + (height - size) / 2, size);
     }
 
-    /** The skin the game has for {@code playerId} on this server, or its default skin. */
     public static PlayerSkin skinOf(UUID playerId) {
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
         if (connection != null) {

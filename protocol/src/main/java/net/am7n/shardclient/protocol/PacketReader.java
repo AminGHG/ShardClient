@@ -3,9 +3,7 @@ package net.am7n.shardclient.protocol;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-/** Reads a message body written by {@link PacketWriter}. Every read is bounds-checked. */
 public final class PacketReader {
-
     private final byte[] data;
     private int position;
 
@@ -48,12 +46,11 @@ public final class PacketReader {
         return new UUID(most, least);
     }
 
-    /** A string of at most {@code maxChars} UTF-16 units; longer is a protocol error, not something to cut. */
     public String readString(int maxChars) throws ProtocolException {
         require(2);
         int length = (data[position] & 0xFF) << 8 | (data[position + 1] & 0xFF);
         position += 2;
-        // One UTF-16 unit is at most 3 UTF-8 bytes (a surrogate pair: 2 units, 4 bytes).
+
         if (length > maxChars * 3) {
             throw new ProtocolException("string of " + length + " bytes exceeds " + maxChars + " chars");
         }

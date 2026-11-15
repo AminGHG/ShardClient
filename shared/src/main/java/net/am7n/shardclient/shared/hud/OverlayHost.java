@@ -11,27 +11,19 @@ import net.minecraft.resources.Identifier;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The ShardClient layer of the in-game HUD: draws the active {@link Overlay}s on top of Minecraft's own HUD.
- * With nothing active it draws nothing and costs one empty list check per frame.
- */
 public final class OverlayHost {
-
     private final List<Overlay> overlays = new ArrayList<>();
 
-    /** Adds the layer to the HUD under {@code id}. Call once, from the mod initializer. */
     public void register(Identifier id) {
         HudElementRegistry.addLast(id, this::render);
     }
 
-    /** Adds {@code overlay} on top of the others, unless it is already shown. Client thread only. */
     public void add(Overlay overlay) {
         if (!overlays.contains(overlay)) {
             overlays.add(overlay);
         }
     }
 
-    /** Adds {@code overlay}, or moves it, to the top: drawn after (over) every other overlay. */
     public void addOnTop(Overlay overlay) {
         overlays.remove(overlay);
         overlays.add(overlay);
@@ -53,7 +45,6 @@ public final class OverlayHost {
         return overlays.isEmpty();
     }
 
-    /** Draws every overlay onto {@code canvas}; used by the HUD layer, and by previews outside a world. */
     public void render(Canvas canvas) {
         if (overlays.isEmpty()) {
             return;
@@ -69,7 +60,6 @@ public final class OverlayHost {
     }
 
     private void draw(Canvas canvas) {
-        // Iterate over a copy: an overlay may add or remove overlays while drawing.
         for (Overlay overlay : List.copyOf(overlays)) {
             boolean alive;
             try {

@@ -26,12 +26,7 @@ import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A module in the client menu: name, description and switch. Clicking the card opens its settings and keybind
- * below it (the card grows smoothly); clicking again closes them. Cards appear one after another when a tab opens.
- */
 final class ModuleCard extends Container {
-
     private static final int HEADER = 32;
     private static final int PADDING = 8;
     private static final int GAP = 2;
@@ -41,10 +36,10 @@ final class ModuleCard extends Container {
     private final List<SettingRow> rows = new ArrayList<>();
     private final Tween open = new Tween(0, 220, Motion.MOVE);
     private final Tween hover = new Tween(0, 110, Easing.OUT_CUBIC);
+    private final net.am7n.shardclient.shared.ui.Hover hoverFeedback = new net.am7n.shardclient.shared.ui.Hover();
     private final long appearAt;
     private boolean expanded;
 
-    /** @param index position in the list, for the staggered entrance */
     ModuleCard(Module module, int index) {
         this.module = module;
         this.toggle = new Toggle(module::isEnabled, module::setEnabled);
@@ -98,10 +93,12 @@ final class ModuleCard extends Container {
         Look look = Theme.look();
         Palette colors = look.colors();
         boolean shadow = look.textShadow();
-        hover.set(canvas.mouseY() >= y && canvas.mouseY() < y + HEADER && contains(canvas.mouseX(), canvas.mouseY()) ? 1 : 0);
+        boolean pointed = canvas.mouseY() >= y && canvas.mouseY() < y + HEADER && contains(canvas.mouseX(), canvas.mouseY());
+        hoverFeedback.update(pointed);
+        hover.set(pointed ? 1 : 0);
 
         canvas.push();
-        canvas.translate(0, (1 - appear) * 6);
+        canvas.translate(0, (1 - appear) * 6 - net.am7n.shardclient.shared.ui.Hover.lift(hover.get()));
         canvas.pushAlpha(appear);
         Theme.look().shape(canvas, x, y, width, height, 6f, Lerp.color(colors.ghost(), colors.ghostHovered(), hover.get() * 0.6f));
         Theme.look().outline(canvas, x, y, width, height, 6f, 1, module.isEnabled() ? withAlpha(colors.accentStrong(), 0x66)
@@ -128,7 +125,6 @@ final class ModuleCard extends Container {
         canvas.pop();
     }
 
-    /** {@code text} cut with an ellipsis so it fits {@code width} in the look's font. */
     private static String fit(String text, int width) {
         var font = Minecraft.getInstance().font;
         if (font.width(Theme.text(Component.literal(text), false)) <= width) {

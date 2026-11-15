@@ -5,13 +5,7 @@ import net.am7n.shardclient.protocol.PacketReader;
 import net.am7n.shardclient.protocol.PacketWriter;
 import net.am7n.shardclient.protocol.ProtocolException;
 
-/**
- * The server is moving the player into an arena for their match.
- *
- * @param arena the arena's name; empty when the server does not say
- */
 public record ArenaTransition(String arena) implements ClientboundPacket {
-
     public static final int ID = 0x14;
 
     @Override

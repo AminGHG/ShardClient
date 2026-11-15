@@ -19,13 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * "Match found": both players' faces and names, the gamemode, arena and the opponent's rank, near the top of the
- * screen. It pops in from 0.95, its parts settle one after another, it holds briefly and leaves. It never covers
- * the middle of the screen and takes no input, because the fight may already be on.
- */
 public final class MatchFoundCard implements Overlay {
-
     private static final int WIDTH = 236;
     private static final int HEIGHT = 84;
     private static final int TOP = 24;
@@ -33,7 +27,7 @@ public final class MatchFoundCard implements Overlay {
     private static final int PADDING = 12;
     private static final long HOLD_MS = 3400;
     private static final long PART_MS = 240;
-    /** How far each part rises while it settles. */
+
     private static final int SETTLE = 4;
 
     private final MatchInfo match;
@@ -58,7 +52,6 @@ public final class MatchFoundCard implements Overlay {
         transition.show();
     }
 
-    /** The server is moving the player into {@code arena}. */
     public void enteringArena(String arena) {
         status = arena.isEmpty() ? "Entering the arena" : "Entering " + arena;
     }
@@ -89,29 +82,28 @@ public final class MatchFoundCard implements Overlay {
         canvas.pushAlpha(Math.clamp(progress, 0f, 1f));
         look.panel(canvas, x, y, WIDTH, HEIGHT);
 
-        // 0: heading
         part(canvas, linear, 0, () -> canvas.textCentered(Theme.text(Component.literal("MATCH FOUND"), true),
                 x + WIDTH / 2, y + PADDING, colors.accentStrong(), shadow));
 
         int faceY = y + PADDING + 14;
         int nameY = faceY + (FACE - 8) / 2;
-        // 1: this player, left
+
         part(canvas, linear, 1, () -> {
             canvas.face(PlayerFace.skinOf(selfId), x + PADDING, faceY, FACE);
             canvas.text(Theme.text(Component.literal(selfName), true), x + PADDING + FACE + 6, nameY,
                     colors.text(), shadow);
         });
-        // 2: VS
+
         part(canvas, linear, 2, () -> canvas.textCentered(Theme.text(Component.literal("VS"), true),
                 x + WIDTH / 2, nameY, colors.textMuted(), shadow));
-        // 3: the opponent, right
+
         part(canvas, linear, 3, () -> {
             int faceX = x + WIDTH - PADDING - FACE;
             canvas.face(PlayerFace.skinOf(match.opponentId()), faceX, faceY, FACE);
             canvas.textRight(Theme.text(Component.literal(match.opponentName()), true), faceX - 6, nameY,
                     colors.text(), shadow);
         });
-        // 4: details
+
         part(canvas, linear, 4, () -> canvas.textCentered(Theme.text(Component.literal(details()), false),
                 x + WIDTH / 2, y + HEIGHT - PADDING - 7, colors.textMuted(), shadow));
 
@@ -120,7 +112,6 @@ public final class MatchFoundCard implements Overlay {
         return true;
     }
 
-    /** Draws part {@code index} faded and lifted by how far it has settled. */
     private void part(Canvas canvas, float linear, int index, Runnable draw) {
         float amount = parts.item(linear, index, Easing.OUT_CUBIC);
         if (amount <= 0) {

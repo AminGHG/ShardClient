@@ -5,9 +5,7 @@ import net.am7n.shardclient.protocol.PacketReader;
 import net.am7n.shardclient.protocol.PacketWriter;
 import net.am7n.shardclient.protocol.ProtocolException;
 
-/** A round is over. Scores already include it and are from this player's point of view. */
 public record RoundEnded(boolean won, int scoreSelf, int scoreOpponent) implements ClientboundPacket {
-
     public static final int ID = 0x32;
 
     @Override

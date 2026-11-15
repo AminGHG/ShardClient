@@ -15,12 +15,7 @@ import net.minecraft.client.input.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Plays a fixed script on the showcase screen and saves a screenshot at each step, then quits the game: the
- * entrance half-way, the settled screen with keyboard focus, two other GUI scales, and the exit half-way.
- */
 final class ShowcaseCapture {
-
     private static final int KEY_TAB = 258;
 
     private record Step(long atMs, Runnable action) {
@@ -81,14 +76,13 @@ final class ShowcaseCapture {
         steps.add(new Step(t += 1180, () -> shot("21-bar-rank-up")));
         steps.add(new Step(t += 1500, () -> shot("22-result-screen")));
         steps.add(new Step(t += 600, minecraft::stop));
-        // The screen stops drawing once it has closed, so the tick keeps the script going to the end.
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> frame());
     }
 
-    /** Called once per rendered frame. */
     void frame() {
         if (minecraft.gui.overlay() != null) {
-            return; // the loading overlay is still fading out over the screen
+            return;
         }
         long now = System.nanoTime();
         if (startNanos == 0) {

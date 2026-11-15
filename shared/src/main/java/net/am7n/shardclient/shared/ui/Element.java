@@ -4,12 +4,7 @@ import net.am7n.shardclient.shared.render.Canvas;
 
 import java.util.List;
 
-/**
- * Anything on a ShardClient screen: it knows how big it wants to be, is given a rectangle, draws itself and may
- * react to input. Layout is two steps, top down: a parent asks {@link #measure()}, then calls {@link #place}.
- */
 public abstract class Element {
-
     protected int x;
     protected int y;
     protected int width;
@@ -17,12 +12,10 @@ public abstract class Element {
     private boolean visible = true;
     private float grow;
 
-    /** The size this element would like, before any parent stretches or squeezes it. */
     public abstract Size measure();
 
     public abstract void render(Canvas canvas);
 
-    /** Gives the element its rectangle; containers lay out their children from it. */
     public final void place(int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
@@ -43,7 +36,6 @@ public abstract class Element {
         return this;
     }
 
-    /** Share of a row's or column's spare space this element takes (0: keeps its measured size). */
     public float grow() {
         return grow;
     }
@@ -73,7 +65,6 @@ public abstract class Element {
         return pointX >= x && pointX < x + width && pointY >= y && pointY < y + height;
     }
 
-    /** @return true when the click was used and nothing behind this element should see it */
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return false;
     }
@@ -90,12 +81,14 @@ public abstract class Element {
         return false;
     }
 
-    /** A key was pressed while this element's screen is open. @return true when it was used */
     public boolean keyPressed(int key) {
         return false;
     }
 
-    /** Adds every element inside this one that can take keyboard focus, in reading order. */
+    public boolean charTyped(String text) {
+        return false;
+    }
+
     public void collectFocusable(List<Focusable> into) {
     }
 }

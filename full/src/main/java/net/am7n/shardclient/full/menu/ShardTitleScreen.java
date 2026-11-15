@@ -23,12 +23,7 @@ import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
-/**
- * ShardClient's title screen: Minecraft's own panorama, the brand and the game's four actions centred, the style
- * switch and the client menu as two icons in the bottom-left corner. Multiplayer is the main action.
- */
 public final class ShardTitleScreen extends ShardScreen {
-
     private static final Identifier LOGO = Identifier.fromNamespaceAndPath("shardclient-shared", "textures/gui/logo.png");
     static final String SHARDPVP_ADDRESS = "shardpvp.xyz";
     private static final int COLUMN = 220;
@@ -59,17 +54,20 @@ public final class ShardTitleScreen extends ShardScreen {
         root.place(0, 0, screenWidth, screenHeight);
     }
 
-    /** The panorama with just enough shade for the text to read. */
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         extractPanorama(graphics, partialTick);
         Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
         int bg = Theme.colors().bg0() & 0xFFFFFF;
-        canvas.gradient(0, 0, width, height, 0x30 << 24 | bg, 0x90 << 24 | bg);
+        if (Theme.light()) {
+            extractBlurredBackground(graphics);
+            canvas.gradient(0, 0, width, height, 0x9C << 24 | bg, 0xD0 << 24 | bg);
+        } else {
+            canvas.gradient(0, 0, width, height, 0x30 << 24 | bg, 0x90 << 24 | bg);
+        }
     }
 
     private final class View extends Container {
-
         private final Button multiplayer = new Button("Multiplayer",
                 () -> minecraft.gui.setScreen(new JoinMultiplayerScreen(ShardTitleScreen.this)))
                 .style(Button.Style.PRIMARY).tall();
@@ -81,8 +79,8 @@ public final class ShardTitleScreen extends ShardScreen {
         private final Button style = new Button("Switch to Minecraft's menu", MenuScreens::toggle).iconOnly(Icons.SWAP);
         private final Button client = new Button("Client menu · Right Shift",
                 () -> ShardClientFull.get().openMenu(minecraft)).iconOnly(Icons.GRID);
-        /** In the order they settle in. */
-        private final List<Button> sequence = List.of(multiplayer, singleplayer, options, quit);
+
+        private final List<Button> sequence = List.of(singleplayer, multiplayer, options, quit);
 
         View() {
             sequence.forEach(this::add);
@@ -103,9 +101,10 @@ public final class ShardTitleScreen extends ShardScreen {
         protected void layout() {
             int left = (width - COLUMN) / 2;
             int y = columnTop();
-            multiplayer.place(left, y, COLUMN, 26);
-            y += 26 + GAP;
+
             singleplayer.place(left, y, COLUMN, 26);
+            y += 26 + GAP;
+            multiplayer.place(left, y, COLUMN, 26);
             y += 26 + GAP;
             int half = (COLUMN - GAP) / 2;
             options.place(left, y, half, 20);
@@ -123,7 +122,6 @@ public final class ShardTitleScreen extends ShardScreen {
             int center = width / 2;
             int brandTop = columnTop() - 84;
 
-            // The brand rises in first.
             float brand = Motion.ENTER.apply(window(t, 0, 420));
             canvas.pushAlpha(brand);
             canvas.push();
@@ -137,7 +135,6 @@ public final class ShardTitleScreen extends ShardScreen {
             canvas.pop();
             canvas.popAlpha();
 
-            // Then the actions, one after another.
             for (int i = 0; i < sequence.size(); i++) {
                 float appear = Motion.ENTER.apply(window(t, 180 + i * Motion.ROW_STAGGER_MS, 280));
                 if (appear <= 0) {

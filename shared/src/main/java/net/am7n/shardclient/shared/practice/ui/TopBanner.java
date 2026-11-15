@@ -10,12 +10,7 @@ import net.am7n.shardclient.shared.render.Look;
 import net.am7n.shardclient.shared.render.Theme;
 import net.minecraft.network.chat.Component;
 
-/**
- * A short two-line banner at the top centre: a round starting, a round won or lost. It drops in, holds and
- * leaves; {@link #pulse()} gives it the small scale pulse that confirms a success.
- */
 public final class TopBanner implements Overlay {
-
     public static final int TOP = 24;
     public static final int HEIGHT = 34;
     public static final int MIN_WIDTH = 132;
@@ -71,7 +66,6 @@ public final class TopBanner implements Overlay {
 
         float scale = 1f;
         if (pulse && elapsedMs < PULSE_MS) {
-            // Up to PULSE_SCALE and back, once, as the banner lands.
             float t = elapsedMs / (float) PULSE_MS;
             scale = Lerp.of(1f, Motion.PULSE_SCALE, (float) Math.sin(Math.PI * t));
         }

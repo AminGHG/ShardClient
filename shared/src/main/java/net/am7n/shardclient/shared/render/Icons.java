@@ -2,9 +2,7 @@ package net.am7n.shardclient.shared.render;
 
 import net.minecraft.resources.Identifier;
 
-/** ShardClient's interface icons: one set, one stroke weight, white so they can be tinted. */
 public final class Icons {
-
     private Icons() {
     }
 

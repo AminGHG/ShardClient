@@ -12,17 +12,12 @@ import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-/**
- * A slider with its value as text beside it. While held, the knob follows the pointer exactly (nothing tweens
- * under the finger) and stretches slightly past the ends like a rubber band; released, it settles.
- */
 public final class Slider extends Element {
-
     private static final int TRACK_WIDTH = 84;
     private static final int HEIGHT = 12;
     private static final int KNOB = 8;
     private static final int LABEL_WIDTH = 40;
-    /** How far (in pixels) the knob may be pulled past an end. */
+
     private static final float OVERSCROLL = 4f;
 
     private final double min;
@@ -98,7 +93,7 @@ public final class Slider extends Element {
             return false;
         }
         dragging = false;
-        // Spring back from wherever the rubber band was pulled.
+
         settle.snap(overshoot);
         settle.set(0);
         overshoot = 0;

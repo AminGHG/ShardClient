@@ -5,9 +5,7 @@ import com.google.gson.JsonPrimitive;
 
 import java.util.List;
 
-/** One of a fixed list of named options; shown as a button that cycles through them. */
 public final class ChoiceSetting extends Setting<String> {
-
     private final List<String> options;
 
     public ChoiceSetting(String id, String name, String defaultValue, List<String> options) {

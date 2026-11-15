@@ -21,6 +21,7 @@ import net.am7n.shardclient.shared.ui.ScrollArea;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
 import net.am7n.shardclient.shared.ui.Stack;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.ConnectScreen;
@@ -49,15 +50,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * ShardClient's server list: tabs for favourites, all servers and recently joined ones; the servers as cards
- * (select with a click, join with a double click, star to favourite); and Minecraft's own two rows of actions
- * at the bottom. Servers, pings and the add / edit / delete / direct-connect dialogs are Minecraft's own.
- */
 public final class ShardServerListScreen extends ShardScreen {
-
     private static final int CARD_HEIGHT = 46;
-    /** Hard drop shadow behind icons: solid black, this many GUI pixels down and right, no blur. */
+
     private static final int ICON_SHADOW = 2;
     private static final int PADDING = 10;
     private static final int COLUMN = 440;
@@ -90,7 +85,7 @@ public final class ShardServerListScreen extends ShardScreen {
     private final ServerStatusPinger pinger = new ServerStatusPinger();
     private final ServerData featured = new ServerData("ShardPvP", ShardTitleScreen.SHARDPVP_ADDRESS, ServerData.Type.OTHER);
     private final Map<ServerData, Icon> icons = new HashMap<>();
-    /** Servers joined by direct connection, kept for the Recent tab (not in the saved list). */
+
     private final Map<String, ServerData> recentData = new HashMap<>();
     private final ClientConfig config = ShardClientFull.get().config();
     private View view;
@@ -123,6 +118,9 @@ public final class ShardServerListScreen extends ShardScreen {
         }
         Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
         int bg = Theme.colors().bg0() & 0xFFFFFF;
+        if (Theme.light()) {
+            extractBlurredBackground(graphics);
+        }
         canvas.pushAlpha(openProgress());
         canvas.gradient(0, 0, width, height, 0xA0 << 24 | bg, 0xD8 << 24 | bg);
         canvas.popAlpha();
@@ -163,8 +161,6 @@ public final class ShardServerListScreen extends ShardScreen {
     private boolean isFeatured(String address) {
         return address.equalsIgnoreCase(featured.ip);
     }
-
-    // Actions
 
     private void join(ServerData server) {
         if (server == null) {
@@ -238,7 +234,6 @@ public final class ShardServerListScreen extends ShardScreen {
         view.rebuild();
     }
 
-    /** Starts a ping the first time a server is shown, like Minecraft's list does. */
     private void ping(ServerData server) {
         if (server.state() != ServerData.State.INITIAL) {
             return;
@@ -248,7 +243,10 @@ public final class ShardServerListScreen extends ShardScreen {
         server.status = Component.empty();
         Util.backgroundExecutor().execute(() -> {
             try {
-                pinger.pingServer(server, () -> minecraft.execute(servers::save), () -> { },
+                pinger.pingServer(server, () -> minecraft.execute(servers::save),
+
+                        () -> server.setState(server.protocol == SharedConstants.getCurrentVersion().protocolVersion()
+                                ? ServerData.State.SUCCESSFUL : ServerData.State.INCOMPATIBLE),
                         EventLoopGroupHolder.remote(minecraft.options.useNativeTransport()));
             } catch (UnknownHostException ex) {
                 server.setState(ServerData.State.UNREACHABLE);
@@ -260,10 +258,6 @@ public final class ShardServerListScreen extends ShardScreen {
         });
     }
 
-    /**
-     * The MOTD split at its line breaks, each line without the spaces before its first and after its last
-     * character. Colours and formatting stay as the server sent them.
-     */
     static List<Component> motdLines(Component motd) {
         record Part(Style style, String text) {
         }
@@ -285,7 +279,6 @@ public final class ShardServerListScreen extends ShardScreen {
         }
         List<Component> out = new ArrayList<>();
         for (List<Part> parts : lines) {
-            // Trim the start: drop leading whitespace across parts.
             while (!parts.isEmpty()) {
                 String stripped = parts.getFirst().text().stripLeading();
                 if (stripped.isEmpty()) {
@@ -295,7 +288,7 @@ public final class ShardServerListScreen extends ShardScreen {
                     break;
                 }
             }
-            // Trim the end the same way.
+
             while (!parts.isEmpty()) {
                 String stripped = parts.getLast().text().stripTrailing();
                 if (stripped.isEmpty()) {
@@ -311,7 +304,7 @@ public final class ShardServerListScreen extends ShardScreen {
             }
             out.add(line);
         }
-        // Blank lines at the very start or end would only push the text off centre.
+
         while (!out.isEmpty() && out.getFirst().getString().isEmpty()) {
             out.removeFirst();
         }
@@ -321,7 +314,6 @@ public final class ShardServerListScreen extends ShardScreen {
         return out;
     }
 
-    /** The servers the open tab shows, ShardPvP first where it belongs. */
     private List<ServerData> entries() {
         List<ServerData> saved = new ArrayList<>();
         for (int i = 0; i < servers.size(); i++) {
@@ -337,7 +329,6 @@ public final class ShardServerListScreen extends ShardScreen {
                 out.addAll(saved);
             }
             case RECENT -> {
-                // Every server joined, newest first: saved ones as they are, direct connections remembered.
                 for (ClientConfig.RecentServer recent : config.recentServers()) {
                     ServerData known = saved.stream().filter(s -> s.ip.equalsIgnoreCase(recent.address()))
                             .findFirst().orElse(isFeatured(recent.address()) ? featured : null);
@@ -349,7 +340,6 @@ public final class ShardServerListScreen extends ShardScreen {
         return out;
     }
 
-    /** A server's icon as a texture, re-uploaded when the server sends a different one. */
     private final class Icon implements AutoCloseable {
         private final FaviconTexture texture;
         private byte[] uploaded;
@@ -381,13 +371,16 @@ public final class ShardServerListScreen extends ShardScreen {
     }
 
     private final class View extends Container {
-
         private static final int TAB_HEIGHT = 22;
         private static final int TAB_WIDTH = 92;
 
         private final Stack list = Stack.column(4);
         private final ScrollArea scroll = new ScrollArea(list, 100);
         private final Tween tabIndicator = new Tween(Tab.ALL.ordinal(), Motion.POPOVER_MS, Motion.MOVE);
+        private final Tween[] tabHover = {new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC),
+                new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC)};
+        private final net.am7n.shardclient.shared.ui.Hover[] tabFeedback = {
+                new net.am7n.shardclient.shared.ui.Hover(), new net.am7n.shardclient.shared.ui.Hover()};
         private final Button join = new Button("Join Server", () -> join(selected)).style(Button.Style.PRIMARY);
         private final Button direct = new Button("Direct Connection", ShardServerListScreen.this::directConnect);
         private final Button add = new Button("Add Server", ShardServerListScreen.this::add);
@@ -443,7 +436,6 @@ public final class ShardServerListScreen extends ShardScreen {
             row(bottomRow, actionsTop + 26);
         }
 
-        /** Buttons sharing a row's width equally, like Minecraft's own server list. */
         private void row(List<Button> buttons, int top) {
             int gap = 6;
             int each = (width - gap * (buttons.size() - 1)) / buttons.size();
@@ -471,7 +463,6 @@ public final class ShardServerListScreen extends ShardScreen {
             canvas.text(Theme.text(Component.literal("Multiplayer"), true, 1.5f), x, y + 4, colors.text(), shadow);
             canvas.pop();
 
-            // Tabs: one highlight that slides to the open tab.
             int tabsTop = tabsTop();
             int trackWidth = TAB_WIDTH * Tab.values().length + 6;
             Theme.look().shape(canvas, x, tabsTop, trackWidth, TAB_HEIGHT, 7f, colors.ghost());
@@ -479,11 +470,23 @@ public final class ShardServerListScreen extends ShardScreen {
             int indicatorX = Math.round(x + 3 + tabIndicator.get() * TAB_WIDTH);
             Theme.look().shape(canvas, indicatorX, tabsTop + 3, TAB_WIDTH, TAB_HEIGHT - 6, 4f, colors.ghostHovered());
             for (Tab each : Tab.values()) {
+                int tabX = x + 3 + each.ordinal() * TAB_WIDTH;
+                boolean pointed = each != tab && canvas.mouseX() >= tabX && canvas.mouseX() < tabX + TAB_WIDTH
+                        && canvas.mouseY() >= tabsTop && canvas.mouseY() < tabsTop + TAB_HEIGHT;
+                tabFeedback[each.ordinal()].update(pointed);
+                tabHover[each.ordinal()].set(pointed ? 1 : 0);
+                float hover = tabHover[each.ordinal()].get();
+                if (hover > 0) {
+                    canvas.pushAlpha(hover * 0.6f);
+                    Theme.look().shape(canvas, tabX, tabsTop + 3, TAB_WIDTH, TAB_HEIGHT - 6, 4f, colors.ghostHovered());
+                    canvas.popAlpha();
+                }
                 String label = each == Tab.ALL ? each.label + "  " + (servers.size() + 1) : each.label;
-                // Tab names in Minecraft's own font, like the server info.
-                canvas.textCentered(Component.literal(label),
-                        x + 3 + each.ordinal() * TAB_WIDTH + TAB_WIDTH / 2, tabsTop + 7,
-                        each == tab ? colors.text() : colors.textMuted(), true);
+                int color = each == tab ? colors.text() : Lerp.color(colors.textMuted(), colors.text(), hover);
+                int lift = Math.round(net.am7n.shardclient.shared.ui.Hover.lift(hover));
+
+                canvas.textCentered(Component.literal(label), tabX + TAB_WIDTH / 2, tabsTop + 7 - lift, color,
+                        net.am7n.shardclient.shared.render.Theme.mcShadow());
             }
 
             if (list.children().isEmpty()) {
@@ -507,12 +510,13 @@ public final class ShardServerListScreen extends ShardScreen {
     }
 
     private final class ServerCard extends Element {
-
         private final ServerData server;
         private final long appearAt;
         private final Tween hover = new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC);
+        private final net.am7n.shardclient.shared.ui.Hover hoverFeedback = new net.am7n.shardclient.shared.ui.Hover();
         private final Tween selection = new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC);
         private long lastClick;
+        private String statusTip;
 
         ServerCard(ServerData server, int index) {
             this.server = server;
@@ -524,7 +528,6 @@ public final class ShardServerListScreen extends ShardScreen {
             return new Size(300, CARD_HEIGHT);
         }
 
-        /** Right edge of the status column. */
         private int statusRight() {
             return x + width - PADDING;
         }
@@ -539,20 +542,21 @@ public final class ShardServerListScreen extends ShardScreen {
             Look look = Theme.look();
             Palette colors = look.colors();
             boolean shadow = look.textShadow();
-            hover.set(contains(canvas.mouseX(), canvas.mouseY()) ? 1 : 0);
+            boolean pointed = contains(canvas.mouseX(), canvas.mouseY());
+            hoverFeedback.update(pointed);
+            hover.set(pointed ? 1 : 0);
             selection.set(selected == server ? 1 : 0);
             float sel = selection.get();
 
             canvas.pushAlpha(appear);
             canvas.push();
-            canvas.translate(0, (1 - appear) * 6);
+            canvas.translate(0, (1 - appear) * 6 - net.am7n.shardclient.shared.ui.Hover.lift(hover.get()));
             int fill = Lerp.color(Lerp.color(colors.ghost(), colors.ghostHovered(), hover.get()),
                     0x2E << 24 | (colors.primary() & 0xFFFFFF), sel);
             Theme.look().shape(canvas, x, y, width, height, 8f, fill);
             Theme.look().outline(canvas, x, y, width, height, 8f, 1,
                     Lerp.color(colors.hairline(), colors.accentStrong(), sel));
 
-            // Icon: inner radius = card radius - padding gap.
             int icon = 32;
             int iconX = x + 7;
             int iconY = y + (height - icon) / 2;
@@ -570,11 +574,8 @@ public final class ShardServerListScreen extends ShardScreen {
             int textX = iconX + icon + 9;
             canvas.text(Theme.text(Component.literal(server.name), true), textX, y + 9, colors.text(), shadow);
             drawStatus(canvas, colors, shadow);
-            // The MOTD in Minecraft's own font. Servers pad lines with spaces to centre them in Minecraft's list;
-            // here each line is trimmed and centred in the space left of the player count instead.
-            // A fixed reserve for the player count, so the MOTD does not shift when the ping answers.
-            int reserve = Math.max(maxPlayersWidth(canvas), canvas.textWidth(Component.literal("000 / 000")));
-            int motdRight = statusRight() - reserve - 8;
+
+            int motdRight = statusRight();
             int motdWidth = Math.max(40, motdRight - textX);
             List<FormattedCharSequence> lines = new ArrayList<>();
             for (Component line : motdLines(server.motd)) {
@@ -590,11 +591,11 @@ public final class ShardServerListScreen extends ShardScreen {
                         colors.textMuted(), true);
             }
 
+            drawStatusTip(canvas, colors);
             canvas.pop();
             canvas.popAlpha();
         }
 
-        /** The width the player count takes (or would take), so the MOTD never runs under it. */
         private int maxPlayersWidth(Canvas canvas) {
             if (server.players == null || server.state() != ServerData.State.SUCCESSFUL) {
                 return 0;
@@ -602,47 +603,53 @@ public final class ShardServerListScreen extends ShardScreen {
             return canvas.textWidth(Component.literal(server.players.online() + " / " + server.players.max()));
         }
 
-        /**
-         * Ping (Minecraft's own signal icons, animated while pinging, like its server list) and players to the
-         * left of the star; returns where the status starts.
-         */
-        private int drawStatus(Canvas canvas, Palette colors, boolean shadow) {
+        private void drawStatus(Canvas canvas, Palette colors, boolean shadow) {
             int right = statusRight();
             Identifier sprite;
-            String text;
             switch (server.state()) {
                 case SUCCESSFUL -> {
                     long ping = server.ping;
                     int level = ping < 0 ? 0 : ping < 150 ? 5 : ping < 300 ? 4 : ping < 600 ? 3 : ping < 1000 ? 2 : 1;
                     sprite = level == 0 ? UNREACHABLE : PING[level - 1];
-                    text = ping + " ms";
+                    statusTip = ping < 0 ? "No connection" : ping + " ms";
                 }
                 case INCOMPATIBLE -> {
                     sprite = INCOMPATIBLE;
-                    text = "Incompatible";
+                    statusTip = "Incompatible version";
                 }
                 case UNREACHABLE -> {
                     sprite = UNREACHABLE;
-                    text = "Offline";
+                    statusTip = "Can't connect";
                 }
                 default -> {
-                    // Minecraft's pinging animation: a light running up and down the bars.
                     int frame = (int) (System.currentTimeMillis() / 100L % 8);
                     sprite = PINGING[frame > 4 ? 8 - frame : frame];
-                    text = "Pinging";
+                    statusTip = "Pinging…";
                 }
             }
             canvas.sprite(sprite, right - 10, y + 9, 10, 8);
-            // Server info in Minecraft's own font, like the MOTD.
-            Component status = Component.literal(text);
-            canvas.textRight(status, right - 14, y + 9, colors.textMuted(), true);
-            int left = right - 14 - canvas.textWidth(status);
-            if (server.players != null && server.state() == ServerData.State.SUCCESSFUL) {
-                Component players = Component.literal(server.players.online() + " / " + server.players.max());
-                canvas.textRight(players, right, y + 26, colors.text(), true);
-                left = Math.min(left, right - canvas.textWidth(players));
+            if (server.players != null && server.state() != ServerData.State.PINGING
+                    && server.state() != ServerData.State.INITIAL && server.state() != ServerData.State.UNREACHABLE) {
+                Component players = Component.literal(server.players.online() + "/" + server.players.max());
+                canvas.textRight(players, right - 14, y + 9, colors.textMuted(),
+                        net.am7n.shardclient.shared.render.Theme.mcShadow());
             }
-            return left;
+        }
+
+        private void drawStatusTip(Canvas canvas, Palette colors) {
+            int right = statusRight();
+            int mx = canvas.mouseX();
+            int my = canvas.mouseY();
+            if (statusTip == null || mx < right - 11 || mx > right + 1 || my < y + 8 || my > y + 18) {
+                return;
+            }
+            Component tip = Component.literal(statusTip);
+            int tipWidth = canvas.textWidth(tip) + 10;
+            int tipX = Math.min(right - tipWidth + 6, canvas.width() - tipWidth - 2);
+            int tipY = y + 20;
+            Theme.look().shape(canvas, tipX, tipY, tipWidth, 14, 4f, colors.surface());
+            Theme.look().outline(canvas, tipX, tipY, tipWidth, 14, 4f, 1, colors.hairline());
+            canvas.text(tip, tipX + 5, tipY + 3, colors.text(), net.am7n.shardclient.shared.render.Theme.mcShadow());
         }
 
         @Override

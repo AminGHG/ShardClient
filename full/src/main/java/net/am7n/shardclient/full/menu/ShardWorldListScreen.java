@@ -34,16 +34,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * ShardClient's world list: the worlds as cards (select with a click, play with a double click) and Minecraft's
- * own two rows of actions at the bottom. Loading, playing, creating, editing, deleting and re-creating all go
- * through Minecraft's own world list, kept alive but never drawn, so every safety prompt (backups, locked or
- * newer worlds, experimental features) stays exactly as in the game.
- */
 public final class ShardWorldListScreen extends ShardScreen {
-
     private static final int CARD_HEIGHT = 46;
-    /** Hard drop shadow behind icons: solid black, this many GUI pixels down and right, no blur. */
+
     private static final int ICON_SHADOW = 2;
     private static final int COLUMN = 440;
 
@@ -78,6 +71,9 @@ public final class ShardWorldListScreen extends ShardScreen {
         }
         Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
         int bg = Theme.colors().bg0() & 0xFFFFFF;
+        if (Theme.light()) {
+            extractBlurredBackground(graphics);
+        }
         canvas.pushAlpha(openProgress());
         canvas.gradient(0, 0, width, height, 0xA0 << 24 | bg, 0xD8 << 24 | bg);
         canvas.popAlpha();
@@ -88,7 +84,6 @@ public final class ShardWorldListScreen extends ShardScreen {
         minecraft.gui.setScreen(parent);
     }
 
-    /** Takes over what Minecraft's list loaded since the last check, like it does itself when drawn. */
     private void poll() {
         if (worlds == null) {
             return;
@@ -137,8 +132,6 @@ public final class ShardWorldListScreen extends ShardScreen {
         poll();
     }
 
-    // Actions: all Minecraft's own.
-
     private void play(WorldListEntry entry) {
         if (entry != null && entry.getLevelSummary().primaryActionActive()) {
             entry.joinWorld();
@@ -173,7 +166,6 @@ public final class ShardWorldListScreen extends ShardScreen {
     }
 
     private final class View extends Container {
-
         private final Stack list = Stack.column(4);
         private final ScrollArea scroll = new ScrollArea(list, 100);
         private final Button play = new Button("Play Selected World", () -> play(selected)).style(Button.Style.PRIMARY);
@@ -214,7 +206,6 @@ public final class ShardWorldListScreen extends ShardScreen {
             row(bottomRow, actionsTop + 26);
         }
 
-        /** Buttons sharing a row's width equally, like Minecraft's own world list. */
         private void row(List<Button> buttons, int top) {
             int gap = 6;
             int each = (width - gap * (buttons.size() - 1)) / buttons.size();
@@ -246,7 +237,7 @@ public final class ShardWorldListScreen extends ShardScreen {
             canvas.pop();
             if (!shown.isEmpty()) {
                 canvas.textRight(Component.literal(shown.size() + (shown.size() == 1 ? " world" : " worlds")),
-                        x + width, y + 10, colors.textMuted(), true);
+                        x + width, y + 10, colors.textMuted(), net.am7n.shardclient.shared.render.Theme.mcShadow());
             }
 
             if (shown.isEmpty()) {
@@ -259,12 +250,12 @@ public final class ShardWorldListScreen extends ShardScreen {
     }
 
     private final class WorldCard extends Element {
-
         private static final int PADDING = 10;
 
         private final WorldListEntry entry;
         private final long appearAt;
         private final Tween hover = new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC);
+        private final net.am7n.shardclient.shared.ui.Hover hoverFeedback = new net.am7n.shardclient.shared.ui.Hover();
         private final Tween selection = new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC);
         private final boolean hasIcon;
         private long lastClick;
@@ -291,13 +282,15 @@ public final class ShardWorldListScreen extends ShardScreen {
             Look look = Theme.look();
             Palette colors = look.colors();
             boolean shadow = look.textShadow();
-            hover.set(contains(canvas.mouseX(), canvas.mouseY()) ? 1 : 0);
+            boolean pointed = contains(canvas.mouseX(), canvas.mouseY());
+            hoverFeedback.update(pointed);
+            hover.set(pointed ? 1 : 0);
             selection.set(selected == entry ? 1 : 0);
             float sel = selection.get();
 
             canvas.pushAlpha(appear);
             canvas.push();
-            canvas.translate(0, (1 - appear) * 6);
+            canvas.translate(0, (1 - appear) * 6 - net.am7n.shardclient.shared.ui.Hover.lift(hover.get()));
             int fill = Lerp.color(Lerp.color(colors.ghost(), colors.ghostHovered(), hover.get()),
                     0x2E << 24 | (colors.primary() & 0xFFFFFF), sel);
             Theme.look().shape(canvas, x, y, width, height, 8f, fill);
@@ -322,15 +315,15 @@ public final class ShardWorldListScreen extends ShardScreen {
             int right = x + width - PADDING;
             canvas.text(Theme.text(Component.literal(clip(canvas, summary.getLevelName(), right - textX)), true),
                     textX, y + 9, colors.text(), shadow);
-            // Details in Minecraft's own font, like the server list's MOTD.
+
             String date = summary.getLastPlayed() > 0
                     ? WorldSelectionList.DATE_FORMAT.format(Instant.ofEpochMilli(summary.getLastPlayed()).atZone(ZoneId.systemDefault()))
                     : "";
             String idLine = summary.getLevelId() + (date.isEmpty() ? "" : "  ·  " + date);
-            canvas.text(Component.literal(clip(canvas, idLine, right - textX)), textX, y + 22, colors.textMuted(), true);
+            canvas.text(Component.literal(clip(canvas, idLine, right - textX)), textX, y + 22, colors.textMuted(), net.am7n.shardclient.shared.render.Theme.mcShadow());
             var info = canvas.wrap(summary.getInfo(), right - textX);
             if (!info.isEmpty()) {
-                canvas.line(info.get(0), textX, y + 32, colors.textMuted(), true);
+                canvas.line(info.get(0), textX, y + 32, colors.textMuted(), net.am7n.shardclient.shared.render.Theme.mcShadow());
             }
 
             canvas.pop();

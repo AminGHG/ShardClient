@@ -4,23 +4,62 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-/**
- * The active {@link Look} plus the measurements every look shares (spacing, timing). Components never hardcode a
- * colour or texture: they ask the look, so switching it restyles everything at once.
- */
 public final class Theme {
-
-    /** Every look a player can pick, default first. */
-    public static final List<Look> LOOKS =
-            List.of(ShardPvpLook.DARK, ShardPvpLook.LIGHT, SemiVanillaLook.INSTANCE, MinecraftLook.INSTANCE);
+    public static final List<Look> LOOKS = List.of(ShardPvpLook.DARK, ShardPvpLook.LIGHT, SemiVanillaLook.DARK,
+            SemiVanillaLook.LIGHT, MinecraftLook.INSTANCE);
 
     private static Look look = ShardPvpLook.DARK;
 
-    /** How the main action button is filled. Outline is the default. */
+    public enum Style {
+        SHARDPVP("ShardPvP"),
+        SEMI_VANILLA("Semi Vanilla"),
+        MINECRAFT("Minecraft");
+
+        private final String displayName;
+
+        Style(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String displayName() {
+            return displayName;
+        }
+    }
+
+    private static boolean preferLight;
+
+    public static Style style() {
+        if (look instanceof SemiVanillaLook) {
+            return Style.SEMI_VANILLA;
+        }
+        return look instanceof MinecraftLook ? Style.MINECRAFT : Style.SHARDPVP;
+    }
+
+    public static boolean lightMode() {
+        return style() != Style.MINECRAFT && preferLight;
+    }
+
+    public static boolean lightModeAvailable() {
+        return style() != Style.MINECRAFT;
+    }
+
+    public static void useStyle(Style style) {
+        look = switch (style) {
+            case SHARDPVP -> preferLight ? ShardPvpLook.LIGHT : ShardPvpLook.DARK;
+            case SEMI_VANILLA -> preferLight ? SemiVanillaLook.LIGHT : SemiVanillaLook.DARK;
+            case MINECRAFT -> MinecraftLook.INSTANCE;
+        };
+    }
+
+    public static void useLightMode(boolean value) {
+        preferLight = value;
+        useStyle(style());
+    }
+
     public enum PrimaryStyle { LILAC, WHITE, OUTLINE, SOFT }
 
     private static PrimaryStyle primaryStyle = PrimaryStyle.OUTLINE;
-    /** Button labels in Minecraft's own font instead of the look's. */
+
     private static boolean minecraftButtonFont = true;
 
     public static PrimaryStyle primaryStyle() {
@@ -42,7 +81,6 @@ public final class Theme {
     private Theme() {
     }
 
-    /** The look in use. Read it while drawing, never keep a copy: it can change at any time. */
     public static Look look() {
         return look;
     }
@@ -51,11 +89,21 @@ public final class Theme {
         return look.colors();
     }
 
-    public static void use(Look next) {
-        look = next;
+    public static boolean light() {
+        return look.colors() == Palette.LIGHT;
     }
 
-    /** The look with {@code id}, or the default for an unknown or missing id. */
+    public static boolean mcShadow() {
+        return !light();
+    }
+
+    public static void use(Look next) {
+        look = next;
+        if (!(next instanceof MinecraftLook)) {
+            preferLight = next.colors() == Palette.LIGHT;
+        }
+    }
+
     public static Look byId(String id) {
         for (Look candidate : LOOKS) {
             if (candidate.id().equals(id)) {
@@ -65,29 +113,24 @@ public final class Theme {
         return LOOKS.get(0);
     }
 
-    /** {@code text} in the active look's font, for drawing {@code sizeFactor} times its normal size. */
     public static Component text(Component text, boolean emphasis, float sizeFactor) {
         return look.styled(text, emphasis, sizeFactor);
     }
 
-    /** {@code text} in the active look's font. */
     public static Component text(Component text, boolean emphasis) {
         return look.styled(text, emphasis);
     }
 
-    // Shapes, in GUI pixels
     public static final int RADIUS_PANEL = 6;
     public static final int RADIUS_CONTROL = 4;
     public static final int RADIUS_SMALL = 2;
 
-    // Spacing, in GUI pixels
     public static final int GAP_SMALL = 2;
     public static final int GAP = 4;
     public static final int GAP_LARGE = 8;
     public static final int PANEL_PADDING = 12;
     public static final int BUTTON_HEIGHT = 20;
 
-    // Timing, in milliseconds
     public static final long FAST_MS = 110;
     public static final long NORMAL_MS = 180;
     public static final long SLOW_MS = 300;

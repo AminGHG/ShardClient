@@ -15,13 +15,7 @@ import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Base of every ShardClient screen. A subclass only says what is on it ({@link #build()}); this class centres
- * it, animates it in and out, routes mouse and keyboard to it, and never pauses the game. Closing plays the
- * exit animation first and can be interrupted by reopening.
- */
 public abstract class ShardScreen extends Screen {
-
     private final Screen parent;
     private final Transition transition = Motion.transition(Motion.POPOVER_MS);
     private final List<Focusable> focusable = new ArrayList<>();
@@ -34,13 +28,8 @@ public abstract class ShardScreen extends Screen {
         this.parent = parent;
     }
 
-    /** Creates the content. Called once per screen; the result is laid out again on every resize. */
     protected abstract Element build();
 
-    /**
-     * Positions the content. By default it gets its measured size, limited to the screen with a margin, and is
-     * centred.
-     */
     protected void arrange(Element root, int screenWidth, int screenHeight) {
         Size size = root.measure();
         int rootWidth = Math.min(size.width(), screenWidth - Theme.GAP_LARGE * 2);
@@ -54,7 +43,6 @@ public abstract class ShardScreen extends Screen {
             try {
                 root = build();
             } catch (RuntimeException ex) {
-                // A screen that cannot be built must never trap the player: log it and go back.
                 ShardClientRuntime.LOGGER.error("Could not build {}", getClass().getName(), ex);
                 minecraft.gui.setScreen(parent);
                 return;
@@ -73,7 +61,6 @@ public abstract class ShardScreen extends Screen {
             extractPanorama(graphics, partialTick);
         }
         if (Theme.look().blurBackdrop()) {
-            // Minecraft's own menu blur, at the strength set in its accessibility options (0 turns it off).
             extractBlurredBackground(graphics);
         }
         Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
@@ -97,7 +84,6 @@ public abstract class ShardScreen extends Screen {
         canvas.pop();
     }
 
-    /** Leaves once the exit animation is over. Done from the tick, never from the middle of a frame. */
     @Override
     public void tick() {
         if (closing && !transition.isVisible()) {
@@ -105,19 +91,16 @@ public abstract class ShardScreen extends Screen {
         }
     }
 
-    /** Starts the exit animation; the screen goes away when it has finished. */
     @Override
     public void onClose() {
         closing = true;
         transition.hide();
     }
 
-    /** How far the screen has opened, 0 (hidden) to 1, for screens that draw their own backdrop. */
     protected float openProgress() {
         return Math.clamp(transition.progress(), 0f, 1f);
     }
 
-    /** Cancels a close in progress: the screen animates back in from wherever it was. */
     public void reopen() {
         closing = false;
         transition.show();
@@ -158,7 +141,6 @@ public abstract class ShardScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        // Controls first: a keybind field must be able to take Esc before it closes the screen.
         if (!closing && root != null && root.keyPressed(event.key())) {
             return true;
         }
@@ -178,6 +160,11 @@ public abstract class ShardScreen extends Screen {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
+        return !closing && root != null && root.charTyped(event.codepointAsString());
     }
 
     private void moveFocus(int step) {

@@ -11,12 +11,7 @@ import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.shared.ui.Size;
 import net.minecraft.network.chat.Component;
 
-/**
- * A module that draws something on the HUD. Its place is stored as a fraction of the free space on each axis,
- * so it stays where the player put it (and on screen) at any window size and GUI scale. The HUD editor moves it.
- */
 public abstract class HudModule extends Module {
-
     protected static final int PADDING = 4;
 
     private float anchorX;
@@ -30,13 +25,10 @@ public abstract class HudModule extends Module {
         this.anchorY = anchorY;
     }
 
-    /** Unscaled size of the element right now. */
     public abstract Size size(Canvas canvas);
 
-    /** Draws the element with its top-left corner at {@code (x, y)}, unscaled. */
     public abstract void draw(Canvas canvas, int x, int y);
 
-    /** Whether there is anything to show right now (e.g. no potion effects: nothing). */
     public boolean visible() {
         return true;
     }
@@ -45,7 +37,6 @@ public abstract class HudModule extends Module {
         return scale.floatValue();
     }
 
-    /** Top-left corner on a screen of the given size. */
     public int x(int screenWidth, int width) {
         return Math.round(anchorX * Math.max(0, screenWidth - width * scaleFactor()));
     }
@@ -54,7 +45,6 @@ public abstract class HudModule extends Module {
         return Math.round(anchorY * Math.max(0, screenHeight - height * scaleFactor()));
     }
 
-    /** Moves the element so its top-left corner is at {@code (x, y)}. */
     public void moveTo(int x, int y, int width, int height, int screenWidth, int screenHeight) {
         float freeX = screenWidth - width * scaleFactor();
         float freeY = screenHeight - height * scaleFactor();
@@ -62,19 +52,18 @@ public abstract class HudModule extends Module {
         anchorY = freeY <= 0 ? 0 : Math.clamp(y / freeY, 0f, 1f);
     }
 
-    /** Draws the element where it belongs. */
     public void render(Canvas canvas) {
         Size size = size(canvas);
-        int x = x(canvas.width(), size.width());
-        int y = y(canvas.height(), size.height());
+        renderAt(canvas, x(canvas.width(), size.width()), y(canvas.height(), size.height()));
+    }
+
+    public void renderAt(Canvas canvas, int x, int y) {
         canvas.push();
         canvas.translate(x, y);
         canvas.scale(scaleFactor(), 0, 0);
         draw(canvas, 0, 0);
         canvas.pop();
     }
-
-    // Helpers for the common "label: value" text element.
 
     protected Size textSize(Canvas canvas, Component text) {
         return new Size(canvas.textWidth(text) + PADDING * 2, canvas.lineHeight() - 1 + PADDING * 2);
@@ -93,7 +82,6 @@ public abstract class HudModule extends Module {
         }
     }
 
-    /** {@code label} muted followed by {@code value} in the main colour, in the look's font. */
     protected static Component labelled(String label, String value) {
         var colors = Theme.colors();
         return Theme.text(Component.literal(label + " ").withColor(colors.textMuted() & 0xFFFFFF)

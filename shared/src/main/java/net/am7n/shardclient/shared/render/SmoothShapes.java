@@ -10,19 +10,9 @@ import net.minecraft.resources.Identifier;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Anti-aliased rounded shapes, drawn at the screen's real resolution instead of Minecraft's GUI grid (where one
- * GUI pixel is 2–4 screen pixels and every curve shows its steps).
- *
- * <p>Each shape is a white mask texture whose alpha is the shape's coverage, generated once per size and tinted
- * when drawn. Corners come from the mask's quadrants; straight parts are plain fills or a stretched mask column.
- * Everything is drawn in screen pixels: the pose is scaled down by the GUI scale for the duration of a call.
- */
 final class SmoothShapes {
-
-    /** Samples per axis per pixel when computing coverage. */
     private static final int SUPERSAMPLE = 4;
-    /** Peak opacity of the shadow mask; the shadow colour's own alpha scales it further. */
+
     private static final float SHADOW_STRENGTH = 1f;
 
     private static final Map<String, Identifier> MASKS = new HashMap<>();
@@ -34,7 +24,6 @@ final class SmoothShapes {
         return Math.max(1, Minecraft.getInstance().getWindow().getGuiScale());
     }
 
-    /** A filled rounded rectangle; all values in GUI pixels, {@code radius} may be fractional. */
     static void fill(GuiGraphicsExtractor graphics, int x, int y, int width, int height, float radius, int argb) {
         int g = guiScale();
         int px = x * g;
@@ -55,10 +44,6 @@ final class SmoothShapes {
         end(graphics);
     }
 
-    /**
-     * A rounded outline just inside the rectangle, {@code stroke} screen pixels thick (at least 1), so it reads
-     * as the website's 1px hairline at any GUI scale.
-     */
     static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, float radius, int stroke,
                       int argb) {
         int g = guiScale();
@@ -78,10 +63,6 @@ final class SmoothShapes {
         end(graphics);
     }
 
-    /**
-     * A soft shadow around (outside) a rounded rectangle, like CSS {@code box-shadow}: {@code blur} GUI pixels
-     * wide, moved down by {@code offsetY}.
-     */
     static void shadow(GuiGraphicsExtractor graphics, int x, int y, int width, int height, float radius, float blur,
                        float offsetY, int argb) {
         int g = guiScale();
@@ -97,18 +78,17 @@ final class SmoothShapes {
         begin(graphics, g);
         Identifier mask = mask("shadow", r, b, () -> shadowMask(finalR, b));
         int c = r + b;
-        // The mask is the shadow of one rounded corner shape around its centre pixel c. Each corner of the
-        // rectangle takes a c-square quadrant whose inner corner sits on that corner's arc centre.
+
         blit(graphics, mask, px - b, py - b, 0, 0, c, c, size, argb);
         blit(graphics, mask, px + pw - r, py - b, c + 1, 0, c, c, size, argb);
         blit(graphics, mask, px - b, py + ph - r, 0, c + 1, c, c, size, argb);
         blit(graphics, mask, px + pw - r, py + ph - r, c + 1, c + 1, c, c, size, argb);
-        // The straight parts: the mask's centre column or row, stretched along each side.
+
         stretch(graphics, mask, px + r, py - b, pw - 2 * r, c, c, 0, 1, c, size, argb);
         stretch(graphics, mask, px + r, py + ph - r, pw - 2 * r, c, c, c + 1, 1, c, size, argb);
         stretch(graphics, mask, px - b, py + r, c, ph - 2 * r, 0, c, c, 1, size, argb);
         stretch(graphics, mask, px + pw - r, py + r, c, ph - 2 * r, c + 1, c, c, 1, size, argb);
-        // The middle is as dark as the mask's centre.
+
         if (pw > 2 * r && ph > 2 * r) {
             int centre = Math.round(shadowAlpha(-r, b) * 255) << 24 | 0xFFFFFF;
             graphics.fill(px + r, py + r, px + pw - r, py + ph - r, multiply(argb, centre));
@@ -116,10 +96,6 @@ final class SmoothShapes {
         end(graphics);
     }
 
-    /**
-     * A square image of {@code textureSize} pixels drawn {@code size} GUI pixels wide at screen resolution, so a
-     * large texture shrinks by the smallest possible factor.
-     */
     static void image(GuiGraphicsExtractor graphics, Identifier texture, int textureSize, int x, int y, int size,
                       int argb) {
         int g = guiScale();
@@ -129,13 +105,8 @@ final class SmoothShapes {
         end(graphics);
     }
 
-    /** Size of the soft glow mask; large enough that stretching it never shows steps. */
     private static final int GLOW_SIZE = 256;
 
-    /**
-     * A soft round glow centred on {@code (cx, cy)} with radii {@code rx}, {@code ry} (GUI pixels), fading out
-     * smoothly to nothing at its edge, like a CSS radial gradient.
-     */
     static void glow(GuiGraphicsExtractor graphics, int cx, int cy, int rx, int ry, int argb) {
         int g = guiScale();
         Identifier mask = mask("glow", GLOW_SIZE, 0, SmoothShapes::glowMask);
@@ -153,7 +124,7 @@ final class SmoothShapes {
                 float dx = (px + 0.5f - c) / c;
                 float dy = (py + 0.5f - c) / c;
                 float d2 = dx * dx + dy * dy;
-                // Gaussian falloff, pinned to exactly zero at the edge so the quad's border never shows.
+
                 float alpha = d2 >= 1 ? 0 : (float) (Math.exp(-3.5 * d2) - Math.exp(-3.5)) / (float) (1 - Math.exp(-3.5));
                 image.setPixel(px, py, white(alpha));
             }
@@ -170,7 +141,6 @@ final class SmoothShapes {
         graphics.pose().popMatrix();
     }
 
-    /** The four quadrants of a {@code size}-square mask at the four corners of a {@code r}-cornered rectangle. */
     private static void corners(GuiGraphicsExtractor graphics, Identifier mask, int px, int py, int pw, int ph, int r,
                                 int size, int argb) {
         blit(graphics, mask, px, py, 0, 0, r, r, size, argb);
@@ -191,8 +161,6 @@ final class SmoothShapes {
         }
     }
 
-    // Masks
-
     private interface Painter {
         NativeImage paint();
     }
@@ -209,7 +177,6 @@ final class SmoothShapes {
         return id;
     }
 
-    /** A disc of radius {@code r} filling a 2r square. */
     private static NativeImage disc(int r) {
         int size = 2 * r;
         NativeImage image = new NativeImage(size, size, true);
@@ -221,7 +188,6 @@ final class SmoothShapes {
         return image;
     }
 
-    /** A ring of outer radius {@code r} and width {@code s} filling a 2r square. */
     private static NativeImage ring(int r, int s) {
         int size = 2 * r;
         NativeImage image = new NativeImage(size, size, true);
@@ -233,7 +199,6 @@ final class SmoothShapes {
         return image;
     }
 
-    /** Fraction of pixel (px, py) inside the circle of radius {@code outer} and outside {@code inner}. */
     private static float coverage(int px, int py, float cx, float cy, float outer, float inner) {
         int inside = 0;
         for (int sy = 0; sy < SUPERSAMPLE; sy++) {
@@ -249,11 +214,6 @@ final class SmoothShapes {
         return inside / (float) (SUPERSAMPLE * SUPERSAMPLE);
     }
 
-    /**
-     * The shadow of a rounded corner shape of radius {@code r} blurred over {@code b}, centred in the image. Like
-     * CSS {@code box-shadow}: full strength well inside the shape, half at its edge, gone {@code b / 2} outside.
-     * It is solid under the shape, so an offset shadow shows no gap or hard line under its card.
-     */
     private static NativeImage shadowMask(int r, int b) {
         int size = 2 * (r + b) + 1;
         float c = r + b + 0.5f;
@@ -269,13 +229,11 @@ final class SmoothShapes {
         return image;
     }
 
-    /** Shadow strength at {@code distance} outside the shape's edge (negative inside), blurred over {@code blur}. */
     private static float shadowAlpha(float distance, float blur) {
         float t = Math.clamp((distance + blur / 2f) / blur, 0f, 1f);
         return 1 - t * t * (3 - 2 * t);
     }
 
-    /** {@code argb} with its alpha multiplied by the alpha of {@code mask}. */
     private static int multiply(int argb, int mask) {
         int alpha = Math.round((argb >>> 24) * ((mask >>> 24) / 255f));
         return alpha << 24 | (argb & 0xFFFFFF);

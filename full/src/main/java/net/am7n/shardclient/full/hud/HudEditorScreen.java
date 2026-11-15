@@ -15,12 +15,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/**
- * Move HUD elements by dragging them and resize them with the mouse wheel. Elements snap to the screen's centre
- * lines. The element under the pointer follows it exactly while held; positions are saved on close.
- */
 public final class HudEditorScreen extends ShardScreen {
-
     private static final int SNAP = 4;
 
     private final ModuleManager modules;
@@ -57,7 +52,6 @@ public final class HudEditorScreen extends ShardScreen {
     }
 
     private final class Editor extends Container {
-
         private final Button done = new Button("Done", HudEditorScreen.this::onClose).style(Button.Style.PRIMARY);
         private HudModule held;
         private double grabX;
@@ -108,7 +102,7 @@ public final class HudEditorScreen extends ShardScreen {
                         module == held || hovered ? colors.accentStrong() : colors.hairline());
             }
             canvas.textCentered(Theme.text(Component.literal("Drag to move · Scroll to resize"), false), width / 2,
-                    height / 2 + 14, colors.text(), true);
+                    height / 2 + 14, colors.text(), net.am7n.shardclient.shared.render.Theme.mcShadow());
             super.render(canvas);
         }
 
@@ -192,7 +186,6 @@ public final class HudEditorScreen extends ShardScreen {
             return true;
         }
 
-        /** Sizes need the font only; a canvas without graphics is enough to measure text. */
         private Canvas sizes() {
             return new Canvas(null, minecraft.font, 0, 0);
         }

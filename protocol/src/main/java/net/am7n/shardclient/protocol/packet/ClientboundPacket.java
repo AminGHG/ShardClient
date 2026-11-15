@@ -6,14 +6,11 @@ import net.am7n.shardclient.protocol.PacketWriter;
 import net.am7n.shardclient.protocol.Protocol;
 import net.am7n.shardclient.protocol.ProtocolException;
 
-/** A message from the server to a client. */
 public sealed interface ClientboundPacket
         permits Welcome, Rejected, QueueJoined, QueueLeft, QueueUpdate, MatchFound, ArenaTransition, Notification,
         TransitionStart, MatchStarted, RoundEnded, MatchEnded, ReturnToLobby, ClientUsers {
-
     int id();
 
-    /** The feature this packet belongs to; null for handshake packets, which every client understands. */
     Feature feature();
 
     void write(PacketWriter out);
@@ -24,7 +21,6 @@ public sealed interface ClientboundPacket
         return out.toByteArray();
     }
 
-    /** The packet in {@code message}, or null when its id is unknown to this build (to be ignored). */
     static ClientboundPacket decode(byte[] message) throws ProtocolException {
         if (message.length > Protocol.MAX_CLIENTBOUND_BYTES) {
             throw new ProtocolException("message of " + message.length + " bytes is too large");

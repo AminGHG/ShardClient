@@ -15,12 +15,7 @@ import net.minecraft.sounds.SoundEvents;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 
-/**
- * A small rounded button whose text comes from a supplier: cycling through options (left click forward, right
- * click back) or showing a key binding. When its text changes, the old text fades out as the new one fades in.
- */
 public final class Pill extends Element {
-
     private static final int HEIGHT = 14;
     private static final int PADDING = 7;
     private static final int MIN_WIDTH = 44;
@@ -33,14 +28,12 @@ public final class Pill extends Element {
     private String previous = "";
     private boolean active;
 
-    /** @param click receives +1 for a left click and -1 for a right click */
     public Pill(Supplier<String> text, IntConsumer click) {
         this.text = text;
         this.click = click;
         this.shown = text.get();
     }
 
-    /** Highlights the pill, e.g. while it waits for a key. */
     public void setActive(boolean active) {
         this.active = active;
     }

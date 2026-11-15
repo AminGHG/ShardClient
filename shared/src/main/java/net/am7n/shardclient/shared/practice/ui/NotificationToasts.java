@@ -15,13 +15,7 @@ import net.minecraft.util.FormattedCharSequence;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Server notifications as cards stacked in the top-right corner. A card slides in from the right edge (where it
- * comes from), stays for a time that grows with its length, and slides back out; the cards below move up to
- * close the gap while it leaves. At most {@link #MAX_SHOWN} are shown; a new one pushes the oldest out.
- */
 public final class NotificationToasts implements Overlay {
-
     private static final int WIDTH = 168;
     private static final int MARGIN = 8;
     private static final int PADDING = 8;
@@ -32,16 +26,12 @@ public final class NotificationToasts implements Overlay {
     private static final long BASE_MS = 4000;
     private static final long PER_CHAR_MS = 40;
     private static final long MAX_MS = 9000;
-    /** How far a card travels in from the right, as a share of its width. */
+
     private static final float SLIDE = 0.4f;
 
     private final List<Card> cards = new ArrayList<>();
     private final TopCenter topCenter;
 
-    /**
-     * Where the top-centre cards (queue indicator, Match Found) are: their width and how far down they reach,
-     * so notifications can step below them on screens too narrow to fit both side by side.
-     */
     public interface TopCenter {
         int width();
 
@@ -130,7 +120,6 @@ public final class NotificationToasts implements Overlay {
             }
             canvas.popAlpha();
 
-            // A leaving card gives its space back as it goes, so the ones below glide up instead of jumping.
             y += Math.round((height + GAP) * progress);
         }
         return !cards.isEmpty();

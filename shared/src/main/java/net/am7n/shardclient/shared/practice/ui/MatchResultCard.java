@@ -14,13 +14,7 @@ import net.am7n.shardclient.shared.render.Palette;
 import net.am7n.shardclient.shared.render.Theme;
 import net.minecraft.network.chat.Component;
 
-/**
- * The end of a match, shown once the player is back in the lobby: Victory or Defeat, the score, the rating
- * counting from its old to its new value, and the rank (marked when it changed). Pops in, settles in sequence,
- * holds and leaves.
- */
 public final class MatchResultCard implements Overlay {
-
     public static final int TOP = 24;
     public static final int HEIGHT = 78;
     public static final int WIDTH = 220;
@@ -79,7 +73,6 @@ public final class MatchResultCard implements Overlay {
                 center, y + PADDING + 16, colors.text(), shadow));
         if (rated) {
             part(canvas, linear, 2, () -> {
-                // The rating counts up (or down) once the line has settled.
                 float count = Easing.OUT_CUBIC.apply(Math.clamp(
                         (elapsedMs - parts.delayMs() * 2) / (float) COUNT_MS, 0f, 1f));
                 int rating = Math.round(Lerp.of(result.ratingBefore(), result.ratingAfter(), count));

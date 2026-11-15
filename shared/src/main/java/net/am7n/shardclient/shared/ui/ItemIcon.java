@@ -4,9 +4,7 @@ import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Theme;
 import net.minecraft.world.item.ItemStack;
 
-/** A Minecraft item drawn as an icon, optionally sitting in a well drawn by the active look. */
 public final class ItemIcon extends Element {
-
     private static final int ITEM = 16;
 
     private ItemStack stack;
@@ -21,7 +19,6 @@ public final class ItemIcon extends Element {
         return this;
     }
 
-    /** Draws a recessed well behind the item. */
     public ItemIcon inSlot() {
         this.slot = true;
         return this;

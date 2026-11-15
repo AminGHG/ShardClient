@@ -4,13 +4,7 @@ import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Palette;
 
-/**
- * The atmosphere of the result screen, after the ShardPvP website's hero: small squares in the logo's purples
- * drifting through the screen, a burst of shards when a victory lands, and a light sheen across the headline.
- * Everything is a pure function of time and a fixed seed, so there is no state to update and nothing to clean up.
- */
 public final class ResultEffects {
-
     private static final int DRIFT_COUNT = 42;
     private static final int BURST_COUNT = 28;
     private static final long BURST_MS = 1100;
@@ -22,7 +16,6 @@ public final class ResultEffects {
         this.victory = victory;
     }
 
-    /** Squares drifting up (victory) or slowly down (defeat), fading in as the screen opens. */
     public void drift(Canvas canvas, Palette colors, long t, float opacity) {
         int width = canvas.width();
         int height = canvas.height();
@@ -35,7 +28,7 @@ public final class ResultEffects {
             float y = victory ? height + 10 - along : along - 10;
             float x = rand(i, 3) * width + (float) Math.sin(seconds * (0.6f + rand(i, 4)) + i) * 6f;
             int size = 1 + Math.round(rand(i, 5) * 2);
-            // Fade near the edges they come from and go to, so none pops in or out.
+
             float edge = Math.min(along, travel - along) / 40f;
             float alpha = Math.clamp(edge, 0f, 1f) * (0.35f + rand(i, 6) * 0.5f) * opacity;
             int color = victory ? pick(i, colors.accent(), colors.accentStrong(), colors.primary())
@@ -46,7 +39,6 @@ public final class ResultEffects {
         }
     }
 
-    /** Shards thrown out of the headline when it lands, falling under gravity and fading. */
     void burst(Canvas canvas, Palette colors, long sinceLanding, int cx, int cy) {
         if (!victory || sinceLanding < 0 || sinceLanding > BURST_MS) {
             return;
@@ -66,13 +58,6 @@ public final class ResultEffects {
         }
     }
 
-    /**
-     * A light band crossing the headline once, drawn as a brighter copy of it clipped to the band (a colour
-     * change through a mask).
-     *
-     * @param progress 0..1 across the headline; outside that range nothing is drawn
-     * @param drawHeadline draws the headline in the given colour
-     */
     void sheen(Canvas canvas, float progress, int left, int top, int width, int height, int color,
                java.util.function.IntConsumer drawHeadline) {
         if (progress <= 0 || progress >= 1) {
@@ -90,7 +75,6 @@ public final class ResultEffects {
         return r < 0.4f ? a : r < 0.75f ? b : c;
     }
 
-    /** A fixed pseudo-random number in 0..1 for particle {@code i} and property {@code salt}. */
     private static float rand(int i, int salt) {
         int h = i * 0x9E3779B1 + salt * 0x85EBCA77;
         h ^= h >>> 15;

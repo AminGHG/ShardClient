@@ -1,8 +1,6 @@
 package net.am7n.shardclient.shared.anim;
 
-/** Mixing two values by a progress. */
 public final class Lerp {
-
     private Lerp() {
     }
 
@@ -14,7 +12,6 @@ public final class Lerp {
         return Math.round(of(from, to, t));
     }
 
-    /** Mixes two ARGB colours channel by channel. */
     public static int color(int from, int to, float t) {
         float clamped = Math.clamp(t, 0f, 1f);
         int a = channel(from >>> 24, to >>> 24, clamped);

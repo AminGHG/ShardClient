@@ -21,12 +21,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-/**
- * What this client currently knows about the player on the Practice Server: the queue they wait in and the match
- * found for them. Changed only by packets from the server; client thread only.
- */
 public final class PracticeSession {
-
     private final List<PracticeListener> listeners = new CopyOnWriteArrayList<>();
     private QueueState queue;
     private MatchInfo match;
@@ -39,12 +34,10 @@ public final class PracticeSession {
         listeners.remove(listener);
     }
 
-    /** The queue the player waits in, or null. */
     public QueueState queue() {
         return queue;
     }
 
-    /** The match last found for the player on this connection, or null. */
     public MatchInfo match() {
         return match;
     }
@@ -92,14 +85,12 @@ public final class PracticeSession {
             }
             case ClientUsers users -> ClientBadges.apply(users);
             case Welcome ignored -> {
-                // Handshake packets belong to PracticeLink.
             }
             case Rejected ignored -> {
             }
         }
     }
 
-    /** Forgets everything: the connection ended or the server stopped talking to this client. */
     void clear() {
         ClientBadges.clear();
         queue = null;
@@ -114,7 +105,6 @@ public final class PracticeSession {
         return queue != null && queue.id().equals(queueId);
     }
 
-    /** One broken listener must not stop the others or reach the network code. */
     private void fire(Consumer<PracticeListener> call) {
         for (PracticeListener listener : listeners) {
             try {

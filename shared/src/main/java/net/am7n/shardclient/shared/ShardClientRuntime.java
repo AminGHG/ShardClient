@@ -6,12 +6,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * What is running: set once by the product's initializer, read by everything in the shared library that needs to
- * know which product it lives in (the handshake reports it to the server).
- */
 public final class ShardClientRuntime {
-
     public static final Logger LOGGER = LoggerFactory.getLogger("ShardClient");
 
     private static volatile ShardClientRuntime instance;
@@ -28,7 +23,6 @@ public final class ShardClientRuntime {
         this.practice = new PracticeIntegration(kind, version);
     }
 
-    /** Called by the Full Client or the Light Version from its client entrypoint, exactly once. */
     public static synchronized ShardClientRuntime start(ClientKind kind, String modId) {
         if (instance != null) {
             throw new IllegalStateException("ShardClient already started as " + instance.kind
@@ -40,6 +34,7 @@ public final class ShardClientRuntime {
         ShardClientRuntime runtime = new ShardClientRuntime(kind, modId, version);
         runtime.practice.register();
         instance = runtime;
+        net.am7n.shardclient.shared.badges.GlobalBadges.register();
         LOGGER.info("ShardClient {} {} started", kind, version);
         return runtime;
     }
@@ -64,7 +59,6 @@ public final class ShardClientRuntime {
         return version;
     }
 
-    /** The Practice Server integration; present in both products. */
     public PracticeIntegration practice() {
         return practice;
     }

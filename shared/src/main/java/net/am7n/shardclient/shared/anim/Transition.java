@@ -1,12 +1,6 @@
 package net.am7n.shardclient.shared.anim;
 
-/**
- * Something that appears and disappears: a screen, an overlay, a notification. Progress runs from 0 (hidden) to
- * 1 (shown). Showing and hiding can be called at any moment, also half-way through the other; the progress then
- * turns around from where it is, taking proportionally less time.
- */
 public final class Transition {
-
     public enum State {
         HIDDEN,
         ENTERING,
@@ -37,7 +31,6 @@ public final class Transition {
         this.clock = clock;
     }
 
-    /** A transition with the same timing in both directions. */
     public static Transition symmetric(long ms, Easing easing) {
         return new Transition(ms, easing, ms, easing);
     }
@@ -54,14 +47,12 @@ public final class Transition {
         turn(shown);
     }
 
-    /** Shows or hides at once, without animating. */
     public void snap(boolean shown) {
         showing = shown;
         from = shown ? 1 : 0;
         durationNanos = 0;
     }
 
-    /** Eased progress, 0 (hidden) to 1 (shown). May briefly exceed 1 with an overshooting easing. */
     public float progress() {
         float target = showing ? 1 : 0;
         if (durationNanos <= 0) {
@@ -85,12 +76,10 @@ public final class Transition {
         return progress > 0 ? State.SHOWN : State.HIDDEN;
     }
 
-    /** False only when fully hidden: nothing needs drawing. */
     public boolean isVisible() {
         return state() != State.HIDDEN;
     }
 
-    /** True while showing or on the way there. */
     public boolean isShowing() {
         return showing;
     }

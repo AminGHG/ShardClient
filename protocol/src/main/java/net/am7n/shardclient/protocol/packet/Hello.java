@@ -5,17 +5,8 @@ import net.am7n.shardclient.protocol.PacketReader;
 import net.am7n.shardclient.protocol.PacketWriter;
 import net.am7n.shardclient.protocol.ProtocolException;
 
-/**
- * First message of a client, sent once the server has announced the channel: which product it is, which protocol
- * versions it speaks and which features it handles. Answered with {@link Welcome} or {@link Rejected}.
- *
- * @param kindId        {@link ClientKind#wireId()}; kept raw so a product this build does not know is still readable
- * @param clientVersion the mod version, for the server's log only
- * @param features      {@link net.am7n.shardclient.protocol.Feature} bit mask
- */
 public record Hello(int minVersion, int maxVersion, int kindId, String clientVersion, long features)
         implements ServerboundPacket {
-
     public static final int ID = 0x01;
     public static final int MAX_VERSION_CHARS = 32;
 
@@ -23,12 +14,10 @@ public record Hello(int minVersion, int maxVersion, int kindId, String clientVer
         this(minVersion, maxVersion, kind.wireId(), clientVersion, features);
     }
 
-    /** The product, or null when the id is not one this build knows. */
     public ClientKind kind() {
         return ClientKind.byWireId(kindId);
     }
 
-    /** {@link #clientVersion} reduced to printable ASCII, safe to put in a log line. */
     public String printableClientVersion() {
         StringBuilder out = new StringBuilder(clientVersion.length());
         for (int i = 0; i < clientVersion.length(); i++) {

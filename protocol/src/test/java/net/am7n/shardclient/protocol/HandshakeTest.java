@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class HandshakeTest {
-
     private static final long SERVER_FEATURES = Feature.all();
 
     private static Hello hello(int min, int max) {

@@ -5,14 +5,7 @@ import net.am7n.shardclient.protocol.PacketReader;
 import net.am7n.shardclient.protocol.PacketWriter;
 import net.am7n.shardclient.protocol.ProtocolException;
 
-/**
- * Progress of the queue the player waits in.
- *
- * @param waitSeconds   how long this player has been waiting, as the server counts it
- * @param playersQueued players in this queue right now, this player included
- */
 public record QueueUpdate(String queueId, int waitSeconds, int playersQueued) implements ClientboundPacket {
-
     public static final int ID = 0x12;
 
     @Override

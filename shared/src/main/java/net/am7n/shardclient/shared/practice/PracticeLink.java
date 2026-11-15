@@ -15,27 +15,17 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.networking.v1.ServerboundPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 
-/**
- * Detects a Practice Server and performs the handshake with it.
- *
- * <p>A server is a Practice Server when it announces the {@code shardclient:main} channel. Only then does this
- * client say hello, and only after the server's welcome are its packets acted on. On every other server, and in
- * singleplayer, nothing is ever sent and the link stays {@link State#INACTIVE}.
- */
 public final class PracticeLink {
-
     public enum State {
-        /** Not on a Practice Server (or not connected at all). */
         INACTIVE,
-        /** The server announced the channel and was sent a hello; no answer yet. */
+
         HELLO_SENT,
-        /** The server welcomed this client: the integration is live. */
+
         ACTIVE,
-        /** The server refused this client; it behaves like plain Minecraft there. */
+
         REJECTED
     }
 
-    /** What this build can display. Only announce a feature once the client really handles it. */
     private static final long FEATURES = Feature.all();
 
     private final ClientKind kind;
@@ -53,7 +43,6 @@ public final class PracticeLink {
         this.session = session;
     }
 
-    /** Hooks into Fabric's networking. Call once, from the mod initializer. */
     public void register() {
         PayloadTypeRegistry.clientboundPlay().register(ShardPayload.TYPE, ShardPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ShardPayload.TYPE, ShardPayload.CODEC);
@@ -61,12 +50,14 @@ public final class PracticeLink {
         ClientPlayNetworking.registerGlobalReceiver(ShardPayload.TYPE,
                 (payload, context) -> context.client().execute(() -> receive(payload.data())));
 
-        // A new play connection (join, or a proxy moving the player to another server) starts from nothing.
         ClientPlayConnectionEvents.INIT.register((handler, client) -> client.execute(this::reset));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(this::reset));
 
-        // The server's channel list can arrive before or after the join; whichever comes last finds it.
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> client.execute(this::sayHello));
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> client.execute(() -> {
+            ShardClientRuntime.LOGGER.info("Joined a server; ShardPvP channel offered: {}",
+                    ClientPlayNetworking.canSend(ShardPayload.TYPE));
+            sayHello();
+        }));
         ServerboundPlayChannelEvents.REGISTER.register((handler, sender, client, channels) -> {
             if (channels.contains(ShardPayload.TYPE.id())) {
                 client.execute(this::sayHello);
@@ -78,22 +69,18 @@ public final class PracticeLink {
         return state;
     }
 
-    /** True while the Practice Server integration is live. */
     public boolean isActive() {
         return state == State.ACTIVE;
     }
 
-    /** The protocol version agreed with the server; 0 unless {@link #isActive()}. */
     public int version() {
         return version;
     }
 
-    /** Whether the server will send packets of {@code feature} on this connection. */
     public boolean has(Feature feature) {
         return isActive() && feature.in(features);
     }
 
-    /** Why the server refused this client; null unless {@link State#REJECTED}. */
     public Rejected.Reason rejection() {
         return rejection;
     }
@@ -108,6 +95,8 @@ public final class PracticeLink {
             }
             Hello hello = new Hello(Protocol.VERSION_MIN, Protocol.VERSION_MAX, kind, clientVersion, FEATURES);
             ClientPlayNetworking.send(new ShardPayload(hello.encode()));
+            ShardClientRuntime.LOGGER.info("Sent ShardPvP hello (protocol {}-{})", Protocol.VERSION_MIN,
+                    Protocol.VERSION_MAX);
         } catch (IllegalStateException notConnected) {
             return;
         }
@@ -127,7 +116,6 @@ public final class PracticeLink {
         }
         switch (packet) {
             case null -> {
-                // A packet from a newer server that this build does not know.
             }
             case Welcome welcome -> welcomed(welcome);
             case Rejected rejected -> rejected(rejected.reason());

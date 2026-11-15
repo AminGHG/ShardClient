@@ -3,9 +3,7 @@ package net.am7n.shardclient.full.module.setting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
-/** A number between {@code min} and {@code max}, snapped to {@code step}; shown as a slider. */
 public final class NumberSetting extends Setting<Double> {
-
     private final double min;
     private final double max;
     private final double step;
@@ -39,7 +37,6 @@ public final class NumberSetting extends Setting<Double> {
         return (int) Math.round(get());
     }
 
-    /** The value as text, with as many decimals as the step needs. */
     public String display() {
         double value = get();
         String number = step >= 1 ? Long.toString(Math.round(value)) : String.format("%.2f", value)

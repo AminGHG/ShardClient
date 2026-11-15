@@ -8,7 +8,17 @@
     "JoinMultiplayerScreenMixin",
     "SelectWorldScreenMixin",
     "WorldListEntryAccessor",
-    "WorldSelectionListAccessor"
+    "WorldSelectionListAccessor",
+    "module.CameraMixin",
+    "module.ChatComponentMixin",
+    "module.EntityTurnMixin",
+    "module.GameRendererMixin",
+    "module.LevelWeatherMixin",
+    "module.LightmapMixin",
+    "module.LivingEntityEventMixin",
+    "module.LivingEntityRendererMixin",
+    "module.MouseHandlerMixin",
+    "module.ScreenEffectRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

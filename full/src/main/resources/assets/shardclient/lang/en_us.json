@@ -1,0 +1,6 @@
+{
+  "key.category.shardclient.main": "ShardClient",
+  "key.shardclient.zoom": "Zoom (hold)",
+  "key.shardclient.freelook": "Freelook (hold)",
+  "key.shardclient.copy_coordinates": "Copy coordinates"
+}

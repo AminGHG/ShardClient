@@ -3,23 +3,16 @@ package net.am7n.shardclient.shared.render;
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.minecraft.network.chat.Component;
 
-/**
- * The ShardPvP website's design (shardpvp.xyz), as exactly as Minecraft allows: smooth anti-aliased rounded
- * corners at full screen resolution, screen-pixel hairlines, pill-shaped bars, soft card shadows, the purple
- * primary button and the Inter Tight typeface. Comes in the site's dark and light mode.
- */
 public final class ShardPvpLook implements Look {
-
     public static final ShardPvpLook DARK = new ShardPvpLook("shardpvp-dark", "ShardPvP Dark", Palette.DARK, 0x8C000000);
     public static final ShardPvpLook LIGHT = new ShardPvpLook("shardpvp-light", "ShardPvP Light", Palette.LIGHT, 0x2E161024);
 
-    // Radii in GUI pixels, scaled from the website's CSS (cards 20px, buttons 12px) to Minecraft's text size.
     private static final float RADIUS_CARD = 10f;
     private static final float RADIUS_BUTTON = 6f;
     private static final float RADIUS_WELL = 5f;
     private static final float SHADOW_BLUR = 10f;
     private static final float SHADOW_OFFSET = 3f;
-    /** Gap between a control and its focus ring, in GUI pixels. */
+
     private static final int FOCUS_GAP = 2;
 
     private final String id;
@@ -69,7 +62,6 @@ public final class ShardPvpLook implements Look {
         return true;
     }
 
-    /** The website's 1 CSS-pixel hairline: about half a GUI pixel, never thinner than one screen pixel. */
     private static int hairline() {
         return Math.max(1, Math.round(SmoothShapes.guiScale() * 0.5f));
     }
@@ -98,7 +90,7 @@ public final class ShardPvpLook implements Look {
                 case OUTLINE -> {
                     canvas.smoothRect(x, y, width, height, RADIUS_BUTTON,
                             Lerp.color(colors.ghost(), colors.ghostHovered(), highlight));
-                    canvas.smoothFrame(x, y, width, height, RADIUS_BUTTON, Math.max(1, SmoothShapes.guiScale()),
+                    canvas.smoothFrame(x, y, width, height, RADIUS_BUTTON, hairline(),
                             colors.accentStrong());
                 }
                 case SOFT -> canvas.smoothRect(x, y, width, height, RADIUS_BUTTON,

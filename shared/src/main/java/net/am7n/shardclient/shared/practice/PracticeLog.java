@@ -5,9 +5,7 @@ import net.am7n.shardclient.protocol.packet.QueueLeft;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import org.slf4j.Logger;
 
-/** Writes Practice Server events to the game log, so a connection problem can be read from latest.log. */
 final class PracticeLog implements PracticeListener {
-
     private static final Logger LOGGER = ShardClientRuntime.LOGGER;
 
     @Override

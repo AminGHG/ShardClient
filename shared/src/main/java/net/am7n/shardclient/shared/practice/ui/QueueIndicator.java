@@ -12,26 +12,21 @@ import net.am7n.shardclient.shared.render.Palette;
 import net.am7n.shardclient.shared.render.Theme;
 import net.minecraft.network.chat.Component;
 
-/**
- * A small card at the top of the screen while the player waits in a queue: which queue, how many are in it,
- * how long they have waited (the server's count) and a searching sweep. Drops in from the top edge.
- */
 public final class QueueIndicator implements Overlay {
-
     private static final int WIDTH = 168;
     private static final int HEIGHT = 30;
     private static final int TOP = 6;
     private static final int PADDING = 8;
-    /** How far it drops in from above. */
+
     private static final int DROP = 8;
     private static final float SWEEP_SHARE = 0.3f;
 
     private final Transition transition = Motion.transition(Motion.POPOVER_MS);
     private final Cycle sweep = new Cycle(1600);
     private QueueState queue;
-    /** When the server's wait time last arrived; the shown time counts on from it until the next one. */
+
     private long updatedAt;
-    /** The local count never runs further ahead of the server than this. */
+
     private static final int MAX_AHEAD_SECONDS = 3;
 
     public static final int BOTTOM = TOP + HEIGHT;

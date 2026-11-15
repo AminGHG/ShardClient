@@ -19,16 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-/**
- * The Full Client's settings file, {@code config/shardclient/full.json}: client preferences, every module's
- * state, settings, keybind and HUD position. The Light Version keeps its own file and never reads this one.
- *
- * <p>A missing file means defaults. An unreadable one is kept aside as {@code full.json.broken} and replaced by
- * defaults. Unknown or malformed entries are ignored one by one, so an older or newer file still loads what it
- * can. Saving writes a temporary file and moves it into place, so a crash never leaves half a file.
- */
 public final class ClientConfig {
-
     private static final int VERSION = 1;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -42,12 +33,15 @@ public final class ClientConfig {
 
     private MenuStyle menuStyle = MenuStyle.SHARD;
     private boolean uiSounds = true;
-    /** A server the player joined: its name, address and when. */
+    private boolean badgesEverywhere = true;
+    private boolean hoverEffects = true;
+    private boolean hoverSounds = true;
+
     public record RecentServer(String name, String address, long joinedAt) {
     }
 
     private static final int MAX_RECENT = 30;
-    /** Joined servers by address (lower case), saved ones and direct connections alike. */
+
     private final java.util.Map<String, RecentServer> recent = new java.util.HashMap<>();
 
     public ClientConfig(ModuleManager modules) {
@@ -63,6 +57,34 @@ public final class ClientConfig {
         save();
     }
 
+    public boolean badgesEverywhere() {
+        return badgesEverywhere;
+    }
+
+    public void setBadgesEverywhere(boolean value) {
+        this.badgesEverywhere = value;
+        apply();
+        save();
+    }
+
+    public boolean hoverEffects() {
+        return hoverEffects;
+    }
+
+    public void setHoverEffects(boolean value) {
+        this.hoverEffects = value;
+        apply();
+    }
+
+    public boolean hoverSounds() {
+        return hoverSounds;
+    }
+
+    public void setHoverSounds(boolean value) {
+        this.hoverSounds = value;
+        apply();
+    }
+
     public boolean uiSounds() {
         return uiSounds;
     }
@@ -72,14 +94,12 @@ public final class ClientConfig {
         UiSounds.setEnabled(value);
     }
 
-    /** Recently joined servers, newest first. */
     public java.util.List<RecentServer> recentServers() {
         return recent.values().stream()
                 .sorted(java.util.Comparator.comparingLong(RecentServer::joinedAt).reversed())
                 .toList();
     }
 
-    /** Remembers that the server at {@code address} was joined now, keeping the newest ones. */
     public void markJoined(String name, String address) {
         recent.put(address.toLowerCase(java.util.Locale.ROOT),
                 new RecentServer(name, address, System.currentTimeMillis()));
@@ -101,7 +121,6 @@ public final class ClientConfig {
             try {
                 Files.move(file, file.resolveSibling("full.json.broken"), StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException ignored) {
-                // Nothing more to do; the next save replaces it.
             }
             apply();
             return;
@@ -117,6 +136,18 @@ public final class ClientConfig {
             if (client.get("uiSounds") instanceof JsonElement sounds && sounds.isJsonPrimitive()
                     && sounds.getAsJsonPrimitive().isBoolean()) {
                 uiSounds = sounds.getAsBoolean();
+            }
+            if (client.get("badgesEverywhere") instanceof JsonElement badges && badges.isJsonPrimitive()
+                    && badges.getAsJsonPrimitive().isBoolean()) {
+                badgesEverywhere = badges.getAsBoolean();
+            }
+            if (client.get("hoverEffects") instanceof JsonElement effects && effects.isJsonPrimitive()
+                    && effects.getAsJsonPrimitive().isBoolean()) {
+                hoverEffects = effects.getAsBoolean();
+            }
+            if (client.get("hoverSounds") instanceof JsonElement hoverSound && hoverSound.isJsonPrimitive()
+                    && hoverSound.getAsJsonPrimitive().isBoolean()) {
+                hoverSounds = hoverSound.getAsBoolean();
             }
         }
         if (json.get("servers") instanceof JsonObject servers) {
@@ -148,6 +179,9 @@ public final class ClientConfig {
 
     private void apply() {
         UiSounds.setEnabled(uiSounds);
+        net.am7n.shardclient.shared.badges.GlobalBadges.setEnabled(badgesEverywhere);
+        net.am7n.shardclient.shared.ui.Hover.setEffects(hoverEffects);
+        UiSounds.setHoverEnabled(hoverSounds);
     }
 
     public void save() {
@@ -157,6 +191,9 @@ public final class ClientConfig {
         client.addProperty("look", Theme.look().id());
         client.addProperty("menuStyle", menuStyle == MenuStyle.VANILLA ? "vanilla" : "shard");
         client.addProperty("uiSounds", uiSounds);
+        client.addProperty("badgesEverywhere", badgesEverywhere);
+        client.addProperty("hoverEffects", hoverEffects);
+        client.addProperty("hoverSounds", hoverSounds);
         json.add("client", client);
         JsonObject servers = new JsonObject();
         com.google.gson.JsonArray recentList = new com.google.gson.JsonArray();

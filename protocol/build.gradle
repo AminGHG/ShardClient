@@ -1,5 +1,3 @@
-// Plain Java: no Minecraft, Fabric or Bukkit types. The ShardCore plugin compiles against these same classes,
-// so both ends of the connection share one definition of every packet.
 base {
     archivesName = 'shardclient-protocol'
 }
@@ -11,9 +9,6 @@ jar {
     }
 }
 
-// Copies the protocol jar into the ShardCore plugin's libs folder (versionless name, so its build file never
-// changes). The folder is machine-specific: set shardcore_libs_dir in local.properties (git-ignored) or pass
-// -Pshardcore_libs_dir=...
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.isFile()) {

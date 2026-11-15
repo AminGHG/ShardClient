@@ -1,16 +1,11 @@
 package net.am7n.shardclient.shared.ui;
 
-/**
- * Lays its children out one after another, as a row or a column, with a gap between them. Spare space along the
- * direction goes to the children that asked to {@link Element#grow(float) grow}.
- */
 public final class Stack extends Container {
-
     public enum Align {
         START,
         CENTER,
         END,
-        /** Every child is made as wide (column) or as tall (row) as the stack. */
+
         STRETCH
     }
 
@@ -31,7 +26,6 @@ public final class Stack extends Container {
         return new Stack(false, gap);
     }
 
-    /** How children sit across the direction of the stack. */
     public Stack align(Align align) {
         this.align = align;
         return this;
@@ -91,7 +85,6 @@ public final class Stack extends Container {
             }
             int along = horizontal ? sizes[i].width() : sizes[i].height();
             if (growTotal > 0 && child.grow() > 0) {
-                // Carry the fractions so the pieces add up to exactly the spare space.
                 float share = spare * child.grow() / growTotal + carried;
                 int whole = (int) share;
                 carried = share - whole;

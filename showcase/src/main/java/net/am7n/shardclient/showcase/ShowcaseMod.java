@@ -4,12 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.gui.screens.TitleScreen;
 
-/**
- * Opens the component gallery once the title screen is really showing (the loading overlay has gone), so its
- * entrance animation is visible. Development only.
- */
 public final class ShowcaseMod implements ClientModInitializer {
-
     private boolean opened;
 
     @Override

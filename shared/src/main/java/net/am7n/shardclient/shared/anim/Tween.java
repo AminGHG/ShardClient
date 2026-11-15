@@ -1,12 +1,6 @@
 package net.am7n.shardclient.shared.anim;
 
-/**
- * A number that moves to its target over time instead of jumping. Giving it a new target while it is moving
- * starts from wherever it is right now, so an animation can be interrupted or reversed at any point without a
- * jump. Reading it is all it takes to drive it: there is nothing to tick.
- */
 public final class Tween {
-
     private final Clock clock;
     private final long durationNanos;
     private final Easing easing;
@@ -28,7 +22,6 @@ public final class Tween {
         this.clock = clock;
     }
 
-    /** The value right now. */
     public float get() {
         if (!moving) {
             return to;
@@ -41,7 +34,6 @@ public final class Tween {
         return from + (to - from) * easing.apply(Math.max(0, t));
     }
 
-    /** Starts moving towards {@code target} from the current value. */
     public void set(float target) {
         if (target == to) {
             return;
@@ -52,7 +44,6 @@ public final class Tween {
         moving = true;
     }
 
-    /** Jumps to {@code value} without animating. */
     public void snap(float value) {
         from = value;
         to = value;
@@ -63,7 +54,6 @@ public final class Tween {
         return to;
     }
 
-    /** True once the value has arrived. */
     public boolean isSettled() {
         get();
         return !moving;

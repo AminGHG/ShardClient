@@ -5,9 +5,7 @@ import net.am7n.shardclient.shared.render.Canvas;
 import java.util.ArrayList;
 import java.util.List;
 
-/** An element made of other elements. Draws them in order and offers input to the topmost one first. */
 public abstract class Container extends Element {
-
     protected final List<Element> children = new ArrayList<>();
 
     public Container add(Element child) {
@@ -75,6 +73,17 @@ public abstract class Container extends Element {
         for (int i = children.size() - 1; i >= 0; i--) {
             Element child = children.get(i);
             if (child.isVisible() && child.keyPressed(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean charTyped(String text) {
+        for (int i = children.size() - 1; i >= 0; i--) {
+            Element child = children.get(i);
+            if (child.isVisible() && child.charTyped(text)) {
                 return true;
             }
         }

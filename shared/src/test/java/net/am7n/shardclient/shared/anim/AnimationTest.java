@@ -9,8 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AnimationTest {
-
-    /** A clock the test moves by hand. */
     private static final class ManualClock implements Clock {
         private long nanos = 1_000_000_000L;
 
@@ -107,7 +105,6 @@ class AnimationTest {
         transition.hide();
         assertEquals(before, transition.progress(), EPSILON, "no jump when turning around");
 
-        // It only has `before` of the way to go back, so it needs that share of the exit time.
         clock.advanceMs((long) (200 * before) + 1);
         assertEquals(Transition.State.HIDDEN, transition.state());
     }
@@ -127,7 +124,7 @@ class AnimationTest {
         Stagger stagger = new Stagger(4, 50, 100);
         assertEquals(250, stagger.totalMs());
 
-        float half = 0.5f; // 125 ms in
+        float half = 0.5f;
         assertEquals(1f, stagger.item(half, 0, Easing.LINEAR), EPSILON);
         assertEquals(0.75f, stagger.item(half, 1, Easing.LINEAR), EPSILON);
         assertEquals(0.25f, stagger.item(half, 2, Easing.LINEAR), EPSILON);

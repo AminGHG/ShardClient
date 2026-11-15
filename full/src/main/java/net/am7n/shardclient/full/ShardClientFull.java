@@ -13,9 +13,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 
-/** Entrypoint of the Full Client: the shared Practice Server integration plus the module system and menus. */
 public final class ShardClientFull implements ClientModInitializer {
-
     public static final String MOD_ID = "shardclient";
 
     private static ShardClientFull instance;

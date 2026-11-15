@@ -10,20 +10,7 @@ import net.am7n.shardclient.shared.render.Palette;
 import net.am7n.shardclient.shared.render.Theme;
 import net.minecraft.network.chat.Component;
 
-/**
- * Rating as progress through the rank, animated from before to after the match the way competitive games do it:
- * <ul>
- *   <li>the bar spans the rank's rating range, so it moves exactly as far as the rating changed;</li>
- *   <li>a gain fills in a brighter segment on top of the old fill; a loss leaves a red segment that drains
- *       away just after the bar;</li>
- *   <li>the rating number counts in step with the bar, after a short pause;</li>
- *   <li>a rank change runs the bar to the end, flashes and pulses, swaps the rank name with a crossfade, then
- *       continues from the other end in the new rank.</li>
- * </ul>
- * Pure function of time: {@link #render} draws the state at {@code t} ms after the bar appeared.
- */
 public final class RankProgressBar {
-
     public static final int HEIGHT = 36;
     private static final int BAR_HEIGHT = 6;
     private static final long HOLD_MS = 300;
@@ -46,13 +33,11 @@ public final class RankProgressBar {
         this.up = result.ratingChange() >= 0;
     }
 
-    /** How long the whole animation takes, from appearing to settled. */
     public long durationMs() {
         long moving = changed ? OVERFLOW_HALF_MS * 2 + FLASH_MS : FILL_MS;
         return HOLD_MS + moving + (up ? 0 : GHOST_DELAY_MS + GHOST_MS);
     }
 
-    /** One moment of the animation: which rank, where the bar is, where the drain ghost is, the rating shown. */
     private record Frame(boolean newRank, float position, float ghost, int rating, float flash) {
     }
 
@@ -84,7 +69,6 @@ public final class RankProgressBar {
         return new Frame(true, position, ghost, ratingAt(true, position), 0);
     }
 
-    /** Where the loss ghost is: it waits at {@code from} until the bar has finished, then drains to it. */
     private static float ghost(long t, float from, float to, long fillMs) {
         if (to >= from) {
             return to;
@@ -94,7 +78,6 @@ public final class RankProgressBar {
         return Lerp.of(from, to, p);
     }
 
-    /** The rating that belongs to bar position {@code position}, so the number and the bar agree exactly. */
     private int ratingAt(boolean newRank, float position) {
         int floor = newRank ? result.afterFloor() : result.beforeFloor();
         int ceiling = newRank ? result.afterCeiling() : result.beforeCeiling();
@@ -111,9 +94,6 @@ public final class RankProgressBar {
         return Math.clamp((rating - floor) / (float) (ceiling - floor), 0f, 1f);
     }
 
-    /**
-     * Draws the bar {@code width} wide, centred on {@code cx}, at {@code t} ms after it appeared.
-     */
     public void render(Canvas canvas, int cx, int y, int width, long t) {
         Frame frame = frame(t);
         Look look = Theme.look();
@@ -122,7 +102,6 @@ public final class RankProgressBar {
         int x = cx - width / 2;
         sounds(frame, t);
 
-        // Rating and change, counting with the bar.
         int change = result.ratingChange();
         Component rating = Theme.text(Component.literal(frame.rating() + " MMR"), true);
         Component delta = Theme.text(Component.literal((change >= 0 ? "+" : "") + change), true);
@@ -135,7 +114,6 @@ public final class RankProgressBar {
         Theme.look().shape(canvas, chipX, y - 3, chipWidth, 14, 7f, colors.ghostHovered());
         canvas.text(delta, chipX + 5, y, changeColor, shadow);
 
-        // The bar, pulsing slightly on a rank change.
         int barY = y + 15;
         float pulse = frame.flash() > 0 ? Lerp.of(1f, Motion.PULSE_SCALE, (float) Math.sin(Math.PI * frame.flash())) : 1f;
         canvas.push();
@@ -143,12 +121,10 @@ public final class RankProgressBar {
         look.barTrack(canvas, x, barY, width, BAR_HEIGHT);
         float base = frame.newRank() ? 0f : fraction(result.ratingBefore(), result.beforeFloor(), result.beforeCeiling());
         if (up) {
-            // Old progress solid, the gain on top of it in the lighter accent.
             float solid = Math.min(base, frame.position());
             fillTo(canvas, look, x, barY, width, frame.position(), colors.accent());
             fillTo(canvas, look, x, barY, width, solid, colors.primary());
         } else {
-            // What was lost shows in red behind the bar until the ghost has drained to it.
             fillTo(canvas, look, x, barY, width, Math.max(frame.ghost(), frame.position()), colors.negative());
             fillTo(canvas, look, x, barY, width, frame.position(), colors.primary());
         }
@@ -159,7 +135,6 @@ public final class RankProgressBar {
         }
         canvas.pop();
 
-        // Rank names: the old one crossfades into the new one when the bar crosses into it.
         int labelY = barY + BAR_HEIGHT + 5;
         float swap = changed ? Math.clamp(frame.newRank() ? 1f : 0f, 0f, 1f) : 1f;
         String rankName = frame.newRank() || !changed ? result.rankAfter() : result.rankBefore();
@@ -181,7 +156,6 @@ public final class RankProgressBar {
         }
     }
 
-    /** Soft ticks rising in pitch while the bar moves, and a level-up sound when it crosses into a new rank. */
     private void sounds(Frame frame, long t) {
         if (t < HOLD_MS || t > durationMs()) {
             return;

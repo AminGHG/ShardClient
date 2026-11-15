@@ -33,14 +33,12 @@ import net.minecraft.world.item.Items;
 
 import java.util.UUID;
 
-/** One of every shared component, to judge spacing, textures and animation in a real game window. */
 final class ShowcaseScreen extends ShardScreen {
-
     private final ShowcaseCapture capture;
-    /** Overlay previews drawn over the screen, with sample data; nothing goes through the network. */
+
     private final OverlayHost previews = new OverlayHost();
     private boolean previewing;
-    /** A bright flat background behind the previews, to judge shadows and edges on light scenery. */
+
     private boolean brightBackdrop;
     private final ScreenTransition transition = new ScreenTransition();
 
@@ -92,7 +90,6 @@ final class ShowcaseScreen extends ShardScreen {
         return new Panel(content).minWidth(264);
     }
 
-    /** Shows the Practice Server overlays with sample data in place of the component gallery. */
     void previewOverlaysOnLight() {
         previewOverlays();
         brightBackdrop = true;
@@ -127,14 +124,12 @@ final class ShowcaseScreen extends ShardScreen {
         previews.add(toasts);
     }
 
-    /** Shows the match result card and a round banner with sample data. */
     void previewResult() {
         previewing = true;
         previews.clear();
         previews.add(new MatchResultCard(new MatchEnded(MatchEnded.Result.WIN, 2, 1, 1172, 1214, "Gold I", 1100, 1200, "Gold II", 1200, 1300)));
     }
 
-    /** Covers the screen like an arena transition; {@link #previewReveal()} lifts it. */
     void previewTransition() {
         previewing = true;
         previews.clear();
@@ -147,7 +142,6 @@ final class ShowcaseScreen extends ShardScreen {
         transition.reveal();
     }
 
-    /** Item stacks only exist once a world is loaded; on the title screen the slots stay empty. */
     private ItemStack item(Item item) {
         return minecraft.level == null ? ItemStack.EMPTY : new ItemStack(item);
     }

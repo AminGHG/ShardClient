@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StackLayoutTest {
-
     private static void assertBounds(Element element, int x, int y, int width, int height) {
         assertEquals(x, element.x(), "x");
         assertEquals(y, element.y(), "y");

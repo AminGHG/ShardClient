@@ -12,3 +12,6 @@ Thumbs.db
 
 # Machine-specific settings (local paths)
 local.properties
+
+# Claude Code local settings
+.claude/

@@ -8,9 +8,7 @@ import net.am7n.shardclient.shared.ui.Pill;
 import net.am7n.shardclient.shared.ui.Size;
 import org.lwjgl.glfw.GLFW;
 
-/** A module's key binding: click, then press a key (Esc or Backspace removes the binding). */
 final class KeybindPill extends Element {
-
     private final Module module;
     private final Pill pill;
     private boolean listening;

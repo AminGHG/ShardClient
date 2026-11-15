@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PacketRoundTripTest {
-
     private static final List<ClientboundPacket> CLIENTBOUND = List.of(
             new Welcome(1, Feature.all()),
             new Rejected(Rejected.Reason.UNSUPPORTED_VERSION, 1, 3),
@@ -107,7 +106,6 @@ class PacketRoundTripTest {
 
     @Test
     void aStringLongerThanItsFieldAllowsIsAnError() {
-        // A hello whose version string claims 200 bytes where 32 chars are allowed.
         byte[] wire = new PacketWriter().writeByte(Hello.ID).writeInt(1).writeInt(1).writeByte(1)
                 .writeString("x".repeat(200), 200).writeLong(0).toByteArray();
         assertThrows(ProtocolException.class, () -> ServerboundPacket.decode(wire));

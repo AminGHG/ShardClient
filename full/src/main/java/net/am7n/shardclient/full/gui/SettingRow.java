@@ -8,9 +8,7 @@ import net.am7n.shardclient.shared.ui.Element;
 import net.am7n.shardclient.shared.ui.Size;
 import net.minecraft.network.chat.Component;
 
-/** One line of a settings list: the name on the left, its control on the right. */
 final class SettingRow extends Container {
-
     static final int HEIGHT = 20;
 
     private final String label;

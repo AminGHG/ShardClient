@@ -8,13 +8,8 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.List;
 
-/**
- * Lets the ShardClient world list drive Minecraft's own (never drawn) list: it loads the worlds when drawn, so
- * the ShardClient screen polls it the same way instead.
- */
 @Mixin(WorldSelectionList.class)
 public interface WorldSelectionListAccessor {
-
     @Invoker("pollLevelsIgnoreErrors")
     List<LevelSummary> shardclient$pollLevels();
 

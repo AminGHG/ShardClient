@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class PracticeSessionTest {
-
     private static final UUID OPPONENT = UUID.fromString("0f6f2f0e-7a51-4c1e-9d0b-1f0c2b3a4d5e");
 
     private final List<String> events = new ArrayList<>();

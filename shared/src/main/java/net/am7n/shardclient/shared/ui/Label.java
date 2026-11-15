@@ -7,9 +7,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.function.IntSupplier;
 
-/** One line of text in Minecraft's font. */
 public final class Label extends Element {
-
     public enum Align {
         LEFT,
         CENTER,
@@ -17,9 +15,9 @@ public final class Label extends Element {
     }
 
     private Component text;
-    /** Looked up on every frame, so a theme switch applies at once. */
+
     private IntSupplier color = () -> Theme.colors().text();
-    /** Null: the active look decides. */
+
     private Boolean shadow;
     private boolean emphasis;
     private Align align = Align.LEFT;
@@ -37,13 +35,11 @@ public final class Label extends Element {
         return this;
     }
 
-    /** A fixed colour, the same in every theme. */
     public Label color(int argb) {
         this.color = () -> argb;
         return this;
     }
 
-    /** A colour from the theme, e.g. {@code () -> Theme.colors().textMuted()}. */
     public Label color(IntSupplier argb) {
         this.color = argb;
         return this;
@@ -54,7 +50,6 @@ public final class Label extends Element {
         return this;
     }
 
-    /** Heading weight: the semibold font in the website look. */
     public Label emphasis() {
         this.emphasis = true;
         return this;

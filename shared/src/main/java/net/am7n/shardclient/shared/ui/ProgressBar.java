@@ -6,19 +6,13 @@ import net.am7n.shardclient.shared.anim.Tween;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Theme;
 
-/**
- * A bar that fills up, or (when {@link #indeterminate()}) a highlight that travels back and forth for work
- * whose end is not known, such as searching for an opponent.
- */
 public final class ProgressBar extends Element {
-
-    /** Width of the travelling highlight, as a share of the bar. */
     private static final float SWEEP_SHARE = 0.3f;
 
     private final Tween fill = new Tween(0, Theme.NORMAL_MS, Easing.OUT_CUBIC);
     private final Cycle sweep = new Cycle(1600);
     private boolean indeterminate;
-    /** Null: the theme's bar colour, looked up when drawing. */
+
     private Integer color;
     private final int preferredWidth;
 
@@ -26,7 +20,6 @@ public final class ProgressBar extends Element {
         this.preferredWidth = preferredWidth;
     }
 
-    /** Sets how full the bar is, 0..1; it moves there smoothly. */
     public ProgressBar progress(float progress) {
         indeterminate = false;
         fill.set(Math.clamp(progress, 0f, 1f));
@@ -58,7 +51,7 @@ public final class ProgressBar extends Element {
 
         if (indeterminate) {
             int span = Math.max(barHeight, Math.round(width * SWEEP_SHARE));
-            // Moves from end to end, so it eases in and out.
+
             int offset = Math.round((width - span) * Easing.IN_OUT_SINE.apply(sweep.wave()));
             look.barFill(canvas, x + offset, top, span, barHeight, color);
         } else {

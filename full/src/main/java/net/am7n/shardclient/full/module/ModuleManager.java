@@ -11,9 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Every module of the Full Client, their keybinds and their per-tick work. */
 public final class ModuleManager {
-
     private final Map<String, Module> modules = new LinkedHashMap<>();
     private final Map<Integer, Boolean> keyWasDown = new HashMap<>();
 
@@ -61,7 +59,6 @@ public final class ModuleManager {
         return list;
     }
 
-    /** Called every client tick: module keybinds (only with no screen open) and enabled modules' work. */
     public void tick(Minecraft mc) {
         if (mc.gui.screen() == null) {
             for (Module module : modules.values()) {

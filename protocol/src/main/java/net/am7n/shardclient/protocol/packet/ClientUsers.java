@@ -9,17 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Which players on this server run ShardClient, so the client can show a badge in front of their names.
- *
- * @param replace true: {@code added} is the complete list (sent once after the handshake); false: a change
- * @param added   players now running ShardClient
- * @param removed players who left or no longer run it
- */
 public record ClientUsers(boolean replace, List<UUID> added, List<UUID> removed) implements ClientboundPacket {
-
     public static final int ID = 0x40;
-    /** Keeps one message well under the size limit; a longer list is sent in several. */
+
     public static final int MAX_PER_LIST = 500;
 
     public ClientUsers {

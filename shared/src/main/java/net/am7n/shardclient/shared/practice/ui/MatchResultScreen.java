@@ -23,16 +23,9 @@ import net.minecraft.network.chat.Component;
 
 import java.util.UUID;
 
-/**
- * The end of a ranked match as a full-screen sequence, shown in the lobby once the match is over: the result
- * rises out of a mask, then the players, the score, the rating counting to its new value and the rank settle one
- * after another. It can be skipped at any moment (button, Space or Esc), continues by itself after
- * {@link #AUTO_CLOSE_MS}, and never pauses the game.
- */
 public final class MatchResultScreen extends ShardScreen {
-
     private static final long AUTO_CLOSE_MS = 9000;
-    /** When the rank bar starts moving, once the parts above it have settled. */
+
     private static final long BAR_START_MS = 1250;
 
     private final MatchEnded result;
@@ -41,12 +34,9 @@ public final class MatchResultScreen extends ShardScreen {
     private final String selfName;
     private final long shownAt = Clock.SYSTEM.nanos();
     private final ResultEffects effects;
-    /** Rating as progress through the rank, when the server sent the rank ranges. */
+
     private final RankProgressBar bar;
 
-    /**
-     * @param match the match as it was found (opponent); null if this client did not see it start
-     */
     public MatchResultScreen(Screen parent, MatchEnded result, MatchInfo match, UUID selfId, String selfName) {
         super(Component.literal("Match result"), parent);
         this.result = result;
@@ -81,16 +71,14 @@ public final class MatchResultScreen extends ShardScreen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (event.key() == 32) { // Space skips, like the button
+        if (event.key() == 32) {
             onClose();
             return true;
         }
         return super.keyPressed(event);
     }
 
-    /** Everything on the screen; laid out from the screen size each frame. */
     private final class View extends Container {
-
         private static final int SKIP_MARGIN = 12;
 
         private final Button skip = new Button("Skip  (Space)", MatchResultScreen.this::onClose);
@@ -143,18 +131,17 @@ public final class MatchResultScreen extends ShardScreen {
             super.render(canvas);
         }
 
-        /** The result word, rising out of a mask line, with an underline growing from the centre. */
         private void heading(Canvas canvas, long t, Palette colors, int cx, int top) {
             Component text = Theme.text(Component.literal(headingText()), true);
             int textWidth = Math.max(1, canvas.textWidth(text));
             float scale = Math.min(4f, (width - 40) / (float) textWidth);
             int lineHeight = Math.round(9 * scale);
-            // Rendered at the size it is drawn, so the big headline stays sharp.
+
             Component sharp = Theme.text(Component.literal(headingText()), true, scale);
             float rise = Motion.ENTER.apply(window(t, 100, 520));
 
             int textPixels = Math.round(textWidth * scale);
-            // A soft glow of the result colour behind the headline, growing in with it.
+
             canvas.glow(cx, top + lineHeight / 2, Math.round(textPixels * 0.75f), Math.round(lineHeight * 1.9f),
                     withAlpha(headingColor(colors), victory() ? 0x5C : 0x3A), rise);
 
@@ -168,7 +155,7 @@ public final class MatchResultScreen extends ShardScreen {
             canvas.clip(0, top, width, lineHeight + 2);
             draw.accept(headingColor(colors));
             canvas.unclip();
-            // Once it has landed, a light sheen crosses it.
+
             effects.sheen(canvas, window(t, 760, 700), cx - textPixels / 2, top, textPixels, lineHeight + 2,
                     colors.text(), draw);
             effects.burst(canvas, colors, t - 560, cx, top + lineHeight / 2);
@@ -236,7 +223,6 @@ public final class MatchResultScreen extends ShardScreen {
             endSettle(canvas);
         }
 
-        /** The rating counts from its old to its new value; the change chip pulses once it arrives. */
         private void rating(Canvas canvas, long t, Look look, int cx, int y) {
             float amount = settle(canvas, t, 1050);
             if (amount <= 0) {
@@ -295,13 +281,11 @@ public final class MatchResultScreen extends ShardScreen {
             endSettle(canvas);
         }
 
-        /** A thin line along the bottom that runs out when the screen continues by itself. */
         private void autoContinue(Canvas canvas, long t, Palette colors) {
             float left = 1 - Math.clamp(t / (float) AUTO_CLOSE_MS, 0f, 1f);
             canvas.fill(x, y + height - 2, Math.round(width * left), 2, colors.accentStrong());
         }
 
-        /** Starts drawing a part that settles in at {@code startMs}; returns how far it has (0 = not yet). */
         private float settle(Canvas canvas, long t, long startMs) {
             float amount = Motion.ENTER.apply(window(t, startMs, 260));
             if (amount <= 0) {
@@ -327,10 +311,6 @@ public final class MatchResultScreen extends ShardScreen {
         return alpha << 24 | (argb & 0xFFFFFF);
     }
 
-    /**
-     * See-through: the world stays visible behind a gradient that darkens towards the bottom and a soft dark
-     * glow behind the content that keeps the text readable. No blur.
-     */
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (minecraft.level == null) {
@@ -345,7 +325,6 @@ public final class MatchResultScreen extends ShardScreen {
         canvas.popAlpha();
     }
 
-    /** Linear progress 0..1 of a step that starts at {@code startMs} and lasts {@code durationMs}. */
     private static float window(long t, long startMs, long durationMs) {
         return Math.clamp((t - startMs) / (float) durationMs, 0f, 1f);
     }

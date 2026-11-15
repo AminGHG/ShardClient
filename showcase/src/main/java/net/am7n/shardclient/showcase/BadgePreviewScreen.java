@@ -6,9 +6,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 
-/** Development only: the badge as the tab list and name tags draw it (the same decorated component). */
 final class BadgePreviewScreen extends Screen {
-
     BadgePreviewScreen() {
         super(Component.literal("Badge preview"));
     }
@@ -26,6 +24,17 @@ final class BadgePreviewScreen extends Screen {
         for (Component name : names) {
             graphics.text(font, name, 20, y, 0xFFFFFFFF, true);
             y += 14;
+        }
+
+        String[] fonts = {"caveat", "dancing_script", "satisfy", "permanent_marker", "bebas_neue", "anton", "righteous",
+                "space_mono"};
+        y = 20;
+        for (String id : fonts) {
+            var style = net.minecraft.network.chat.Style.EMPTY.withFont(new net.minecraft.network.chat.FontDescription
+                    .Resource(net.minecraft.resources.Identifier.fromNamespaceAndPath("shardclient", "lyrics_" + id)));
+            graphics.text(font, Component.literal(id + ": Now we're standing side by side ÄÖÜß").withStyle(style),
+                    130, y, 0xFFFFFFFF, true);
+            y += 16;
         }
     }
 }

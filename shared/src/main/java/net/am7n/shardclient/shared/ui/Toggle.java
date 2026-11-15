@@ -13,12 +13,7 @@ import net.minecraft.sounds.SoundEvents;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-/**
- * An on/off switch. The knob slides with ease-in-out and stretches 12% along its travel while it moves; the track
- * colour follows it. The state is read from the supplier every frame, so it never disagrees with what it controls.
- */
 public final class Toggle extends Element {
-
     private static final int WIDTH = 22;
     private static final int HEIGHT = 12;
     private static final int KNOB = 8;
@@ -26,11 +21,17 @@ public final class Toggle extends Element {
     private final BooleanSupplier state;
     private final Consumer<Boolean> change;
     private final Tween position;
+    private BooleanSupplier enabled = () -> true;
 
     public Toggle(BooleanSupplier state, Consumer<Boolean> change) {
         this.state = state;
         this.change = change;
         this.position = new Tween(state.getAsBoolean() ? 1 : 0, 180, Motion.MOVE);
+    }
+
+    public Toggle enabledWhen(BooleanSupplier enabled) {
+        this.enabled = enabled;
+        return this;
     }
 
     @Override
@@ -41,7 +42,18 @@ public final class Toggle extends Element {
     @Override
     public void render(Canvas canvas) {
         Palette colors = Theme.colors();
-        position.set(state.getAsBoolean() ? 1 : 0);
+        boolean on = enabled.getAsBoolean();
+        if (!on) {
+            canvas.pushAlpha(0.35f);
+        }
+        drawSwitch(canvas, colors, on && state.getAsBoolean());
+        if (!on) {
+            canvas.popAlpha();
+        }
+    }
+
+    private void drawSwitch(Canvas canvas, Palette colors, boolean value) {
+        position.set(value ? 1 : 0);
         float p = position.get();
         int left = x + (width - WIDTH) / 2;
         int top = y + (height - HEIGHT) / 2;
@@ -50,7 +62,7 @@ public final class Toggle extends Element {
         if (p < 0.5f) {
             Theme.look().outline(canvas, left, top, WIDTH, HEIGHT, HEIGHT / 2f, 1, colors.hairline());
         }
-        // Stretch while travelling: widest half-way, normal at rest.
+
         float stretch = 1 + Motion.KNOB_STRETCH * (float) Math.sin(Math.PI * p);
         int knobWidth = Math.round(KNOB * stretch);
         int travel = WIDTH - 4 - knobWidth;
@@ -60,7 +72,7 @@ public final class Toggle extends Element {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0 || !contains(mouseX, mouseY)) {
+        if (button != 0 || !contains(mouseX, mouseY) || !enabled.getAsBoolean()) {
             return false;
         }
         change.accept(!state.getAsBoolean());

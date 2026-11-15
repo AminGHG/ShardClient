@@ -1,8 +1,6 @@
 package net.am7n.shardclient.full.module;
 
-/** Where a module is listed in the client menu. */
 public enum Category {
-
     VISUAL("Visual"),
     HUD("HUD"),
     PVP("PvP"),

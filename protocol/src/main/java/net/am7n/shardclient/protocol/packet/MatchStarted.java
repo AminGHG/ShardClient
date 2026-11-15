@@ -5,14 +5,7 @@ import net.am7n.shardclient.protocol.PacketReader;
 import net.am7n.shardclient.protocol.PacketWriter;
 import net.am7n.shardclient.protocol.ProtocolException;
 
-/**
- * A round begins: the player is on their spawn in the arena. Scores are from this player's point of view.
- *
- * @param round      1 for the first round
- * @param winsNeeded rounds needed to win the match
- */
 public record MatchStarted(int round, int winsNeeded, int scoreSelf, int scoreOpponent) implements ClientboundPacket {
-
     public static final int ID = 0x31;
 
     @Override

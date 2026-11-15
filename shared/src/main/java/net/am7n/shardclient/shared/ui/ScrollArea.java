@@ -5,20 +5,15 @@ import net.am7n.shardclient.shared.anim.Tween;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Theme;
 
-/**
- * A window onto content taller than itself. The mouse wheel scrolls it smoothly; a slim bar shows the position
- * when there is something to scroll.
- */
 public final class ScrollArea extends Container {
-
     private static final int WHEEL_STEP = 24;
+
+    private static final int INSET = 3;
 
     private final int viewHeight;
     private final Tween scroll = new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC);
     private int contentHeight;
 
-    /** @param viewHeight the height this area asks for; its content may be any height */
-    /** Jumps back to the top, e.g. when the content is replaced. */
     public void scrollToTop() {
         scroll.snap(0);
     }
@@ -36,8 +31,8 @@ public final class ScrollArea extends Container {
 
     @Override
     protected void layout() {
-        contentHeight = children.get(0).measure().height();
-        // Keep a running scroll animation; only pull the target back if the content got shorter.
+        contentHeight = children.get(0).measure().height() + INSET * 2;
+
         float clamped = Math.clamp(scroll.target(), 0, maxScroll());
         if (clamped != scroll.target()) {
             scroll.set(clamped);
@@ -50,8 +45,8 @@ public final class ScrollArea extends Container {
     }
 
     private void placeContent() {
-        int contentWidth = width - Theme.look().scrollbarWidth() - Theme.GAP_SMALL;
-        children.get(0).place(x, y - Math.round(scroll.get()), contentWidth, contentHeight);
+        int contentWidth = width - Theme.look().scrollbarWidth() - Theme.GAP_SMALL - INSET * 2;
+        children.get(0).place(x + INSET, y + INSET - Math.round(scroll.get()), contentWidth, contentHeight - INSET * 2);
     }
 
     @Override
@@ -87,7 +82,6 @@ public final class ScrollArea extends Container {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Content scrolled out of view must not be clickable.
         return contains(mouseX, mouseY) && super.mouseClicked(mouseX, mouseY, button);
     }
 }

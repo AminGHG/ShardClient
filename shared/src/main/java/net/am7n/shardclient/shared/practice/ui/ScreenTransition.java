@@ -9,21 +9,14 @@ import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Theme;
 import net.minecraft.resources.Identifier;
 
-/**
- * Covers the screen with the ShardPvP logo while the server moves the player, then reveals the new place through
- * an opening from the centre. Started by the server's {@code TransitionStart}, lifted by the event that says the
- * move is done. It is only ever used where the player cannot be harmed during it, and it lifts by itself after
- * {@link #MAX_COVER_MS} so it can never trap anyone.
- */
 public final class ScreenTransition implements Overlay {
-
     private static final Identifier LOGO = Identifier.fromNamespaceAndPath("shardclient-shared", "textures/gui/logo.png");
     private static final int LOGO_TEXTURE = 256;
     private static final int LOGO_SIZE = 56;
     private static final long COVER_MS = 160;
-    /** Exits are 20% shorter than entrances, but a reveal reads as the main motion, so it gets its own time. */
+
     private static final long REVEAL_MS = 380;
-    /** The cover stays up at least this long, so it never flickers. */
+
     private static final long MIN_COVER_MS = 220;
     private static final long MAX_COVER_MS = 1500;
 
@@ -34,11 +27,9 @@ public final class ScreenTransition implements Overlay {
     private long revealAt;
     private boolean revealRequested;
 
-    /** Covers the screen (again, if a reveal is still running). */
     public void cover() {
         long now = Clock.SYSTEM.nanos();
         if (phase == Phase.REVEALING) {
-            // Turn around from the current state instead of jumping to black.
             float shown = 1 - revealProgress(now);
             startedAt = now - (long) (shown * COVER_MS * 1_000_000L);
         } else if (phase == Phase.DONE) {
@@ -48,7 +39,6 @@ public final class ScreenTransition implements Overlay {
         revealRequested = false;
     }
 
-    /** The move is done: reveal as soon as the cover has been up for its minimum time. */
     public void reveal() {
         if (phase == Phase.COVERING) {
             revealRequested = true;
@@ -94,10 +84,6 @@ public final class ScreenTransition implements Overlay {
         return Math.clamp((now - revealAt) / (REVEAL_MS * 1_000_000f), 0f, 1f);
     }
 
-    /**
-     * The cover with a centred opening of {@code opening} (0 closed, 1 the whole screen): the new place shows
-     * through a mask that widens from the middle while the rest fades.
-     */
     private void drawCover(Canvas canvas, float alpha, float opening) {
         int width = canvas.width();
         int height = canvas.height();

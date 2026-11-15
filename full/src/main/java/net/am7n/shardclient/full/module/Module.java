@@ -13,13 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * A feature of the Full Client the player can switch on and off: name, description, category, settings, an
- * optional keybind and enable/disable callbacks. Everything here is client-side; no module needs the server.
- */
 public abstract class Module {
-
-    /** No key bound. */
     public static final int NO_KEY = -1;
 
     private final String id;
@@ -75,7 +69,6 @@ public abstract class Module {
         setEnabled(!enabled);
     }
 
-    /** Switches the module, running its callbacks. A failing callback leaves it off and is logged. */
     public void setEnabled(boolean value) {
         if (enabled == value) {
             return;
@@ -99,11 +92,9 @@ public abstract class Module {
     protected void onDisable() {
     }
 
-    /** Every client tick while enabled. */
     public void tick() {
     }
 
-    /** Draws on the HUD every frame while enabled (overlays such as a crosshair or a warning). */
     public void renderHud(net.am7n.shardclient.shared.render.Canvas canvas) {
     }
 
@@ -137,7 +128,6 @@ public abstract class Module {
         return json;
     }
 
-    /** Applies stored values; anything missing or malformed keeps its default. */
     public void fromJson(JsonObject json) {
         JsonElement keyJson = json.get("key");
         if (keyJson != null && keyJson.isJsonPrimitive() && keyJson.getAsJsonPrimitive().isNumber()) {

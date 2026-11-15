@@ -1,15 +1,10 @@
-// Development only. This mod is never released and is in neither product jar: it exists to look at the shared
-// components in a real game window.
-//
-//   gradlew :showcase:runClient                 opens the gallery on the title screen
-//   gradlew :showcase:runClient -Pcapture       also saves screenshots to showcase/run/screenshots and quits
 base {
     archivesName = 'shardclient-showcase'
 }
 
 dependencies {
     implementation project(':shared')
-    // The Full Client too, so its menus can be captured (-Pmenus).
+
     implementation project(':full')
 }
 

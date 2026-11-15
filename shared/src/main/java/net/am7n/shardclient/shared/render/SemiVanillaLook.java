@@ -3,27 +3,31 @@ package net.am7n.shardclient.shared.render;
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.minecraft.network.chat.Component;
 
-/**
- * Between the website and the game: the website's dark colours and typeface, but shapes snapped to Minecraft's
- * GUI pixel grid, so rounded corners show their pixel steps like the rest of the game.
- */
 public final class SemiVanillaLook implements Look {
+    public static final SemiVanillaLook DARK = new SemiVanillaLook("semi-vanilla", "Semi Vanilla", Palette.DARK);
+    public static final SemiVanillaLook LIGHT =
+            new SemiVanillaLook("semi-vanilla-light", "Semi Vanilla Light", Palette.LIGHT);
 
-    public static final SemiVanillaLook INSTANCE = new SemiVanillaLook();
+    public static final SemiVanillaLook INSTANCE = DARK;
 
-    private final Palette colors = Palette.DARK;
+    private final String id;
+    private final String displayName;
+    private final Palette colors;
 
-    private SemiVanillaLook() {
+    private SemiVanillaLook(String id, String displayName, Palette colors) {
+        this.id = id;
+        this.displayName = displayName;
+        this.colors = colors;
     }
 
     @Override
     public String id() {
-        return "semi-vanilla";
+        return id;
     }
 
     @Override
     public String displayName() {
-        return "Semi Vanilla";
+        return displayName;
     }
 
     @Override
@@ -57,7 +61,6 @@ public final class SemiVanillaLook implements Look {
         canvas.roundFrame(x, y, width, height, Theme.RADIUS_PANEL, colors.hairline());
     }
 
-    /** The website's radius on Minecraft's pixel grid: about half, so corners show a few clean steps. */
     private static int gridRadius(float radius) {
         return Math.clamp(Math.round(radius / 2f), 0, Theme.RADIUS_PANEL);
     }
@@ -82,7 +85,6 @@ public final class SemiVanillaLook implements Look {
             return;
         }
         if (primary) {
-            // The same main-button styles as the website look, on the pixel grid.
             switch (Theme.primaryStyle()) {
                 case LILAC -> canvas.roundRect(x, y, width, height, radius,
                         Lerp.color(colors.primary(), colors.primaryHovered(), highlight));

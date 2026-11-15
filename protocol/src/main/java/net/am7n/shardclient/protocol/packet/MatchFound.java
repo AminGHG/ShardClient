@@ -7,19 +7,8 @@ import net.am7n.shardclient.protocol.ProtocolException;
 
 import java.util.UUID;
 
-/**
- * The server paired this player with an opponent. Each player gets their own copy, describing the other one.
- * Receiving it also means the player is out of whatever queue they were in.
- *
- * @param opponentId   the opponent's profile id; the client already knows the skin of anyone on the server
- * @param mode         the gamemode, e.g. {@code 1v1}
- * @param kit          the kit being played; empty when the server does not say
- * @param arena        where the match is played; empty when the server does not say
- * @param opponentRank the opponent's rank as text; empty when there is none (unranked)
- */
 public record MatchFound(UUID opponentId, String opponentName, String mode, String kit, String arena,
                          boolean ranked, String opponentRank) implements ClientboundPacket {
-
     public static final int ID = 0x13;
     public static final int MAX_PLAYER_NAME_CHARS = 16;
     public static final int MAX_TEXT_CHARS = 48;

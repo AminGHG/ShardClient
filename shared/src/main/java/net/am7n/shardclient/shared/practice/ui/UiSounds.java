@@ -7,18 +7,10 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 
-/**
- * The client's own interface sounds, built from Minecraft's sounds so nothing extra is downloaded. They sit on
- * top of the sounds the server already plays for everyone, so they are short and pitched higher than those to
- * add sparkle rather than noise. Only this player hears them.
- */
 public final class UiSounds {
-
-    /** Semitone steps of the Match Found arpeggio (a major chord rising to the octave), from F#. */
     private static final int[] MATCH_ARPEGGIO = {0, 4, 7, 12};
     private static final int ARPEGGIO_STEP_TICKS = 2;
 
-    /** Off switch for the settings to come. */
     private static volatile boolean enabled = true;
 
     private UiSounds() {
@@ -26,6 +18,22 @@ public final class UiSounds {
 
     public static void setEnabled(boolean value) {
         enabled = value;
+    }
+
+    private static volatile boolean hoverEnabled = true;
+    private static long lastHoverAt;
+
+    public static void setHoverEnabled(boolean value) {
+        hoverEnabled = value;
+    }
+
+    public static void hover() {
+        long now = System.currentTimeMillis();
+        if (!hoverEnabled || now - lastHoverAt < 45) {
+            return;
+        }
+        lastHoverAt = now;
+        Minecraft.getInstance().getSoundManager().play(new GlassTick(0.45f));
     }
 
     public static void matchFound() {
@@ -59,13 +67,11 @@ public final class UiSounds {
         }
     }
 
-    /** A quiet tick while a progress bar moves; higher further along, lower when draining. */
     public static void barTick(float progress, boolean rising) {
         float pitch = rising ? 0.8f + progress * 0.8f : 1.2f - progress * 0.2f;
         play(SoundEvents.NOTE_BLOCK_HAT.value(), pitch, 0.18f, 0);
     }
 
-    /** The rank-progress bar crossed into another rank. */
     public static void rankChanged(boolean up) {
         if (up) {
             play(SoundEvents.PLAYER_LEVELUP, 1.0f, 0.6f, 0);
@@ -89,7 +95,6 @@ public final class UiSounds {
         }
     }
 
-    /** Note-block pitch for {@code semitones} above F#. */
     private static float pitch(int semitones) {
         return (float) Math.pow(2, semitones / 12.0);
     }
