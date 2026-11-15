@@ -39,7 +39,7 @@ public final class LyricsModule extends HudModule {
     final BooleanSetting facePlayer = bool("face_you", "Turn to face you", false);
     final ChoiceSetting letters = choice("letters", "Letters", "3D", "3D", "Flat");
     final NumberSetting depth = number("depth", "3D depth", 2, 0.5, 6, 0.5, " px");
-    final BooleanSetting throughWalls = bool("through_walls", "See through walls", true);
+    final BooleanSetting throughWalls = bool("through_walls_v2", "See through walls", false);
 
     final ChoiceSetting font = choice("font", "Font", "Minecraft", "Minecraft", "Minecraft Uniform", "ShardClient",
             "Caveat", "Dancing Script", "Satisfy", "Permanent Marker", "Bebas Neue", "Anton", "Righteous",
@@ -98,10 +98,11 @@ public final class LyricsModule extends HudModule {
                 worldSize.set(1.6);
                 letters.set("Flat");
                 font.set("Caveat");
-                color.set("White");
-                shadow.set(false);
+                color.set("Gradient");
+                shadow.set(true);
+                throughWalls.set(false);
                 glow.set("Soft");
-                glowColor.set("White");
+                glowColor.set("Lilac");
                 enter.set("Rise");
                 exit.set("Fade");
                 idle.set("Float");
@@ -116,7 +117,7 @@ public final class LyricsModule extends HudModule {
                 depth.set(2.5);
                 font.set("Minecraft");
                 bold.set(true);
-                color.set("White");
+                color.set("Gold");
                 glow.set("Off");
                 enter.set("Pop");
                 exit.set("Drop");
@@ -130,7 +131,7 @@ public final class LyricsModule extends HudModule {
                 color.set("Gradient");
                 glow.set("Strong");
                 glowColor.set("Same as text");
-                throughWalls.set(true);
+                throughWalls.set(false);
                 enter.set("Fade");
                 exit.set("Fade");
                 idle.set("Pulse");
@@ -153,8 +154,9 @@ public final class LyricsModule extends HudModule {
                 letters.set("Flat");
                 font.set("Bebas Neue");
                 uppercase.set(true);
-                color.set("White");
+                color.set("Rainbow");
                 shadow.set(true);
+                throughWalls.set(false);
                 glow.set("Off");
                 enter.set("Drop");
                 exit.set("Shrink");
