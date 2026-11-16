@@ -13,6 +13,8 @@ public final class Keys {
     public static KeyMapping zoom;
     public static KeyMapping freelook;
     public static KeyMapping copyCoordinates;
+    public static KeyMapping addWaypoint;
+    public static KeyMapping removeWaypoint;
 
     private Keys() {
     }
@@ -23,6 +25,10 @@ public final class Keys {
         freelook = KeyMappingHelper.registerKeyMapping(
                 new KeyMapping("key.shardclient.freelook", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, CATEGORY));
         copyCoordinates = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.shardclient.copy_coordinates",
+                InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
+        addWaypoint = KeyMappingHelper.registerKeyMapping(
+                new KeyMapping("key.shardclient.add_waypoint", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, CATEGORY));
+        removeWaypoint = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.shardclient.remove_waypoint",
                 InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
     }
 }

@@ -18,7 +18,9 @@
     "module.LivingEntityEventMixin",
     "module.LivingEntityRendererMixin",
     "module.MouseHandlerMixin",
-    "module.ScreenEffectRendererMixin"
+    "module.OverlayTextureAccessor",
+    "module.ScreenEffectRendererMixin",
+    "module.ScreenshotMixin"
   ],
   "injectors": {
     "defaultRequire": 1

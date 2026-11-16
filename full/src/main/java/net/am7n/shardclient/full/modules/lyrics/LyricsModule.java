@@ -10,6 +10,7 @@ import net.am7n.shardclient.full.module.setting.NumberSetting;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Theme;
+import net.am7n.shardclient.shared.ui.Element;
 import net.am7n.shardclient.shared.ui.Size;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FontDescription;
@@ -27,20 +28,6 @@ public final class LyricsModule extends HudModule {
             "Neon Sign", "Karaoke", "Poster");
     private String appliedPreset;
 
-    public final ChoiceSetting place = choice("place", "Where", "In front", "Screen", "In front", "Sky", "Around you",
-            "Follow view");
-    final NumberSetting distance = number("distance", "World distance", 6, 2, 30, 0.5, " blocks");
-    final NumberSetting height = number("height", "World height", 0.4, -4, 12, 0.1, " blocks");
-    final NumberSetting sideSpread = number("side_spread", "Side spread", 14, 0, 40, 1, "°");
-    final NumberSetting skyDistance = number("sky_distance_v2", "Sky distance", 80, 30, 200, 5, " blocks");
-    final NumberSetting skyHeight = number("sky_height_v2", "Sky height", 32, 10, 100, 1, " blocks");
-    final NumberSetting worldSize = number("world_size", "World text size", 1, 0.25, 4, 0.05, "×");
-
-    final BooleanSetting facePlayer = bool("face_you", "Turn to face you", false);
-    final ChoiceSetting letters = choice("letters", "Letters", "3D", "3D", "Flat");
-    final NumberSetting depth = number("depth", "3D depth", 2, 0.5, 6, 0.5, " px");
-    final BooleanSetting throughWalls = bool("through_walls_v2", "See through walls", false);
-
     final ChoiceSetting font = choice("font", "Font", "Minecraft", "Minecraft", "Minecraft Uniform", "ShardClient",
             "Caveat", "Dancing Script", "Satisfy", "Permanent Marker", "Bebas Neue", "Anton", "Righteous",
             "Space Mono", "Random per song", "Random per line");
@@ -54,27 +41,85 @@ public final class LyricsModule extends HudModule {
     final ChoiceSetting glowColor = choice("glow_color", "Glow colour", "Same as text", "Same as text", "White",
             "Lilac", "Pink", "Gold");
 
+    final ChoiceSetting layout = choice("layout", "Layout", "Lines", "Lines", "Words");
+    final NumberSetting maxWidth = number("max_width", "Max line width", 170, 80, 400, 10, " px");
+    final BooleanSetting next = bool("next", "Show the next line", true);
+    final BooleanSetting previous = bool("previous", "Keep the last line briefly", true);
+    final BooleanSetting karaoke = bool("karaoke", "Karaoke fill", false);
+
+    public final ChoiceSetting place = choice("place", "Where", "In front", "Screen", "In front", "Sky", "Around you",
+            "Follow view");
+    final NumberSetting distance = number("distance", "Distance", 6, 2, 30, 0.5, " blocks");
+    final NumberSetting height = number("height", "Height", 0.4, -4, 12, 0.1, " blocks");
+    final NumberSetting sideSpread = number("side_spread", "Side spread", 14, 0, 40, 1, "°");
+    final NumberSetting skyDistance = number("sky_distance_v2", "Sky distance", 80, 30, 200, 5, " blocks");
+    final NumberSetting skyHeight = number("sky_height_v2", "Sky height", 32, 10, 100, 1, " blocks");
+    final NumberSetting worldSize = number("world_size", "Text size", 1, 0.25, 4, 0.05, "×");
+    final ChoiceSetting letters = choice("letters", "Letters", "3D", "3D", "Flat");
+    final NumberSetting depth = number("depth", "3D depth", 2, 0.5, 6, 0.5, " px");
+    final BooleanSetting facePlayer = bool("face_you", "Turn to face you", false);
+    final BooleanSetting throughWalls = bool("through_walls_v2", "See through walls", false);
+
     final ChoiceSetting enter = choice("enter", "Entrance", "Rise", "Fade", "Rise", "Drop", "Pop", "Typewriter",
-            "Words");
+            "Word by word");
     final ChoiceSetting exit = choice("exit", "Exit", "Fade", "Fade", "Rise", "Drop", "Shrink", "Backspace", "None");
     final NumberSetting speed = number("anim_speed", "Animation speed", 1, 0.25, 3, 0.05, "×");
     final ChoiceSetting idle = choice("idle", "While shown", "None", "None", "Float", "Pulse", "Wave");
-    final BooleanSetting karaoke = bool("karaoke", "Karaoke fill", false);
-    final BooleanSetting next = bool("next", "Show the next line", true);
-    final BooleanSetting previous = bool("previous", "Keep the last line briefly", true);
 
     final NumberSetting offset = number("offset", "Timing offset", 0, -2000, 2000, 50, " ms");
     final BooleanSetting spotifyOnly = bool("spotify_only", "Only Spotify", false);
     final BooleanSetting whilePaused = bool("paused", "Keep showing while paused", false);
 
-    private Lyrics shownLyrics;
-    private int index = -2;
-    private int lastIndex = -2;
-    private long changedAt;
+    private static final class Timeline {
+        private Lyrics shown;
+        private int index = -2;
+        private int last = -2;
+        private long changedAt;
+    }
+
+    private final Timeline live = new Timeline();
+    private final Timeline sample = new Timeline();
+    private final long sampleStart = System.currentTimeMillis();
+    private static final Lyrics SAMPLE = new Lyrics(List.of(
+            new Lyrics.Line(0, "Lights are falling from the sky"),
+            new Lyrics.Line(2800, "We keep running through the night"),
+            new Lyrics.Line(5600, "Sing it louder"),
+            new Lyrics.Line(8400, "Every word is shining bright")));
+    private static final long SAMPLE_LENGTH = 11200;
 
     public LyricsModule() {
         super("lyrics", "Lyrics", "Synced lyrics of your music, on screen or out in the world.", 0.5f, 0.2f);
         background.set(false);
+        moveToEnd(scale, background, enter, exit, speed, idle, offset, spotifyOnly, whilePaused);
+
+        preset.heading("Style");
+        layout.heading("Layout");
+        place.heading("Position");
+        enter.heading("Animation");
+        offset.heading("Music");
+
+        glowColor.showIf(() -> !glow.is("Off"));
+        outline.showIf(this::inWorld);
+        distance.showIf(() -> inWorld() && !place.is("Sky"));
+        height.showIf(this::inWorld);
+        sideSpread.showIf(() -> place.is("In front") || place.is("Sky"));
+        skyDistance.showIf(() -> place.is("Sky"));
+        skyHeight.showIf(() -> place.is("Sky"));
+        worldSize.showIf(this::inWorld);
+        letters.showIf(this::inWorld);
+        depth.showIf(() -> inWorld() && letters.is("3D"));
+        facePlayer.showIf(() -> inWorld() && !place.is("Follow view"));
+        throughWalls.showIf(this::inWorld);
+        scale.showIf(() -> !inWorld());
+        background.showIf(() -> !inWorld());
+    }
+
+    int maxLineWidth() {
+        return maxWidth.intValue();
+    }
+
+    boolean wordsLayout() {
+        return layout.is("Words");
     }
 
     @Override
@@ -86,7 +131,24 @@ public final class LyricsModule extends HudModule {
         } else if (!appliedPreset.equals(preset.get())) {
             appliedPreset = preset.get();
             applyPreset(appliedPreset);
+            presetSnapshot = preset.is("Custom") ? null : snapshot();
+        } else if (presetSnapshot != null && !snapshot().equals(presetSnapshot)) {
+            presetSnapshot = null;
+            preset.set("Custom");
+            appliedPreset = "Custom";
         }
+    }
+
+    private String presetSnapshot;
+
+    private String snapshot() {
+        StringBuilder out = new StringBuilder();
+        for (net.am7n.shardclient.full.module.setting.Setting<?> setting : settings()) {
+            if (setting != preset) {
+                out.append(setting.id()).append('=').append(setting.get()).append(';');
+            }
+        }
+        return out.toString();
     }
 
     private void applyPreset(String name) {
@@ -95,7 +157,7 @@ public final class LyricsModule extends HudModule {
                 place.set("Sky");
                 skyDistance.set(90.0);
                 skyHeight.set(38.0);
-                worldSize.set(1.6);
+                worldSize.set(1.1);
                 letters.set("Flat");
                 font.set("Caveat");
                 color.set("Gradient");
@@ -103,6 +165,7 @@ public final class LyricsModule extends HudModule {
                 throughWalls.set(false);
                 glow.set("Soft");
                 glowColor.set("Lilac");
+                layout.set("Words");
                 enter.set("Rise");
                 exit.set("Fade");
                 idle.set("Float");
@@ -119,6 +182,7 @@ public final class LyricsModule extends HudModule {
                 bold.set(true);
                 color.set("Gold");
                 glow.set("Off");
+                layout.set("Lines");
                 enter.set("Pop");
                 exit.set("Drop");
                 idle.set("None");
@@ -132,6 +196,7 @@ public final class LyricsModule extends HudModule {
                 glow.set("Strong");
                 glowColor.set("Same as text");
                 throughWalls.set(false);
+                layout.set("Lines");
                 enter.set("Fade");
                 exit.set("Fade");
                 idle.set("Pulse");
@@ -144,6 +209,7 @@ public final class LyricsModule extends HudModule {
                 next.set(true);
                 shadow.set(true);
                 glow.set("Off");
+                layout.set("Lines");
                 enter.set("Fade");
                 exit.set("Rise");
                 idle.set("None");
@@ -158,6 +224,7 @@ public final class LyricsModule extends HudModule {
                 shadow.set(true);
                 throughWalls.set(false);
                 glow.set("Off");
+                layout.set("Words");
                 enter.set("Drop");
                 exit.set("Shrink");
                 idle.set("None");
@@ -176,25 +243,34 @@ public final class LyricsModule extends HudModule {
     }
 
     List<LyricFrame> frames() {
-        List<LyricFrame> out = new ArrayList<>();
         Lyrics lyrics = MediaWatcher.get().lyrics();
         NowPlaying playing = track().orElse(null);
         if (playing == null || lyrics.isEmpty()) {
-            return out;
+            return new ArrayList<>();
         }
-        if (lyrics != shownLyrics) {
-            shownLyrics = lyrics;
-            index = -2;
-            lastIndex = -2;
+        return frames(live, lyrics, playing.positionNow() + offset.intValue());
+    }
+
+    private List<LyricFrame> sampleFrames() {
+        return frames(sample, SAMPLE, (System.currentTimeMillis() - sampleStart) % SAMPLE_LENGTH);
+    }
+
+    private List<LyricFrame> frames(Timeline timeline, Lyrics lyrics, long position) {
+        List<LyricFrame> out = new ArrayList<>();
+        if (lyrics != timeline.shown) {
+            timeline.shown = lyrics;
+            timeline.index = -2;
+            timeline.last = -2;
         }
-        long position = playing.positionNow() + offset.intValue();
         int now = lyrics.indexAt(position);
-        if (now != index) {
-            lastIndex = index;
-            index = now;
-            changedAt = System.currentTimeMillis();
+        if (now != timeline.index) {
+            timeline.last = timeline.index;
+            timeline.index = now;
+            timeline.changedAt = System.currentTimeMillis();
         }
-        float since = (System.currentTimeMillis() - changedAt) / (1000f / speed.floatValue());
+        int index = timeline.index;
+        int lastIndex = timeline.last;
+        float since = (System.currentTimeMillis() - timeline.changedAt) / (1000f / speed.floatValue());
         float in = Math.clamp(since / 0.45f, 0f, 1f);
         float out_ = Math.clamp(since / 0.35f, 0f, 1f);
 
@@ -203,12 +279,14 @@ public final class LyricsModule extends HudModule {
             out.add(leaving(lyrics, lastIndex, out_));
         }
         if (index >= 0) {
-            out.add(arriving(lyrics, index, in, position));
+            out.add(arriving(timeline, lyrics, index, in, position));
         }
         if (next.on() && index + 1 < lyrics.lines().size()) {
+            styleLine = index + 1;
             String text = shownText(lyrics, index + 1);
-            out.add(new LyricFrame(style(text, colorFor(index + 1, 0)), colorFor(index + 1, 0), 0.45f * in,
-                    lineGap() + (1 - in) * 6, 0.8f, LyricFrame.Role.NEXT, index + 1));
+            Component styled = style(text, colorFor(index + 1, 0));
+            out.add(new LyricFrame(styled, styled, colorFor(index + 1, 0), 0.45f * in, lineGap() + (1 - in) * 6, 0.8f,
+                    LyricFrame.Role.NEXT, index + 1));
         }
         return out;
     }
@@ -217,8 +295,10 @@ public final class LyricsModule extends HudModule {
         return 13;
     }
 
-    private LyricFrame arriving(Lyrics lyrics, int at, float t, long position) {
-        String text = shownText(lyrics, at);
+    private LyricFrame arriving(Timeline timeline, Lyrics lyrics, int at, float t, long position) {
+        styleLine = at;
+        String full = shownText(lyrics, at);
+        String text = full;
         float eased = (float) Easing.OUT_CUBIC.apply(t);
         float alpha = eased;
         float dy = 0;
@@ -231,7 +311,7 @@ public final class LyricsModule extends HudModule {
                 text = text.substring(0, Math.round(text.length() * Math.min(1f, t * 1.4f)));
                 alpha = 1;
             }
-            case "Words" -> {
+            case "Word by word" -> {
                 String[] words = text.split(" ");
                 int shown = Math.max(1, Math.round(words.length * Math.min(1f, t * 1.2f)));
                 text = String.join(" ", java.util.Arrays.copyOf(words, Math.min(shown, words.length)));
@@ -240,7 +320,7 @@ public final class LyricsModule extends HudModule {
             default -> {
             }
         }
-        long sinceStart = System.currentTimeMillis() - changedAt;
+        long sinceStart = System.currentTimeMillis() - timeline.changedAt;
         switch (idle.get()) {
             case "Float" -> dy += (float) Math.sin(sinceStart / 600.0) * 1.5f;
             case "Pulse" -> scale *= 1 + 0.03f * (float) Math.sin(sinceStart / 300.0);
@@ -249,16 +329,19 @@ public final class LyricsModule extends HudModule {
         }
         int c = colorFor(at, sinceStart);
         Component styled = style(text, c);
+        Component styledFull = style(full, c);
         if (karaoke.on()) {
             styled = karaokeFill(text, c, fill(lyrics, at, position));
         } else if (idle.is("Wave")) {
             styled = wave(text, c, sinceStart);
         }
-        return new LyricFrame(styled, c, alpha, dy, scale, LyricFrame.Role.CURRENT, at);
+        return new LyricFrame(styled, styledFull, c, alpha, dy, scale, LyricFrame.Role.CURRENT, at);
     }
 
     private LyricFrame leaving(Lyrics lyrics, int at, float t) {
-        String text = shownText(lyrics, at);
+        styleLine = at;
+        String full = shownText(lyrics, at);
+        String text = full;
         float eased = (float) Easing.OUT_CUBIC.apply(t);
         float alpha = 1 - eased;
         float dy = 0;
@@ -275,8 +358,7 @@ public final class LyricsModule extends HudModule {
             }
         }
         int c = colorFor(at, 0);
-        return new LyricFrame(style(text, c), c, alpha * 0.7f, dy - lineGap() * (inWorld() ? 0 : 0), scale,
-                LyricFrame.Role.PREVIOUS, at);
+        return new LyricFrame(style(text, c), style(full, c), c, alpha * 0.7f, dy, scale, LyricFrame.Role.PREVIOUS, at);
     }
 
     private static float backOut(float t) {
@@ -325,8 +407,8 @@ public final class LyricsModule extends HudModule {
 
     float glowStrength() {
         return switch (glow.get()) {
-            case "Soft" -> 0.18f;
-            case "Strong" -> 0.34f;
+            case "Soft" -> 0.45f;
+            case "Strong" -> 0.8f;
             default -> 0f;
         };
     }
@@ -405,6 +487,7 @@ public final class LyricsModule extends HudModule {
     }
 
     private static final int WIDTH = 260;
+    private static final float SCREEN_SCALE = 1.4f;
 
     @Override
     public boolean visible() {
@@ -413,55 +496,135 @@ public final class LyricsModule extends HudModule {
 
     @Override
     public Size size(Canvas canvas) {
-        return new Size(WIDTH, 44);
+        return new Size(WIDTH, 44 + Math.round((currentHeight(canvas, frames()) - LyricLayout.ROW) * SCREEN_SCALE));
+    }
+
+    private float currentHeight(Canvas canvas, List<LyricFrame> frames) {
+        for (LyricFrame frame : frames) {
+            if (frame.role() == LyricFrame.Role.CURRENT) {
+                return LyricLayout.height(screenRows(canvas, frame, SCREEN_SCALE * frame.scale(), wordsLayout()));
+            }
+        }
+        return LyricLayout.ROW;
+    }
+
+    private List<LyricLayout.Row> screenRows(Canvas canvas, LyricFrame frame, float scale, boolean words) {
+        int wrap = Math.max(40, Math.min(maxLineWidth(), Math.round((WIDTH - 8) / scale)));
+        return LyricLayout.rows(frame.full(), words, wrap, fontFor(frame.lineId()) + bold.on(),
+                c -> canvas.font().width(c));
     }
 
     @Override
     public void draw(Canvas canvas, int x, int y) {
         List<LyricFrame> frames = frames();
         if (frames.isEmpty()) {
-            frames = List.of(new LyricFrame(style("♪ Lyrics show here while music plays", PALETTE[0]), PALETTE[0], 1, 0,
-                    1, LyricFrame.Role.CURRENT, 0));
+            Component hint = style("♪ Lyrics show here while music plays", PALETTE[0]);
+            frames = List.of(new LyricFrame(hint, hint, PALETTE[0], 1, 0, 1, LyricFrame.Role.CURRENT, 0));
         }
         Size size = size(canvas);
         drawBackground(canvas, x, y, size.width(), size.height());
-        int centerX = x + WIDTH / 2;
-        int baseY = y + 10;
+        drawLines(canvas, frames, x + WIDTH / 2, y + 10);
+    }
+
+    private void drawLines(Canvas canvas, List<LyricFrame> frames, int centerX, float baseY) {
+        float currentHeight = currentHeight(canvas, frames);
         for (LyricFrame frame : frames) {
-            float base = frame.role() == LyricFrame.Role.CURRENT ? 1.4f : frame.role() == LyricFrame.Role.NEXT ? 1f : 1.4f;
-            float scale = base * frame.scale();
-            int width = canvas.textWidth(frame.text());
-            float fit = Math.min(1f, (WIDTH - 8) / Math.max(1f, width * scale));
-            scale *= fit;
-            float lineY = baseY + frame.offsetY() + (frame.role() == LyricFrame.Role.NEXT ? 10 : 0);
+            if (frame.role() == LyricFrame.Role.PREVIOUS && wordsLayout()) {
+                continue;
+            }
+            boolean isNext = frame.role() == LyricFrame.Role.NEXT;
+            float scale = (isNext ? 1f : SCREEN_SCALE) * frame.scale();
+            List<LyricLayout.Row> rows = screenRows(canvas, frame, scale, wordsLayout() && !isNext);
+            float lineY = baseY + frame.offsetY()
+                    + (isNext ? 10 + (currentHeight - LyricLayout.ROW) * SCREEN_SCALE : 0);
             canvas.push();
             canvas.translate(centerX, lineY);
             canvas.scale(scale, 0, 0);
             canvas.pushAlpha(frame.alpha());
-            float glowAmount = glowStrength();
-            if (glowAmount > 0 && frame.role() != LyricFrame.Role.NEXT) {
-                int g = glowColor(frame.color());
-                canvas.pushAlpha(glowAmount);
-                for (int[] o : GLOW_OFFSETS) {
-                    canvas.textCentered(recolor(frame.text(), g), o[0], o[1] - 4, g, false);
+            float glowAmount = isNext ? 0 : glowStrength();
+            float rowY = -4;
+            for (LyricLayout.Row row : rows) {
+                Component part = LyricLayout.slice(frame.text(), row.start(), row.end());
+                int rowX = -row.width() / 2;
+                canvas.push();
+                canvas.translate(0, rowY);
+                canvas.scale(row.scale(), 0, 0);
+                if (glowAmount > 0) {
+                    drawGlow(canvas, frame, row, part, rowX, glowAmount);
                 }
-                canvas.popAlpha();
+                canvas.line(part.getVisualOrderText(), rowX, 0, 0xFFFFFFFF, shadow.on());
+                canvas.pop();
+                rowY += row.height();
             }
-            canvas.textCentered(frame.text(), 0, -4, 0xFFFFFFFF, shadow.on());
             canvas.popAlpha();
             canvas.pop();
         }
     }
 
-    static final int[][] GLOW_OFFSETS = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, 1}, {-1, 1}, {1, -1},
-            {-2, 0}, {2, 0}, {0, -2}, {0, 2}};
+    private void drawGlow(Canvas canvas, LyricFrame frame, LyricLayout.Row row, Component part, int rowX,
+                          float amount) {
+        int shown = Math.min(row.width(), canvas.font().width(part));
+        if (shown <= 0) {
+            return;
+        }
+        LyricGlow.Texture glowTexture = glowTexture(frame, row);
+        if (glowTexture == null) {
+            return;
+        }
+        int fullWidth = row.width() + LyricGlow.PAD * 2;
+        int quadWidth = shown + LyricGlow.PAD * 2;
+        int uWidth = Math.round(glowTexture.width() * quadWidth / (float) fullWidth);
+        int[] colors = glowColors(frame.color());
+        int rgb = lerp(colors[0], colors[1], 0.5f) & 0xFFFFFF;
+        int alpha = Math.round(Math.min(1f, amount) * 255);
+        canvas.texture(GlowPipelines.GUI, glowTexture.id(), rowX - LyricGlow.PAD, -LyricGlow.PAD, quadWidth,
+                LyricGlow.QUAD_HEIGHT, 0, 0, uWidth, glowTexture.height(), glowTexture.width(),
+                glowTexture.height(), alpha << 24 | rgb);
+    }
 
-    static Component recolor(Component text, int c) {
-        MutableComponent out = Component.empty();
-        text.visit((style, part) -> {
-            out.append(Component.literal(part).withStyle(style.withColor(c & 0xFFFFFF)));
-            return Optional.empty();
-        }, Style.EMPTY);
-        return out;
+    LyricGlow.Texture glowTexture(LyricFrame frame, LyricLayout.Row row) {
+        String text = LyricLayout.plain(LyricLayout.slice(frame.full(), row.start(), row.end()));
+        return LyricGlow.get(text, fontFor(frame.lineId()), bold.on(), row.width());
+    }
+
+    int[] glowColors(int textColor) {
+        if (glowColor.is("Same as text") && color.is("Gradient")) {
+            return new int[]{PALETTE[1], PALETTE[2]};
+        }
+        int c = glowColor(textColor);
+        return new int[]{c, c};
+    }
+
+    @Override
+    public Element preview() {
+        return new Preview();
+    }
+
+    private final class Preview extends Element {
+        @Override
+        public Size measure() {
+            return new Size(160, 84);
+        }
+
+        @Override
+        public void render(Canvas canvas) {
+            canvas.smoothRect(x, y, width, height, 5, 0xFF0E0B18);
+            canvas.gradient(x + 1, y + height / 2, width - 2, height / 2 - 1, 0x00000000, 0x55302050);
+            canvas.text(Theme.text(Component.literal("PREVIEW"), true), x + 6, y + 5, 0x88FFFFFF, false);
+            canvas.text(Theme.text(Component.literal(place.get()), false),
+                    x + width - 6 - canvas.textWidth(Theme.text(Component.literal(place.get()), false)), y + 5,
+                    0x66FFFFFF, false);
+            List<LyricFrame> frames = sampleFrames();
+            float block = currentHeight(canvas, frames) * SCREEN_SCALE + (next.on() ? 12 : 0);
+            float fit = Math.min(1f, Math.min((width - 12) / (float) WIDTH, (height - 22) / block));
+            int centerX = x + width / 2;
+            float centerY = y + 8 + (height - 8) / 2f;
+            canvas.clip(x + 1, y + 1, width - 2, height - 2);
+            canvas.push();
+            canvas.scale(fit, centerX, centerY);
+            drawLines(canvas, frames, centerX, centerY - block / 2 + 4 * SCREEN_SCALE);
+            canvas.pop();
+            canvas.unclip();
+        }
     }
 }

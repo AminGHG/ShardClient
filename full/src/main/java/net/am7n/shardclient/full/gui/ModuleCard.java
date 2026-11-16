@@ -25,6 +25,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 final class ModuleCard extends Container {
     private static final int HEADER = 32;
@@ -33,7 +34,8 @@ final class ModuleCard extends Container {
 
     private final Module module;
     private final Toggle toggle;
-    private final List<SettingRow> rows = new ArrayList<>();
+    private final List<Element> rows = new ArrayList<>();
+    private final List<BooleanSupplier> rowShown = new ArrayList<>();
     private final Tween open = new Tween(0, 220, Motion.MOVE);
     private final Tween hover = new Tween(0, 110, Easing.OUT_CUBIC);
     private final net.am7n.shardclient.shared.ui.Hover hoverFeedback = new net.am7n.shardclient.shared.ui.Hover();
@@ -45,13 +47,33 @@ final class ModuleCard extends Container {
         this.toggle = new Toggle(module::isEnabled, module::setEnabled);
         this.appearAt = Clock.SYSTEM.nanos() + index * Motion.ROW_STAGGER_MS * 1_000_000L;
         add(toggle);
-        for (Setting<?> setting : module.settings()) {
-            rows.add(new SettingRow(setting.name(), control(setting)));
+        Element preview = module.preview();
+        if (preview != null) {
+            addRow(preview, () -> true);
         }
-        rows.add(new SettingRow("Keybind", new KeybindPill(module)));
-        for (SettingRow row : rows) {
-            add(row);
+        List<Setting<?>> all = module.settings();
+        for (int i = 0; i < all.size(); i++) {
+            Setting<?> setting = all.get(i);
+            if (setting.heading() != null) {
+                List<Setting<?>> group = new ArrayList<>();
+                for (int j = i; j < all.size() && (j == i || all.get(j).heading() == null); j++) {
+                    group.add(all.get(j));
+                }
+                addRow(new HeadingRow(setting.heading()), () -> group.stream().anyMatch(Setting::shown));
+            }
+            addRow(new SettingRow(setting.name(), control(setting)), setting::shown);
         }
+        addRow(new SettingRow("Keybind", new KeybindPill(module)), () -> true);
+    }
+
+    private void addRow(Element row, BooleanSupplier shown) {
+        rows.add(row);
+        rowShown.add(shown);
+        add(row);
+    }
+
+    private boolean shown(int index) {
+        return rowShown.get(index).getAsBoolean();
     }
 
     private static Element control(Setting<?> setting) {
@@ -64,7 +86,13 @@ final class ModuleCard extends Container {
     }
 
     private int settingsHeight() {
-        return PADDING + rows.size() * (SettingRow.HEIGHT + GAP);
+        int height = PADDING;
+        for (int i = 0; i < rows.size(); i++) {
+            if (shown(i)) {
+                height += rows.get(i).measure().height() + GAP;
+            }
+        }
+        return height;
     }
 
     @Override
@@ -78,9 +106,16 @@ final class ModuleCard extends Container {
         toggle.place(x + width - PADDING - switchSize.width(), y + (HEADER - switchSize.height()) / 2,
                 switchSize.width(), switchSize.height());
         int rowY = y + HEADER;
-        for (SettingRow row : rows) {
-            row.place(x + PADDING + 4, rowY, width - PADDING * 2 - 4, SettingRow.HEIGHT);
-            rowY += SettingRow.HEIGHT + GAP;
+        for (int i = 0; i < rows.size(); i++) {
+            Element row = rows.get(i);
+            boolean visible = shown(i);
+            row.visible(visible);
+            if (!visible) {
+                continue;
+            }
+            int rowHeight = row.measure().height();
+            row.place(x + PADDING + 4, rowY, width - PADDING * 2 - 4, rowHeight);
+            rowY += rowHeight + GAP;
         }
     }
 
@@ -115,8 +150,10 @@ final class ModuleCard extends Container {
         if (openness > 0) {
             canvas.clip(x, y + HEADER, width, height - HEADER);
             canvas.pushAlpha(openness);
-            for (SettingRow row : rows) {
-                row.render(canvas);
+            for (int i = 0; i < rows.size(); i++) {
+                if (shown(i)) {
+                    rows.get(i).render(canvas);
+                }
             }
             canvas.popAlpha();
             canvas.unclip();
@@ -159,8 +196,8 @@ final class ModuleCard extends Container {
             return true;
         }
         if (expanded) {
-            for (SettingRow row : rows) {
-                if (row.mouseClicked(mouseX, mouseY, button)) {
+            for (int i = 0; i < rows.size(); i++) {
+                if (shown(i) && rows.get(i).mouseClicked(mouseX, mouseY, button)) {
                     return true;
                 }
             }
@@ -176,5 +213,28 @@ final class ModuleCard extends Container {
     @Override
     public boolean keyPressed(int key) {
         return expanded && super.keyPressed(key);
+    }
+
+    private static final class HeadingRow extends Element {
+        private final String label;
+
+        HeadingRow(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public Size measure() {
+            return new Size(160, 16);
+        }
+
+        @Override
+        public void render(Canvas canvas) {
+            Look look = Theme.look();
+            Component text = Theme.text(Component.literal(label.toUpperCase(java.util.Locale.ROOT)), true);
+            int textY = y + height - 10;
+            canvas.text(text, x, textY, look.colors().accentStrong(), look.textShadow());
+            int lineX = x + canvas.textWidth(text) + 6;
+            canvas.fill(lineX, textY + 4, x + width - lineX, 1, look.colors().hairline());
+        }
     }
 }

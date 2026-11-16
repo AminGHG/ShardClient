@@ -205,6 +205,15 @@ public final class Canvas {
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, width, height, tint(0xFFFFFFFF));
     }
 
+    public void texture(com.mojang.blaze3d.pipeline.RenderPipeline pipeline, Identifier texture, int x, int y,
+                        int width, int height, float u, float v, int uWidth, int vHeight, int textureWidth,
+                        int textureHeight, int argb) {
+        if (!faint()) {
+            graphics.blit(pipeline, texture, x, y, u, v, width, height, uWidth, vHeight, textureWidth, textureHeight,
+                    tint(argb));
+        }
+    }
+
     public void sprite(Identifier sprite, int x, int y, int width, int height, int argb) {
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, width, height, tint(argb));
     }

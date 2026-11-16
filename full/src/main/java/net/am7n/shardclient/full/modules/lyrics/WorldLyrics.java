@@ -1,6 +1,7 @@
 package net.am7n.shardclient.full.modules.lyrics;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.am7n.shardclient.full.media.MediaWatcher;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
@@ -8,9 +9,9 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -90,73 +91,123 @@ public final class WorldLyrics {
 
         int currentId = frames.stream().filter(f -> f.role() == LyricFrame.Role.CURRENT)
                 .mapToInt(LyricFrame::lineId).findFirst().orElse(-1);
+        float currentHeight = LyricLayout.ROW;
         for (LyricFrame frame : frames) {
-            int spotId = frame.role() == LyricFrame.Role.NEXT ? currentId : frame.lineId();
-            int widthPx = font.width(frame.text());
+            if (frame.role() == LyricFrame.Role.CURRENT) {
+                currentHeight = LyricLayout.height(rows(font, frame));
+            }
+        }
+        for (LyricFrame frame : frames) {
+            boolean next = frame.role() == LyricFrame.Role.NEXT;
+            List<LyricLayout.Row> rows = rows(font, frame);
+            int spotId = next ? currentId : frame.lineId();
+            int widthPx = Math.max(1, LyricLayout.width(rows));
             Spot spot = module.place.is("Follow view") ? place(camera, spotId, widthPx)
                     : spots.computeIfAbsent(spotId, id -> place(camera, id, widthPx));
             if (spot == null) {
                 continue;
             }
+            int alpha = Math.round(Math.clamp(frame.alpha(), 0f, 1f) * 255);
+            if (alpha <= 3) {
+                continue;
+            }
             pose.pushPose();
             pose.translate(spot.position().x - cam.x, spot.position().y - cam.y, spot.position().z - cam.z);
             pose.mulPose(module.facePlayer.on() || module.place.is("Follow view") ? camera.rotation() : spot.facing(cam));
-            float scale = spot.scale() * frame.scale() * (frame.role() == LyricFrame.Role.NEXT ? 0.75f : 1f);
+            float scale = spot.scale() * frame.scale() * (next ? 0.75f : 1f);
             pose.scale(scale, -scale, scale);
 
-            FormattedCharSequence text = frame.text().getVisualOrderText();
-            float x = -font.width(text) / 2f;
-            float y = frame.offsetY() / (frame.role() == LyricFrame.Role.NEXT ? 0.75f : 1f) - 4;
-            int alpha = Math.round(Math.clamp(frame.alpha(), 0f, 1f) * 255);
+            float blockHeight = LyricLayout.height(rows);
+            float shift = next ? (currentHeight - LyricLayout.ROW) / 2f / 0.75f : -(blockHeight - LyricLayout.ROW) / 2f;
+            float rowY = frame.offsetY() / (next ? 0.75f : 1f) - 4 + shift;
+            boolean solid = solid(frame);
+            boolean bold = module.bold.on();
+            float depth = module.depth.floatValue();
+            float glow = next ? 0 : module.glowStrength();
+            int[] glowColors = module.glowColors(frame.color());
 
-            boolean solid = module.letters.is("3D") && module.pixelFont(frame.lineId());
-            if (alpha > 3 && solid) {
-                StringBuilder plain = new StringBuilder();
-                java.util.List<Integer> colors = new java.util.ArrayList<>();
-                frame.text().visit((style, part) -> {
-                    int rgb = style.getColor() == null ? 0xFFFFFF : style.getColor().getValue();
-                    part.codePoints().forEach(cp -> {
-                        plain.appendCodePoint(cp);
-                        colors.add(alpha << 24 | rgb);
-                    });
-                    return java.util.Optional.empty();
-                }, net.minecraft.network.chat.Style.EMPTY);
-                String line = plain.toString();
-                int[] perChar = colors.stream().mapToInt(Integer::intValue).toArray();
-                boolean bold = module.bold.on();
-                float voxelX = -VoxelFont.width(line, bold) / 2f;
-                float depth = module.depth.floatValue();
-
-                context.submitNodeCollector().submitCustomGeometry(pose, RenderTypes.textBackground(),
-                        (p, consumer) -> VoxelFont.draw(p, consumer, line, perChar.length == 0 ? new int[]{alpha << 24
-                                | 0xFFFFFF} : perChar, voxelX, y, depth, bold, FULL_BRIGHT));
-            }
-            if (alpha > 3 && !solid) {
-                float glow = module.glowStrength();
-                if (glow > 0 && frame.role() != LyricFrame.Role.NEXT) {
-                    int g = module.glowColor(frame.color()) & 0xFFFFFF;
-                    int glowAlpha = Math.round(alpha * glow);
-                    FormattedCharSequence halo = LyricsModule.recolor(frame.text(), g).getVisualOrderText();
-
-                    for (int ring = 1; ring <= 3; ring++) {
-                        float radius = ring * 0.55f;
-                        int ringAlpha = Math.max(1, Math.round(glowAlpha * (0.55f - ring * 0.13f)));
-                        for (int step = 0; step < 12; step++) {
-                            double angle = step * Math.PI / 6 + ring * 0.26;
-                            context.submitNodeCollector().submitText(pose, x + (float) Math.cos(angle) * radius,
-                                    y + (float) Math.sin(angle) * radius, halo, false, mode, FULL_BRIGHT,
-                                    ringAlpha << 24 | g, 0, 0);
-                        }
+            for (LyricLayout.Row row : rows) {
+                Component part = LyricLayout.slice(frame.text(), row.start(), row.end());
+                float x = -row.width() / 2f;
+                pose.pushPose();
+                pose.translate(0, rowY, 0);
+                pose.scale(row.scale(), row.scale(), row.scale());
+                if (glow > 0) {
+                    int shown = Math.min(row.width(),
+                            solid ? VoxelFont.width(LyricLayout.plain(part), bold) : font.width(part));
+                    LyricGlow.Texture texture = shown > 0 ? module.glowTexture(frame, row) : null;
+                    if (texture != null) {
+                        float u1 = (shown + LyricGlow.PAD * 2f) / (row.width() + LyricGlow.PAD * 2f);
+                        float x0 = x - LyricGlow.PAD;
+                        float x1 = x + shown + LyricGlow.PAD;
+                        float z = -(solid ? depth : 0) - 0.3f;
+                        int glowAlpha = Math.round(Math.min(1f, glow) * alpha) << 24;
+                        int left = glowAlpha | glowColors[0] & 0xFFFFFF;
+                        int right = glowAlpha | LyricsModule.lerp(glowColors[0], glowColors[1], u1) & 0xFFFFFF;
+                        RenderType type = GlowPipelines.world(texture.id(), module.throughWalls.on());
+                        context.submitNodeCollector().submitCustomGeometry(pose, type,
+                                (p, consumer) -> glowQuad(p, consumer, x0, x1, z, u1, left, right));
                     }
                 }
-                int outline = module.outline.on() ? alpha << 24 : 0;
-                context.submitNodeCollector().submitText(pose, x, y, text, module.shadow.on() && !module.outline.on(),
-                        mode, FULL_BRIGHT, alpha << 24 | 0xFFFFFF, 0, outline);
+                if (solid) {
+                    StringBuilder plain = new StringBuilder();
+                    List<Integer> colors = new java.util.ArrayList<>();
+                    part.visit((style, text) -> {
+                        int rgb = style.getColor() == null ? 0xFFFFFF : style.getColor().getValue();
+                        text.codePoints().forEach(cp -> {
+                            plain.appendCodePoint(cp);
+                            colors.add(alpha << 24 | rgb);
+                        });
+                        return java.util.Optional.empty();
+                    }, net.minecraft.network.chat.Style.EMPTY);
+                    if (!colors.isEmpty()) {
+                        String line = plain.toString();
+                        int[] perChar = colors.stream().mapToInt(Integer::intValue).toArray();
+                        context.submitNodeCollector().submitCustomGeometry(pose, RenderTypes.textBackground(),
+                                (p, consumer) -> VoxelFont.draw(p, consumer, line, perChar, x, 0, depth, bold,
+                                        FULL_BRIGHT));
+                    }
+                } else {
+                    int outline = module.outline.on() ? alpha << 24 : 0;
+                    context.submitNodeCollector().submitText(pose, x, 0, part.getVisualOrderText(),
+                            module.shadow.on() && !module.outline.on(), mode, FULL_BRIGHT, alpha << 24 | 0xFFFFFF, 0,
+                            outline);
+                }
+                pose.popPose();
+                rowY += row.height();
             }
             pose.popPose();
         }
 
         spots.keySet().removeIf(id -> Math.abs(id - currentId) > 2);
+    }
+
+    private static void glowQuad(PoseStack.Pose pose, VertexConsumer out, float x0, float x1, float z, float u1,
+                                 int left, int right) {
+        float y0 = -LyricGlow.PAD;
+        float y1 = y0 + LyricGlow.QUAD_HEIGHT;
+        out.addVertex(pose, x0, y0, z).setColor(left).setUv(0, 0).setLight(FULL_BRIGHT);
+        out.addVertex(pose, x0, y1, z).setColor(left).setUv(0, 1).setLight(FULL_BRIGHT);
+        out.addVertex(pose, x1, y1, z).setColor(right).setUv(u1, 1).setLight(FULL_BRIGHT);
+        out.addVertex(pose, x1, y0, z).setColor(right).setUv(u1, 0).setLight(FULL_BRIGHT);
+        out.addVertex(pose, x1, y0, z).setColor(right).setUv(u1, 0).setLight(FULL_BRIGHT);
+        out.addVertex(pose, x1, y1, z).setColor(right).setUv(u1, 1).setLight(FULL_BRIGHT);
+        out.addVertex(pose, x0, y1, z).setColor(left).setUv(0, 1).setLight(FULL_BRIGHT);
+        out.addVertex(pose, x0, y0, z).setColor(left).setUv(0, 0).setLight(FULL_BRIGHT);
+    }
+
+    private boolean solid(LyricFrame frame) {
+        return module.letters.is("3D") && module.pixelFont(frame.lineId());
+    }
+
+    private List<LyricLayout.Row> rows(Font font, LyricFrame frame) {
+        boolean words = module.wordsLayout() && frame.role() != LyricFrame.Role.NEXT;
+        boolean bold = module.bold.on();
+        java.util.function.ToIntFunction<Component> measure = solid(frame)
+                ? c -> VoxelFont.width(LyricLayout.plain(c), bold)
+                : font::width;
+        String style = (solid(frame) ? "voxel" : module.fontFor(frame.lineId())) + bold;
+        return LyricLayout.rows(frame.full(), words, module.maxLineWidth(), style, measure);
     }
 
     private Spot place(Camera camera, int id, int widthPx) {
@@ -198,6 +249,9 @@ public final class WorldLyrics {
             Vec3 lifted = lift(at, right, halfWidth, scale);
             if (lifted != null) {
                 at = lifted;
+            } else if (module.place.is("Sky")) {
+                Vec3 higher = lift(at.add(0, 8, 0), right, halfWidth, scale);
+                at = higher != null ? higher : at.add(0, 16, 0);
             } else {
                 Vec3 nearer = clearOfBlocks(cam, target);
                 Vec3 nearerLifted = lift(nearer, right, halfWidth, scale);

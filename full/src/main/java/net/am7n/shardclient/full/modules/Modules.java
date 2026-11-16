@@ -34,6 +34,7 @@ public final class Modules {
     }
 
     public static void registerAll(ModuleManager modules, ShardClientRuntime runtime) {
+        net.am7n.shardclient.full.modules.lyrics.GlowPipelines.init();
         Keys.register();
 
         modules.register(Features.fullbright = new Fullbright());
@@ -43,6 +44,7 @@ public final class Modules {
         modules.register(Features.lowFire = new LowFire());
         modules.register(Features.weather = new WeatherChanger());
         modules.register(Features.ownNametag = new OwnNametag());
+        modules.register(Features.motionBlur = new net.am7n.shardclient.full.modules.visual.MotionBlur());
 
         modules.register(new SimpleHuds.Fps());
         modules.register(new SimpleHuds.Ping());
@@ -67,17 +69,22 @@ public final class Modules {
 
         modules.register(Features.crosshair = new Crosshair());
         modules.register(new LowHealthWarning());
+        modules.register(new net.am7n.shardclient.full.modules.pvp.HitColor());
 
         modules.register(new ToggleKeys.Sprint());
         modules.register(new ToggleKeys.Sneak());
         modules.register(Features.chatTimestamps = new ChatTimestamps());
         modules.register(new AutoGG());
         modules.register(new CopyCoordinates());
+        modules.register(Features.waypoints = new net.am7n.shardclient.full.modules.utility.Waypoints());
+        modules.register(Features.screenshotCopy = new net.am7n.shardclient.full.modules.utility.ScreenshotCopy());
     }
 
     public static void registerHooks(ModuleManager modules) {
         CombatTracker.register();
         new net.am7n.shardclient.full.modules.lyrics.WorldLyrics(Features.lyrics).register();
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(
+                context -> Features.waypoints.render(context));
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> SimpleHuds.Session.joined());
 
         HudElementRegistry.addFirst(Identifier.fromNamespaceAndPath("shardclient", "click_counter"),

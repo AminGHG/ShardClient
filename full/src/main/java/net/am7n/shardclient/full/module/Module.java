@@ -98,6 +98,18 @@ public abstract class Module {
     public void renderHud(net.am7n.shardclient.shared.render.Canvas canvas) {
     }
 
+    public net.am7n.shardclient.shared.ui.Element preview() {
+        return null;
+    }
+
+    protected void moveToEnd(Setting<?>... moved) {
+        for (Setting<?> setting : moved) {
+            if (settings.remove(setting)) {
+                settings.add(setting);
+            }
+        }
+    }
+
     protected BooleanSetting bool(String id, String name, boolean value) {
         return add(new BooleanSetting(id, name, value));
     }
