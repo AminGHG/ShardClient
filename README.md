@@ -105,4 +105,6 @@ ShardClient is licensed under the [GNU General Public License v3.0](LICENSE) (GP
 
 - [Inter Tight](https://github.com/rsms/inter-tight) by The Inter Project Authors, SIL Open Font License 1.1
   (`shared/src/main/resources/licenses/inter-tight`).
+- Motion blur follows [Motion Blur](https://github.com/Noryea/motionblur-fabric) by Noryea, GPL-3.0
+  (frame-feedback blend shader and the `/motionblur <percent>` command).
 - Built with [Fabric](https://fabricmc.net).

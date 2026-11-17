@@ -19,6 +19,9 @@
     "module.LivingEntityRendererMixin",
     "module.MouseHandlerMixin",
     "module.OverlayTextureAccessor",
+    "module.PostChainAccessor",
+    "module.PostPassAccessor",
+    "module.PostPassMixin",
     "module.ScreenEffectRendererMixin",
     "module.ScreenshotMixin"
   ],
