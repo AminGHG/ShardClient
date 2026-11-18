@@ -9,11 +9,8 @@ import net.am7n.shardclient.protocol.packet.Hello;
 import net.am7n.shardclient.protocol.packet.Rejected;
 import net.am7n.shardclient.protocol.packet.Welcome;
 import net.am7n.shardclient.shared.ShardClientRuntime;
-import net.am7n.shardclient.shared.net.ShardPayload;
+import net.am7n.shardclient.shared.platform.Channel;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.networking.v1.ServerboundPlayChannelEvents;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 
 public final class PracticeLink {
     public enum State {
@@ -44,17 +41,13 @@ public final class PracticeLink {
     }
 
     public void register() {
-        PayloadTypeRegistry.clientboundPlay().register(ShardPayload.TYPE, ShardPayload.CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ShardPayload.TYPE, ShardPayload.CODEC);
-
-        ClientPlayNetworking.registerGlobalReceiver(ShardPayload.TYPE,
-                (payload, context) -> context.client().execute(() -> receive(payload.data())));
+        Channel.register(this::receive);
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> client.execute(this::reset));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(this::reset));
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> client.execute(() -> {
-            boolean offered = ClientPlayNetworking.canSend(ShardPayload.TYPE);
+            boolean offered = Channel.offered();
             ShardClientRuntime.LOGGER.info("Joined a server; ShardPvP channel offered: {}", offered);
             if (offered) {
                 sayHello();
@@ -63,11 +56,7 @@ public final class PracticeLink {
                 sayHello(true);
             }
         }));
-        ServerboundPlayChannelEvents.REGISTER.register((handler, sender, client, channels) -> {
-            if (channels.contains(ShardPayload.TYPE.id())) {
-                client.execute(this::sayHello);
-            }
-        });
+        Channel.onOffered(this::sayHello);
     }
 
     public State state() {
@@ -99,11 +88,11 @@ public final class PracticeLink {
             return;
         }
         try {
-            if (!evenIfNotOffered && !ClientPlayNetworking.canSend(ShardPayload.TYPE)) {
+            if (!evenIfNotOffered && !Channel.offered()) {
                 return;
             }
             Hello hello = new Hello(Protocol.VERSION_MIN, Protocol.VERSION_MAX, kind, clientVersion, FEATURES);
-            ClientPlayNetworking.send(new ShardPayload(hello.encode()));
+            Channel.send(hello.encode());
             ShardClientRuntime.LOGGER.info("Sent ShardPvP hello (protocol {}-{})", Protocol.VERSION_MIN,
                     Protocol.VERSION_MAX);
         } catch (IllegalStateException notConnected) {

@@ -577,9 +577,12 @@ public final class LyricsModule extends HudModule {
         int[] colors = glowColors(frame.color());
         int rgb = lerp(colors[0], colors[1], 0.5f) & 0xFFFFFF;
         int alpha = Math.round(Math.min(1f, amount) * 255);
-        canvas.texture(GlowPipelines.GUI, glowTexture.id(), rowX - LyricGlow.PAD, -LyricGlow.PAD, quadWidth,
+        if (canvas.faint()) {
+            return;
+        }
+        canvas.gfx().pipelineBlit(GlowPipelines.GUI, glowTexture.id(), rowX - LyricGlow.PAD, -LyricGlow.PAD, quadWidth,
                 LyricGlow.QUAD_HEIGHT, 0, 0, uWidth, glowTexture.height(), glowTexture.width(),
-                glowTexture.height(), alpha << 24 | rgb);
+                glowTexture.height(), canvas.tint(alpha << 24 | rgb));
     }
 
     LyricGlow.Texture glowTexture(LyricFrame frame, LyricLayout.Row row) {

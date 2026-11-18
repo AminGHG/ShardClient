@@ -1,22 +1,20 @@
 package net.am7n.shardclient.shared.ui;
 
-import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.shared.ShardClientRuntime;
-import net.am7n.shardclient.shared.anim.Motion;
 import net.am7n.shardclient.shared.anim.Lerp;
+import net.am7n.shardclient.shared.anim.Motion;
 import net.am7n.shardclient.shared.anim.Transition;
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.platform.ScreenBase;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Theme;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ShardScreen extends Screen {
+public abstract class ShardScreen extends ScreenBase {
     private final Screen parent;
     private final Transition transition = Motion.transition(Motion.POPOVER_MS);
     private final List<Focusable> focusable = new ArrayList<>();
@@ -57,26 +55,23 @@ public abstract class ShardScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        if (minecraft.level == null) {
-            extractPanorama(graphics, partialTick);
-        }
-        if (Theme.look().blurBackdrop()) {
-            extractBlurredBackground(graphics);
-        }
-        Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+    protected boolean blurBehind() {
+        return Theme.look().blurBackdrop();
+    }
+
+    @Override
+    protected void drawBackdrop(Canvas canvas) {
         canvas.pushAlpha(Math.clamp(transition.progress(), 0f, 1f));
         canvas.fill(0, 0, width, height, Theme.colors().backdrop());
         canvas.popAlpha();
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+    protected void draw(Canvas canvas) {
         if (root == null) {
             return;
         }
         float progress = transition.progress();
-        Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
         canvas.push();
         canvas.scale(Lerp.of(Motion.POPOVER_START_SCALE, 1f, progress), width / 2f, height / 2f);
         canvas.pushAlpha(Math.clamp(progress, 0f, 1f));
@@ -117,46 +112,46 @@ public abstract class ShardScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+    protected boolean onMouseClicked(double x, double y, int button) {
         if (closing || root == null) {
             return false;
         }
         focus(-1);
-        return root.mouseClicked(event.x(), event.y(), event.button());
+        return root.mouseClicked(x, y, button);
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
-        return root != null && root.mouseReleased(event.x(), event.y(), event.button());
+    protected boolean onMouseReleased(double x, double y, int button) {
+        return root != null && root.mouseReleased(x, y, button);
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        return !closing && root != null && root.mouseDragged(event.x(), event.y(), event.button());
+    protected boolean onMouseDragged(double x, double y, int button) {
+        return !closing && root != null && root.mouseDragged(x, y, button);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        return !closing && root != null && root.mouseScrolled(mouseX, mouseY, scrollY);
+    protected boolean onMouseScrolled(double x, double y, double amount) {
+        return !closing && root != null && root.mouseScrolled(x, y, amount);
     }
 
     @Override
-    public boolean keyPressed(KeyEvent event) {
-        if (!closing && root != null && root.keyPressed(event.key())) {
+    protected boolean onKey(Key key) {
+        if (!closing && root != null && root.keyPressed(key.code())) {
             return true;
         }
-        if (event.isEscape() && shouldCloseOnEsc()) {
+        if (key.escape() && shouldCloseOnEsc()) {
             onClose();
             return true;
         }
         if (closing) {
             return false;
         }
-        if (event.isCycleFocus()) {
-            moveFocus(event.hasShiftDown() ? -1 : 1);
+        if (key.cycleFocus()) {
+            moveFocus(key.shift() ? -1 : 1);
             return true;
         }
-        if ((event.isConfirmation() || event.isSelection()) && focusIndex >= 0) {
+        if (key.confirm() && focusIndex >= 0) {
             focusable.get(focusIndex).activate();
             return true;
         }
@@ -164,8 +159,8 @@ public abstract class ShardScreen extends Screen {
     }
 
     @Override
-    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
-        return !closing && root != null && root.charTyped(event.codepointAsString());
+    protected boolean onChar(String text) {
+        return !closing && root != null && root.charTyped(text);
     }
 
     private void moveFocus(int step) {

@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.mixin;
 
+import net.am7n.shardclient.shared.platform.Profiles;
 import net.am7n.shardclient.shared.practice.ClientBadges;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -13,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class PlayerTabOverlayMixin {
     @Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true)
     private void shardclient$badge(PlayerInfo info, CallbackInfoReturnable<Component> cir) {
-        if (ClientBadges.has(info.getProfile().id())) {
-            cir.setReturnValue(ClientBadges.decorate(cir.getReturnValue(), info.getProfile().name()));
+        if (ClientBadges.has(Profiles.id(info.getProfile()))) {
+            cir.setReturnValue(ClientBadges.decorate(cir.getReturnValue(), Profiles.name(info.getProfile())));
         }
     }
 }

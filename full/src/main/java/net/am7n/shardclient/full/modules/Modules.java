@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.modules;
 
+import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.full.module.ModuleManager;
 import net.am7n.shardclient.full.modules.hud.ArmorHud;
 import net.am7n.shardclient.full.modules.hud.ClickCounter;
@@ -112,7 +113,7 @@ public final class Modules {
             Minecraft mc = Minecraft.getInstance();
             if (Features.on(Features.crosshair) && mc.options.getCameraType().isFirstPerson()
                     && mc.player != null && !mc.player.isSpectator()) {
-                Features.crosshair.draw(new Canvas(graphics, mc.font, -1, -1));
+                Features.crosshair.draw(Gfx.canvas(graphics, mc.font, -1, -1));
             } else {
                 original.extractRenderState(graphics, delta);
             }

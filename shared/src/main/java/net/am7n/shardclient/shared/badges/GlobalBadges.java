@@ -1,5 +1,7 @@
 package net.am7n.shardclient.shared.badges;
 
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.platform.Profiles;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -123,7 +125,7 @@ public final class GlobalBadges {
         if (onServer && now - lastLookup >= LOOKUP_EVERY_MS) {
             lastLookup = now;
             for (PlayerInfo info : connection.getOnlinePlayers()) {
-                UUID id = info.getProfile().id();
+                UUID id = Profiles.id(info.getProfile());
                 Answer answer = ANSWERS.get(id);
                 if ((answer == null || now - answer.at() > ANSWER_TTL_MS) && ask.size() < MAX_LOOKUP) {
                     ask.add(id);
@@ -234,7 +236,7 @@ public final class GlobalBadges {
             throw new BadgeException("the server sent a bad sign-in challenge");
         }
         try {
-            client.services().sessionService().joinServer(user.getProfileId(), user.getAccessToken(), serverId);
+            Game.joinServer(user.getProfileId(), user.getAccessToken(), serverId);
         } catch (AuthenticationException ex) {
             throw new BadgeException("Mojang couldn't verify this account (offline account or expired session?)", ex);
         }

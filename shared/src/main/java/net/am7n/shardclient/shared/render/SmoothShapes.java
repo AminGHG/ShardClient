@@ -1,11 +1,7 @@
 package net.am7n.shardclient.shared.render;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.Identifier;
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.platform.Gfx;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,37 +11,36 @@ final class SmoothShapes {
 
     private static final float SHADOW_STRENGTH = 1f;
 
-    private static final Map<String, Identifier> MASKS = new HashMap<>();
+    private static final Map<String, Asset> MASKS = new HashMap<>();
 
     private SmoothShapes() {
     }
 
     static int guiScale() {
-        return Math.max(1, Minecraft.getInstance().getWindow().getGuiScale());
+        return Math.max(1, Game.guiScale());
     }
 
-    static void fill(GuiGraphicsExtractor graphics, int x, int y, int width, int height, float radius, int argb) {
+    static void fill(Gfx gfx, int x, int y, int width, int height, float radius, int argb) {
         int g = guiScale();
         int px = x * g;
         int py = y * g;
         int pw = width * g;
         int ph = height * g;
         int r = Math.min(Math.round(radius * g), Math.min(pw, ph) / 2);
-        begin(graphics, g);
+        begin(gfx, g);
         if (r <= 0) {
-            graphics.fill(px, py, px + pw, py + ph, argb);
+            gfx.fill(px, py, px + pw, py + ph, argb);
         } else {
-            Identifier disc = mask("disc", r, 0, () -> disc(r));
-            corners(graphics, disc, px, py, pw, ph, r, 2 * r, argb);
-            graphics.fill(px + r, py, px + pw - r, py + ph, argb);
-            graphics.fill(px, py + r, px + r, py + ph - r, argb);
-            graphics.fill(px + pw - r, py + r, px + pw, py + ph - r, argb);
+            Asset disc = mask("disc", r, 0, 2 * r, () -> disc(r));
+            corners(gfx, disc, px, py, pw, ph, r, 2 * r, argb);
+            gfx.fill(px + r, py, px + pw - r, py + ph, argb);
+            gfx.fill(px, py + r, px + r, py + ph - r, argb);
+            gfx.fill(px + pw - r, py + r, px + pw, py + ph - r, argb);
         }
-        end(graphics);
+        gfx.pop();
     }
 
-    static void frame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, float radius, int stroke,
-                      int argb) {
+    static void frame(Gfx gfx, int x, int y, int width, int height, float radius, int stroke, int argb) {
         int g = guiScale();
         int px = x * g;
         int py = y * g;
@@ -53,18 +48,18 @@ final class SmoothShapes {
         int ph = height * g;
         int s = Math.max(1, stroke);
         int r = Math.max(s, Math.min(Math.round(radius * g), Math.min(pw, ph) / 2));
-        begin(graphics, g);
-        Identifier ring = mask("ring", r, s, () -> ring(r, s));
-        corners(graphics, ring, px, py, pw, ph, r, 2 * r, argb);
-        graphics.fill(px + r, py, px + pw - r, py + s, argb);
-        graphics.fill(px + r, py + ph - s, px + pw - r, py + ph, argb);
-        graphics.fill(px, py + r, px + s, py + ph - r, argb);
-        graphics.fill(px + pw - s, py + r, px + pw, py + ph - r, argb);
-        end(graphics);
+        begin(gfx, g);
+        Asset ring = mask("ring", r, s, 2 * r, () -> ring(r, s));
+        corners(gfx, ring, px, py, pw, ph, r, 2 * r, argb);
+        gfx.fill(px + r, py, px + pw - r, py + s, argb);
+        gfx.fill(px + r, py + ph - s, px + pw - r, py + ph, argb);
+        gfx.fill(px, py + r, px + s, py + ph - r, argb);
+        gfx.fill(px + pw - s, py + r, px + pw, py + ph - r, argb);
+        gfx.pop();
     }
 
-    static void shadow(GuiGraphicsExtractor graphics, int x, int y, int width, int height, float radius, float blur,
-                       float offsetY, int argb) {
+    static void shadow(Gfx gfx, int x, int y, int width, int height, float radius, float blur, float offsetY,
+                       int argb) {
         int g = guiScale();
         int r = Math.max(1, Math.round(radius * g));
         int b = Math.max(1, Math.round(blur * g));
@@ -75,49 +70,48 @@ final class SmoothShapes {
         r = Math.min(r, Math.min(pw, ph) / 2);
         int size = 2 * (r + b) + 1;
         int finalR = r;
-        begin(graphics, g);
-        Identifier mask = mask("shadow", r, b, () -> shadowMask(finalR, b));
+        begin(gfx, g);
+        Asset mask = mask("shadow", r, b, size, () -> shadowMask(finalR, b));
         int c = r + b;
 
-        blit(graphics, mask, px - b, py - b, 0, 0, c, c, size, argb);
-        blit(graphics, mask, px + pw - r, py - b, c + 1, 0, c, c, size, argb);
-        blit(graphics, mask, px - b, py + ph - r, 0, c + 1, c, c, size, argb);
-        blit(graphics, mask, px + pw - r, py + ph - r, c + 1, c + 1, c, c, size, argb);
+        blit(gfx, mask, px - b, py - b, 0, 0, c, c, size, argb);
+        blit(gfx, mask, px + pw - r, py - b, c + 1, 0, c, c, size, argb);
+        blit(gfx, mask, px - b, py + ph - r, 0, c + 1, c, c, size, argb);
+        blit(gfx, mask, px + pw - r, py + ph - r, c + 1, c + 1, c, c, size, argb);
 
-        stretch(graphics, mask, px + r, py - b, pw - 2 * r, c, c, 0, 1, c, size, argb);
-        stretch(graphics, mask, px + r, py + ph - r, pw - 2 * r, c, c, c + 1, 1, c, size, argb);
-        stretch(graphics, mask, px - b, py + r, c, ph - 2 * r, 0, c, c, 1, size, argb);
-        stretch(graphics, mask, px + pw - r, py + r, c, ph - 2 * r, c + 1, c, c, 1, size, argb);
+        stretch(gfx, mask, px + r, py - b, pw - 2 * r, c, c, 0, 1, c, size, argb);
+        stretch(gfx, mask, px + r, py + ph - r, pw - 2 * r, c, c, c + 1, 1, c, size, argb);
+        stretch(gfx, mask, px - b, py + r, c, ph - 2 * r, 0, c, c, 1, size, argb);
+        stretch(gfx, mask, px + pw - r, py + r, c, ph - 2 * r, c + 1, c, c, 1, size, argb);
 
         if (pw > 2 * r && ph > 2 * r) {
             int centre = Math.round(shadowAlpha(-r, b) * 255) << 24 | 0xFFFFFF;
-            graphics.fill(px + r, py + r, px + pw - r, py + ph - r, multiply(argb, centre));
+            gfx.fill(px + r, py + r, px + pw - r, py + ph - r, multiply(argb, centre));
         }
-        end(graphics);
+        gfx.pop();
     }
 
-    static void image(GuiGraphicsExtractor graphics, Identifier texture, int textureSize, int x, int y, int size,
-                      int argb) {
+    static void image(Gfx gfx, Asset texture, int textureSize, int x, int y, int size, int argb) {
         int g = guiScale();
-        begin(graphics, g);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x * g, y * g, 0, 0, size * g, size * g,
-                textureSize, textureSize, textureSize, textureSize, argb);
-        end(graphics);
+        begin(gfx, g);
+        gfx.blit(texture, x * g, y * g, 0, 0, size * g, size * g, textureSize, textureSize, textureSize, textureSize,
+                argb);
+        gfx.pop();
     }
 
     private static final int GLOW_SIZE = 256;
 
-    static void glow(GuiGraphicsExtractor graphics, int cx, int cy, int rx, int ry, int argb) {
+    static void glow(Gfx gfx, int cx, int cy, int rx, int ry, int argb) {
         int g = guiScale();
-        Identifier mask = mask("glow", GLOW_SIZE, 0, SmoothShapes::glowMask);
-        begin(graphics, g);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, mask, (cx - rx) * g, (cy - ry) * g, 0, 0, 2 * rx * g, 2 * ry * g,
-                GLOW_SIZE, GLOW_SIZE, GLOW_SIZE, GLOW_SIZE, argb);
-        end(graphics);
+        Asset mask = mask("glow", GLOW_SIZE, 0, GLOW_SIZE, SmoothShapes::glowMask);
+        begin(gfx, g);
+        gfx.blit(mask, (cx - rx) * g, (cy - ry) * g, 0, 0, 2 * rx * g, 2 * ry * g, GLOW_SIZE, GLOW_SIZE, GLOW_SIZE,
+                GLOW_SIZE, argb);
+        gfx.pop();
     }
 
-    private static NativeImage glowMask() {
-        NativeImage image = new NativeImage(GLOW_SIZE, GLOW_SIZE, true);
+    private static int[] glowMask() {
+        int[] image = new int[GLOW_SIZE * GLOW_SIZE];
         float c = GLOW_SIZE / 2f;
         for (int py = 0; py < GLOW_SIZE; py++) {
             for (int px = 0; px < GLOW_SIZE; px++) {
@@ -126,74 +120,67 @@ final class SmoothShapes {
                 float d2 = dx * dx + dy * dy;
 
                 float alpha = d2 >= 1 ? 0 : (float) (Math.exp(-3.5 * d2) - Math.exp(-3.5)) / (float) (1 - Math.exp(-3.5));
-                image.setPixel(px, py, white(alpha));
+                image[py * GLOW_SIZE + px] = white(alpha);
             }
         }
         return image;
     }
 
-    private static void begin(GuiGraphicsExtractor graphics, int g) {
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(1f / g, 1f / g);
+    private static void begin(Gfx gfx, int g) {
+        gfx.push();
+        gfx.scale(1f / g, 1f / g);
     }
 
-    private static void end(GuiGraphicsExtractor graphics) {
-        graphics.pose().popMatrix();
+    private static void corners(Gfx gfx, Asset mask, int px, int py, int pw, int ph, int r, int size, int argb) {
+        blit(gfx, mask, px, py, 0, 0, r, r, size, argb);
+        blit(gfx, mask, px + pw - r, py, r, 0, r, r, size, argb);
+        blit(gfx, mask, px, py + ph - r, 0, r, r, r, size, argb);
+        blit(gfx, mask, px + pw - r, py + ph - r, r, r, r, r, size, argb);
     }
 
-    private static void corners(GuiGraphicsExtractor graphics, Identifier mask, int px, int py, int pw, int ph, int r,
+    private static void blit(Gfx gfx, Asset mask, int x, int y, int u, int v, int w, int h, int size, int argb) {
+        gfx.blit(mask, x, y, u, v, w, h, w, h, size, size, argb);
+    }
+
+    private static void stretch(Gfx gfx, Asset mask, int x, int y, int w, int h, int u, int v, int uw, int vh,
                                 int size, int argb) {
-        blit(graphics, mask, px, py, 0, 0, r, r, size, argb);
-        blit(graphics, mask, px + pw - r, py, r, 0, r, r, size, argb);
-        blit(graphics, mask, px, py + ph - r, 0, r, r, r, size, argb);
-        blit(graphics, mask, px + pw - r, py + ph - r, r, r, r, r, size, argb);
-    }
-
-    private static void blit(GuiGraphicsExtractor graphics, Identifier mask, int x, int y, int u, int v, int w, int h,
-                             int size, int argb) {
-        graphics.blit(RenderPipelines.GUI_TEXTURED, mask, x, y, u, v, w, h, size, size, argb);
-    }
-
-    private static void stretch(GuiGraphicsExtractor graphics, Identifier mask, int x, int y, int w, int h, int u,
-                                int v, int uw, int vh, int size, int argb) {
         if (w > 0 && h > 0) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, mask, x, y, u, v, w, h, uw, vh, size, size, argb);
+            gfx.blit(mask, x, y, u, v, w, h, uw, vh, size, size, argb);
         }
     }
 
     private interface Painter {
-        NativeImage paint();
+        int[] paint();
     }
 
-    private static Identifier mask(String kind, int a, int b, Painter painter) {
+    private static Asset mask(String kind, int a, int b, int size, Painter painter) {
         String key = kind + "_" + a + "_" + b;
-        Identifier id = MASKS.get(key);
+        Asset id = MASKS.get(key);
         if (id == null) {
-            id = Identifier.fromNamespaceAndPath("shardclient-shared", "dynamic/" + key);
-            NativeImage image = painter.paint();
-            Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(() -> "shardclient " + key, image));
+            id = Asset.shared("dynamic/" + key);
+            Gfx.registerTexture(id, size, size, painter.paint());
             MASKS.put(key, id);
         }
         return id;
     }
 
-    private static NativeImage disc(int r) {
+    private static int[] disc(int r) {
         int size = 2 * r;
-        NativeImage image = new NativeImage(size, size, true);
+        int[] image = new int[size * size];
         for (int py = 0; py < size; py++) {
             for (int px = 0; px < size; px++) {
-                image.setPixel(px, py, white(coverage(px, py, r, r, r, 0)));
+                image[py * size + px] = white(coverage(px, py, r, r, r, 0));
             }
         }
         return image;
     }
 
-    private static NativeImage ring(int r, int s) {
+    private static int[] ring(int r, int s) {
         int size = 2 * r;
-        NativeImage image = new NativeImage(size, size, true);
+        int[] image = new int[size * size];
         for (int py = 0; py < size; py++) {
             for (int px = 0; px < size; px++) {
-                image.setPixel(px, py, white(coverage(px, py, r, r, r, r - s)));
+                image[py * size + px] = white(coverage(px, py, r, r, r, r - s));
             }
         }
         return image;
@@ -214,16 +201,16 @@ final class SmoothShapes {
         return inside / (float) (SUPERSAMPLE * SUPERSAMPLE);
     }
 
-    private static NativeImage shadowMask(int r, int b) {
+    private static int[] shadowMask(int r, int b) {
         int size = 2 * (r + b) + 1;
         float c = r + b + 0.5f;
-        NativeImage image = new NativeImage(size, size, true);
+        int[] image = new int[size * size];
         for (int py = 0; py < size; py++) {
             for (int px = 0; px < size; px++) {
                 float dx = px + 0.5f - c;
                 float dy = py + 0.5f - c;
                 float distance = (float) Math.sqrt(dx * dx + dy * dy) - r;
-                image.setPixel(px, py, white(shadowAlpha(distance, b) * SHADOW_STRENGTH));
+                image[py * size + px] = white(shadowAlpha(distance, b) * SHADOW_STRENGTH);
             }
         }
         return image;

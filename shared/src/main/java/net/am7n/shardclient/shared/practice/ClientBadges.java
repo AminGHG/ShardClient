@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice;
 
+import net.am7n.shardclient.shared.platform.Profiles;
 import net.am7n.shardclient.protocol.packet.ClientUsers;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.am7n.shardclient.shared.render.Fonts;
@@ -64,8 +65,8 @@ public final class ClientBadges {
         ClientPacketListener connection = client.getConnection();
         if (connection != null) {
             for (PlayerInfo info : connection.getOnlinePlayers()) {
-                String name = info.getProfile().name();
-                if (name != null && !name.isEmpty() && has(info.getProfile().id())) {
+                String name = Profiles.name(info.getProfile());
+                if (name != null && !name.isEmpty() && has(Profiles.id(info.getProfile()))) {
                     next.add(name);
                 }
             }

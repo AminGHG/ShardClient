@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.menu;
 
+import net.am7n.shardclient.shared.platform.Gfx;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.am7n.shardclient.full.ShardClientFull;
 import net.am7n.shardclient.full.config.ClientConfig;
@@ -118,7 +119,7 @@ public final class ShardServerListScreen extends ShardScreen {
         if (minecraft.level == null) {
             extractPanorama(graphics, partialTick);
         }
-        Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+        Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
         int bg = Theme.colors().bg0() & 0xFFFFFF;
         if (Theme.light()) {
             extractBlurredBackground(graphics);

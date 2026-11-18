@@ -1,7 +1,7 @@
 package net.am7n.shardclient.shared.practice.ui;
 
-import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.protocol.packet.MatchEnded;
+import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Lerp;
@@ -14,11 +14,10 @@ import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.shared.ui.Button;
 import net.am7n.shardclient.shared.ui.Container;
 import net.am7n.shardclient.shared.ui.Element;
+import net.am7n.shardclient.shared.ui.Key;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.UUID;
@@ -70,12 +69,12 @@ public final class MatchResultScreen extends ShardScreen {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent event) {
-        if (event.key() == 32) {
+    protected boolean onKey(Key key) {
+        if (key.code() == 32) {
             onClose();
             return true;
         }
-        return super.keyPressed(event);
+        return super.onKey(key);
     }
 
     private final class View extends Container {
@@ -312,11 +311,12 @@ public final class MatchResultScreen extends ShardScreen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        if (minecraft.level == null) {
-            extractPanorama(graphics, partialTick);
-        }
-        Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+    protected boolean blurBehind() {
+        return false;
+    }
+
+    @Override
+    protected void drawBackdrop(Canvas canvas) {
         int bg = Theme.colors().bg0();
         canvas.pushAlpha(openProgress());
         canvas.gradient(0, 0, width, height, withAlpha(bg, 0x38), withAlpha(bg, 0x9E));

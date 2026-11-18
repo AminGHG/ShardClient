@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.menu;
 
+import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.full.mixin.WorldListEntryAccessor;
 import net.am7n.shardclient.full.mixin.WorldSelectionListAccessor;
 import net.am7n.shardclient.shared.anim.Clock;
@@ -71,7 +72,7 @@ public final class ShardWorldListScreen extends ShardScreen {
         if (minecraft.level == null) {
             extractPanorama(graphics, partialTick);
         }
-        Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+        Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
         int bg = Theme.colors().bg0() & 0xFFFFFF;
         if (Theme.light()) {
             extractBlurredBackground(graphics);

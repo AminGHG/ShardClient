@@ -1,17 +1,8 @@
 package net.am7n.shardclient.shared.render;
 
+import net.am7n.shardclient.shared.platform.Gfx;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.PlayerFaceExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.ARGB;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 
@@ -21,7 +12,7 @@ import java.util.UUID;
 public final class Canvas {
     private static final float MIN_VISIBLE_ALPHA = 0.04f;
 
-    private final GuiGraphicsExtractor graphics;
+    private final Gfx gfx;
     private final Font font;
     private final int mouseX;
     private final int mouseY;
@@ -29,19 +20,23 @@ public final class Canvas {
     private int alphaDepth;
     private float alpha = 1f;
 
-    public Canvas(GuiGraphicsExtractor graphics, Font font, int mouseX, int mouseY) {
-        this.graphics = graphics;
+    public Canvas(Gfx gfx, Font font, int mouseX, int mouseY) {
+        this.gfx = gfx;
         this.font = font;
         this.mouseX = mouseX;
         this.mouseY = mouseY;
     }
 
+    public Gfx gfx() {
+        return gfx;
+    }
+
     public int width() {
-        return graphics.guiWidth();
+        return gfx.width();
     }
 
     public int height() {
-        return graphics.guiHeight();
+        return gfx.height();
     }
 
     public int mouseX() {
@@ -69,46 +64,50 @@ public final class Canvas {
         return alpha;
     }
 
-    private int tint(int argb) {
-        return alpha >= 1f ? argb : ARGB.multiplyAlpha(argb, alpha);
+    public int tint(int argb) {
+        if (alpha >= 1f) {
+            return argb;
+        }
+        int a = Math.round((argb >>> 24) * alpha);
+        return a << 24 | (argb & 0xFFFFFF);
     }
 
-    private boolean faint() {
+    public boolean faint() {
         return alpha < MIN_VISIBLE_ALPHA;
     }
 
     public void push() {
-        graphics.pose().pushMatrix();
+        gfx.push();
     }
 
     public void pop() {
-        graphics.pose().popMatrix();
+        gfx.pop();
     }
 
     public void translate(float x, float y) {
-        graphics.pose().translate(x, y);
+        gfx.translate(x, y);
     }
 
     public void scale(float factor, float pivotX, float pivotY) {
-        graphics.pose().translate(pivotX, pivotY);
-        graphics.pose().scale(factor, factor);
-        graphics.pose().translate(-pivotX, -pivotY);
+        gfx.translate(pivotX, pivotY);
+        gfx.scale(factor, factor);
+        gfx.translate(-pivotX, -pivotY);
     }
 
     public void clip(int x, int y, int width, int height) {
-        graphics.enableScissor(x, y, x + width, y + height);
+        gfx.scissor(x, y, x + width, y + height);
     }
 
     public void unclip() {
-        graphics.disableScissor();
+        gfx.unscissor();
     }
 
     public void fill(int x, int y, int width, int height, int argb) {
-        graphics.fill(x, y, x + width, y + height, tint(argb));
+        gfx.fill(x, y, x + width, y + height, tint(argb));
     }
 
     public void frame(int x, int y, int width, int height, int argb) {
-        graphics.outline(x, y, width, height, tint(argb));
+        gfx.outline(x, y, width, height, tint(argb));
     }
 
     public void roundRect(int x, int y, int width, int height, int radius, int argb) {
@@ -116,10 +115,10 @@ public final class Canvas {
         int color = tint(argb);
         for (int row = 0; row < r; row++) {
             int inset = cornerInset(r, row);
-            graphics.fill(x + inset, y + row, x + width - inset, y + row + 1, color);
-            graphics.fill(x + inset, y + height - row - 1, x + width - inset, y + height - row, color);
+            gfx.fill(x + inset, y + row, x + width - inset, y + row + 1, color);
+            gfx.fill(x + inset, y + height - row - 1, x + width - inset, y + height - row, color);
         }
-        graphics.fill(x, y + r, x + width, y + height - r, color);
+        gfx.fill(x, y + r, x + width, y + height - r, color);
     }
 
     public void roundFrame(int x, int y, int width, int height, int radius, int argb) {
@@ -131,45 +130,45 @@ public final class Canvas {
             int run = Math.max(1, previous - inset);
             int top = y + row;
             int bottom = y + height - row - 1;
-            graphics.fill(x + inset, top, x + inset + run, top + 1, color);
-            graphics.fill(x + width - inset - run, top, x + width - inset, top + 1, color);
-            graphics.fill(x + inset, bottom, x + inset + run, bottom + 1, color);
-            graphics.fill(x + width - inset - run, bottom, x + width - inset, bottom + 1, color);
+            gfx.fill(x + inset, top, x + inset + run, top + 1, color);
+            gfx.fill(x + width - inset - run, top, x + width - inset, top + 1, color);
+            gfx.fill(x + inset, bottom, x + inset + run, bottom + 1, color);
+            gfx.fill(x + width - inset - run, bottom, x + width - inset, bottom + 1, color);
             previous = inset;
         }
-        graphics.fill(x + r, y, x + width - r, y + 1, color);
-        graphics.fill(x + r, y + height - 1, x + width - r, y + height, color);
-        graphics.fill(x, y + r, x + 1, y + height - r, color);
-        graphics.fill(x + width - 1, y + r, x + width, y + height - r, color);
+        gfx.fill(x + r, y, x + width - r, y + 1, color);
+        gfx.fill(x + r, y + height - 1, x + width - r, y + height, color);
+        gfx.fill(x, y + r, x + 1, y + height - r, color);
+        gfx.fill(x + width - 1, y + r, x + width, y + height - r, color);
     }
 
     public void smoothRect(int x, int y, int width, int height, float radius, int argb) {
         if (width > 0 && height > 0) {
-            SmoothShapes.fill(graphics, x, y, width, height, radius, tint(argb));
+            SmoothShapes.fill(gfx, x, y, width, height, radius, tint(argb));
         }
     }
 
     public void smoothFrame(int x, int y, int width, int height, float radius, int stroke, int argb) {
         if (width > 0 && height > 0) {
-            SmoothShapes.frame(graphics, x, y, width, height, radius, stroke, tint(argb));
+            SmoothShapes.frame(gfx, x, y, width, height, radius, stroke, tint(argb));
         }
     }
 
     public void icon(Asset icon, int x, int y, int size, int argb) {
         if (!faint()) {
-            SmoothShapes.image(graphics, Assets.id(icon), 64, x, y, size, tint(argb));
+            SmoothShapes.image(gfx, icon, 64, x, y, size, tint(argb));
         }
     }
 
     public void image(Asset texture, int textureSize, int x, int y, int size) {
         if (!faint()) {
-            SmoothShapes.image(graphics, Assets.id(texture), textureSize, x, y, size, tint(0xFFFFFFFF));
+            SmoothShapes.image(gfx, texture, textureSize, x, y, size, tint(0xFFFFFFFF));
         }
     }
 
     public void image(Asset texture, int textureSize, int x, int y, int size, int argb) {
         if (!faint()) {
-            SmoothShapes.image(graphics, Assets.id(texture), textureSize, x, y, size, tint(argb));
+            SmoothShapes.image(gfx, texture, textureSize, x, y, size, tint(argb));
         }
     }
 
@@ -180,7 +179,7 @@ public final class Canvas {
 
     public void glow(int cx, int cy, int radiusX, int radiusY, int argb) {
         if (radiusX > 0 && radiusY > 0 && !faint()) {
-            SmoothShapes.glow(graphics, cx, cy, radiusX, radiusY, tint(argb));
+            SmoothShapes.glow(gfx, cx, cy, radiusX, radiusY, tint(argb));
         }
     }
 
@@ -192,12 +191,12 @@ public final class Canvas {
     }
 
     public void gradient(int x, int y, int width, int height, int top, int bottom) {
-        graphics.fillGradient(x, y, x + width, y + height, tint(top), tint(bottom));
+        gfx.gradient(x, y, x + width, y + height, tint(top), tint(bottom));
     }
 
     public void smoothShadow(int x, int y, int width, int height, float radius, float blur, float offsetY, int argb) {
         if (width > 0 && height > 0 && !faint()) {
-            SmoothShapes.shadow(graphics, x, y, width, height, radius, blur, offsetY, tint(argb));
+            SmoothShapes.shadow(gfx, x, y, width, height, radius, blur, offsetY, tint(argb));
         }
     }
 
@@ -207,44 +206,23 @@ public final class Canvas {
     }
 
     public void sprite(Asset sprite, int x, int y, int width, int height) {
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, Assets.id(sprite), x, y, width, height, tint(0xFFFFFFFF));
-    }
-
-    public void texture(com.mojang.blaze3d.pipeline.RenderPipeline pipeline, Identifier texture, int x, int y,
-                        int width, int height, float u, float v, int uWidth, int vHeight, int textureWidth,
-                        int textureHeight, int argb) {
-        if (!faint()) {
-            graphics.blit(pipeline, texture, x, y, u, v, width, height, uWidth, vHeight, textureWidth, textureHeight,
-                    tint(argb));
-        }
+        gfx.sprite(sprite, x, y, width, height, tint(0xFFFFFFFF));
     }
 
     public void sprite(Asset sprite, int x, int y, int width, int height, int argb) {
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, Assets.id(sprite), x, y, width, height, tint(argb));
+        gfx.sprite(sprite, x, y, width, height, tint(argb));
     }
 
     public void item(ItemStack stack, int x, int y) {
         if (alpha >= 0.5f && !stack.isEmpty()) {
-            graphics.fakeItem(stack, x, y);
+            gfx.item(stack, x, y);
         }
     }
 
     public void face(UUID playerId, int x, int y, int size) {
-        PlayerSkin skin = skinOf(playerId);
         if (!faint()) {
-            PlayerFaceExtractor.extractRenderState(graphics, skin, x, y, size, tint(0xFFFFFFFF));
+            gfx.face(playerId, x, y, size, tint(0xFFFFFFFF));
         }
-    }
-
-    private static PlayerSkin skinOf(UUID playerId) {
-        ClientPacketListener connection = Minecraft.getInstance().getConnection();
-        if (connection != null) {
-            PlayerInfo info = connection.getPlayerInfo(playerId);
-            if (info != null) {
-                return info.getSkin();
-            }
-        }
-        return DefaultPlayerSkin.get(playerId);
     }
 
     public int textWidth(Component text) {
@@ -257,7 +235,7 @@ public final class Canvas {
 
     public void text(Component text, int x, int y, int argb, boolean shadow) {
         if (!faint()) {
-            graphics.text(font, text, x, y, tint(argb), shadow);
+            gfx.text(font, text, x, y, tint(argb), shadow);
         }
     }
 
@@ -267,7 +245,7 @@ public final class Canvas {
 
     public void line(FormattedCharSequence line, int x, int y, int argb, boolean shadow) {
         if (!faint()) {
-            graphics.text(font, line, x, y, tint(argb), shadow);
+            gfx.text(font, line, x, y, tint(argb), shadow);
         }
     }
 

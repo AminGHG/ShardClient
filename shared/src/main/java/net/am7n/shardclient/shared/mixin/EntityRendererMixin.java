@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.mixin;
 
+import net.am7n.shardclient.shared.platform.Profiles;
 import net.am7n.shardclient.shared.practice.ClientBadges;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.network.chat.Component;
@@ -20,7 +21,7 @@ public abstract class EntityRendererMixin {
         }
         if (entity instanceof Player player) {
             if (ClientBadges.has(player.getUUID())) {
-                cir.setReturnValue(ClientBadges.decorate(name, player.getGameProfile().name()));
+                cir.setReturnValue(ClientBadges.decorate(name, Profiles.name(player.getGameProfile())));
             }
         } else {
             Component decorated = ClientBadges.decorateAny(name);

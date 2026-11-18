@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.menu;
 
+import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.full.ShardClientFull;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Motion;
@@ -59,7 +60,7 @@ public final class ShardTitleScreen extends ShardScreen {
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         extractPanorama(graphics, partialTick);
-        Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+        Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
         int bg = Theme.colors().bg0() & 0xFFFFFF;
         if (Theme.light()) {
             extractBlurredBackground(graphics);

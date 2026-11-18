@@ -58,6 +58,7 @@ configure(subprojects.findAll { it.name in ['shared', 'full', 'light', 'showcase
         def props = [
                 version          : project.version,
                 minecraft_version: rootProject.minecraft_version,
+                minecraft_range  : "~${rootProject.minecraft_version}",
                 loader_min_version: rootProject.loader_min_version,
                 java_version     : rootProject.java_version
         ]

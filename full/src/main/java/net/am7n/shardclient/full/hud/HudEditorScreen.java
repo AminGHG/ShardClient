@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.hud;
 
+import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.full.config.ClientConfig;
 import net.am7n.shardclient.full.module.ModuleManager;
 import net.am7n.shardclient.shared.render.Canvas;
@@ -39,7 +40,7 @@ public final class HudEditorScreen extends ShardScreen {
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+        Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
         canvas.pushAlpha(openProgress());
         canvas.fill(0, 0, width, height, 0x40000000);
         canvas.popAlpha();
@@ -187,7 +188,7 @@ public final class HudEditorScreen extends ShardScreen {
         }
 
         private Canvas sizes() {
-            return new Canvas(null, minecraft.font, 0, 0);
+            return Gfx.canvas(null, minecraft.font, 0, 0);
         }
     }
 }

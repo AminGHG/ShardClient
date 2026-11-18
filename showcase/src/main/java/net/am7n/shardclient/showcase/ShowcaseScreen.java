@@ -1,5 +1,6 @@
 package net.am7n.shardclient.showcase;
 
+import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.shared.ui.Button;
 import net.am7n.shardclient.shared.ui.Element;
@@ -149,7 +150,7 @@ final class ShowcaseScreen extends ShardScreen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (previewing) {
-            Canvas canvas = new Canvas(graphics, font, mouseX, mouseY);
+            Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
             if (brightBackdrop) {
                 canvas.fill(0, 0, width, height / 2, 0xFFE8742C);
                 canvas.fill(0, height / 2, width, height - height / 2, 0xFFF2F2F2);

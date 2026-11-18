@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.hud;
 
+import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.full.module.ModuleManager;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.am7n.shardclient.shared.render.Canvas;
@@ -43,7 +44,7 @@ public final class HudRenderer {
         if (mc.gui.screen() instanceof HudEditorScreen || mc.player == null) {
             return;
         }
-        Canvas canvas = new Canvas(graphics, mc.font, -1, -1);
+        Canvas canvas = Gfx.canvas(graphics, mc.font, -1, -1);
         for (var module : modules.all()) {
             if (module.isEnabled() && !(module instanceof HudModule)) {
                 try {
