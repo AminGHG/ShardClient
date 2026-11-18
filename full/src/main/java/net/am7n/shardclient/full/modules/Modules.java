@@ -83,6 +83,7 @@ public final class Modules {
         modules.register(new CopyCoordinates());
         modules.register(Features.waypoints = new net.am7n.shardclient.full.modules.utility.Waypoints());
         modules.register(Features.screenshotCopy = new net.am7n.shardclient.full.modules.utility.ScreenshotCopy());
+        modules.register(new net.am7n.shardclient.full.discord.DiscordPresence());
     }
 
     public static void registerHooks(ModuleManager modules) {

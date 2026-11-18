@@ -16,8 +16,8 @@ final class BadgePreviewScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         graphics.fill(0, 0, width, height, 0xFF202020);
         Component[] names = {
-                ClientBadges.decorate(Component.literal("Steve")),
-                ClientBadges.decorate(Component.literal("Alex").withStyle(ChatFormatting.GOLD)),
+                ClientBadges.decorate(Component.literal("Steve"), "Steve"),
+                ClientBadges.decorate(Component.literal("Alex").withStyle(ChatFormatting.GOLD), "Alex"),
                 Component.literal("NoClient")
         };
         int y = 20;
