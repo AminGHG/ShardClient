@@ -1,12 +1,8 @@
 package net.am7n.shardclient.shared.hud;
 
 import net.am7n.shardclient.shared.ShardClientRuntime;
+import net.am7n.shardclient.shared.platform.Hud;
 import net.am7n.shardclient.shared.render.Canvas;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +10,8 @@ import java.util.List;
 public final class OverlayHost {
     private final List<Overlay> overlays = new ArrayList<>();
 
-    public void register(Identifier id) {
-        HudElementRegistry.addLast(id, this::render);
+    public void register(String name) {
+        Hud.addLayer(name, this::render);
     }
 
     public void add(Overlay overlay) {
@@ -50,13 +46,6 @@ public final class OverlayHost {
             return;
         }
         draw(canvas);
-    }
-
-    private void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
-        if (overlays.isEmpty()) {
-            return;
-        }
-        draw(new Canvas(graphics, Minecraft.getInstance().font, -1, -1));
     }
 
     private void draw(Canvas canvas) {

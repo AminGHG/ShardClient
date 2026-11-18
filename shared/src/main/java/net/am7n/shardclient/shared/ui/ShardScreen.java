@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.ui;
 
+import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.am7n.shardclient.shared.anim.Motion;
 import net.am7n.shardclient.shared.anim.Lerp;
@@ -44,7 +45,7 @@ public abstract class ShardScreen extends Screen {
                 root = build();
             } catch (RuntimeException ex) {
                 ShardClientRuntime.LOGGER.error("Could not build {}", getClass().getName(), ex);
-                minecraft.gui.setScreen(parent);
+                Game.setScreen(parent);
                 return;
             }
             transition.show();
@@ -87,7 +88,7 @@ public abstract class ShardScreen extends Screen {
     @Override
     public void tick() {
         if (closing && !transition.isVisible()) {
-            minecraft.gui.setScreen(parent);
+            Game.setScreen(parent);
         }
     }
 

@@ -12,7 +12,6 @@ import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Look;
 import net.am7n.shardclient.shared.render.Palette;
 import net.am7n.shardclient.shared.render.Theme;
-import net.am7n.shardclient.shared.ui.PlayerFace;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -89,7 +88,7 @@ public final class MatchFoundCard implements Overlay {
         int nameY = faceY + (FACE - 8) / 2;
 
         part(canvas, linear, 1, () -> {
-            canvas.face(PlayerFace.skinOf(selfId), x + PADDING, faceY, FACE);
+            canvas.face(selfId, x + PADDING, faceY, FACE);
             canvas.text(Theme.text(Component.literal(selfName), true), x + PADDING + FACE + 6, nameY,
                     colors.text(), shadow);
         });
@@ -99,7 +98,7 @@ public final class MatchFoundCard implements Overlay {
 
         part(canvas, linear, 3, () -> {
             int faceX = x + WIDTH - PADDING - FACE;
-            canvas.face(PlayerFace.skinOf(match.opponentId()), faceX, faceY, FACE);
+            canvas.face(match.opponentId(), faceX, faceY, FACE);
             canvas.textRight(Theme.text(Component.literal(match.opponentName()), true), faceX - 6, nameY,
                     colors.text(), shadow);
         });

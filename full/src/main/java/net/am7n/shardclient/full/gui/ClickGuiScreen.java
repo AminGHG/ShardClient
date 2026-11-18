@@ -21,6 +21,8 @@ import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
 import net.am7n.shardclient.shared.ui.Stack;
 import net.am7n.shardclient.shared.ui.Toggle;
+import net.am7n.shardclient.shared.render.Asset;
+import net.am7n.shardclient.shared.render.Assets;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -29,7 +31,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 
 public final class ClickGuiScreen extends ShardScreen {
-    private static final Identifier LOGO = Identifier.fromNamespaceAndPath("shardclient-shared", "textures/gui/logo.png");
+    private static final Asset LOGO = Asset.shared("textures/gui/logo.png");
     private static final int SIDEBAR = 104;
     private static final int TAB_HEIGHT = 20;
     private static final int PADDING = 10;

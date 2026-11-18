@@ -1,5 +1,7 @@
 package net.am7n.shardclient.shared.ui;
 
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.am7n.shardclient.shared.anim.Motion;
@@ -10,7 +12,6 @@ import net.am7n.shardclient.shared.render.Theme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public final class Button extends Element implements Focusable {
     private final Tween pressScale = new Tween(1, Motion.PRESS_RELEASE_MS, Motion.ENTER);
     private final Hover hover = new Hover();
     private Style style = Style.GHOST;
-    private Identifier icon;
+    private Asset icon;
     private boolean iconOnly;
     private int height = Theme.BUTTON_HEIGHT;
     private boolean enabled = true;
@@ -56,12 +57,12 @@ public final class Button extends Element implements Focusable {
         return this;
     }
 
-    public Button icon(Identifier icon) {
+    public Button icon(Asset icon) {
         this.icon = icon;
         return this;
     }
 
-    public Button iconOnly(Identifier icon) {
+    public Button iconOnly(Asset icon) {
         this.icon = icon;
         this.iconOnly = true;
         return this;
@@ -155,9 +156,9 @@ public final class Button extends Element implements Focusable {
             return false;
         }
         pressScale.snap(Motion.PRESS_SCALE);
-        Object screenBefore = Minecraft.getInstance().gui.screen();
+        Object screenBefore = Game.screen();
         activate();
-        if (Minecraft.getInstance().gui.screen() != screenBefore) {
+        if (Game.screen() != screenBefore) {
             pressScale.snap(1);
         }
         return true;

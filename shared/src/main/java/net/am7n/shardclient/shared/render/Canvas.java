@@ -7,11 +7,16 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+import java.util.UUID;
 
 public final class Canvas {
     private static final float MIN_VISIBLE_ALPHA = 0.04f;
@@ -150,25 +155,25 @@ public final class Canvas {
         }
     }
 
-    public void icon(Identifier icon, int x, int y, int size, int argb) {
+    public void icon(Asset icon, int x, int y, int size, int argb) {
         if (!faint()) {
-            SmoothShapes.image(graphics, icon, 64, x, y, size, tint(argb));
+            SmoothShapes.image(graphics, Assets.id(icon), 64, x, y, size, tint(argb));
         }
     }
 
-    public void image(Identifier texture, int textureSize, int x, int y, int size) {
+    public void image(Asset texture, int textureSize, int x, int y, int size) {
         if (!faint()) {
-            SmoothShapes.image(graphics, texture, textureSize, x, y, size, tint(0xFFFFFFFF));
+            SmoothShapes.image(graphics, Assets.id(texture), textureSize, x, y, size, tint(0xFFFFFFFF));
         }
     }
 
-    public void image(Identifier texture, int textureSize, int x, int y, int size, int argb) {
+    public void image(Asset texture, int textureSize, int x, int y, int size, int argb) {
         if (!faint()) {
-            SmoothShapes.image(graphics, texture, textureSize, x, y, size, tint(argb));
+            SmoothShapes.image(graphics, Assets.id(texture), textureSize, x, y, size, tint(argb));
         }
     }
 
-    public void imageWithHardShadow(Identifier texture, int textureSize, int x, int y, int size, int offset) {
+    public void imageWithHardShadow(Asset texture, int textureSize, int x, int y, int size, int offset) {
         image(texture, textureSize, x + offset, y + offset, size, 0xFF000000);
         image(texture, textureSize, x, y, size);
     }
@@ -201,8 +206,8 @@ public final class Canvas {
         return r - (int) Math.round(Math.sqrt(r * r - dy * dy));
     }
 
-    public void sprite(Identifier sprite, int x, int y, int width, int height) {
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, width, height, tint(0xFFFFFFFF));
+    public void sprite(Asset sprite, int x, int y, int width, int height) {
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, Assets.id(sprite), x, y, width, height, tint(0xFFFFFFFF));
     }
 
     public void texture(com.mojang.blaze3d.pipeline.RenderPipeline pipeline, Identifier texture, int x, int y,
@@ -214,8 +219,8 @@ public final class Canvas {
         }
     }
 
-    public void sprite(Identifier sprite, int x, int y, int width, int height, int argb) {
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, width, height, tint(argb));
+    public void sprite(Asset sprite, int x, int y, int width, int height, int argb) {
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, Assets.id(sprite), x, y, width, height, tint(argb));
     }
 
     public void item(ItemStack stack, int x, int y) {
@@ -224,10 +229,22 @@ public final class Canvas {
         }
     }
 
-    public void face(PlayerSkin skin, int x, int y, int size) {
+    public void face(UUID playerId, int x, int y, int size) {
+        PlayerSkin skin = skinOf(playerId);
         if (!faint()) {
             PlayerFaceExtractor.extractRenderState(graphics, skin, x, y, size, tint(0xFFFFFFFF));
         }
+    }
+
+    private static PlayerSkin skinOf(UUID playerId) {
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection != null) {
+            PlayerInfo info = connection.getPlayerInfo(playerId);
+            if (info != null) {
+                return info.getSkin();
+            }
+        }
+        return DefaultPlayerSkin.get(playerId);
     }
 
     public int textWidth(Component text) {

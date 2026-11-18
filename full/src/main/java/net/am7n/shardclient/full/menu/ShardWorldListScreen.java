@@ -18,6 +18,8 @@ import net.am7n.shardclient.shared.ui.ScrollArea;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
 import net.am7n.shardclient.shared.ui.Stack;
+import net.am7n.shardclient.shared.render.Asset;
+import net.am7n.shardclient.shared.render.Assets;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.FaviconTexture;
 import net.minecraft.client.gui.screens.Screen;
@@ -301,7 +303,7 @@ public final class ShardWorldListScreen extends ShardScreen {
             int iconY = y + (height - icon) / 2;
             FaviconTexture texture = ((WorldListEntryAccessor) (Object) entry).shardclient$icon();
             if (hasIcon && texture != null && !texture.isClosed()) {
-                canvas.imageWithHardShadow(texture.textureLocation(), 64, iconX, iconY, icon, ICON_SHADOW);
+                canvas.imageWithHardShadow(Assets.asset(texture.textureLocation()), 64, iconX, iconY, icon, ICON_SHADOW);
             } else {
                 String name = summary.getLevelName();
                 Theme.look().shape(canvas, iconX + ICON_SHADOW, iconY + ICON_SHADOW, icon, icon, 4f, 0xFF000000);

@@ -1,13 +1,11 @@
 package net.am7n.shardclient.shared.badges;
 
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.platform.Hud;
 import net.am7n.shardclient.protocol.packet.Notification;
 import net.am7n.shardclient.shared.hud.OverlayHost;
 import net.am7n.shardclient.shared.practice.ui.NotificationToasts;
-import net.am7n.shardclient.shared.render.Canvas;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
 
 public final class BadgeNotice {
     private static final String TITLE = "ShardClient";
@@ -29,16 +27,12 @@ public final class BadgeNotice {
     }
 
     public static void register() {
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("shardclient-shared", "badge_notice"),
-                (graphics, delta) -> {
-                    Minecraft mc = Minecraft.getInstance();
-                    if (mc.gui.screen() == null) {
-                        HOST.render(new Canvas(graphics, mc.font, -1, -1));
-                    }
-                });
-        ScreenEvents.AFTER_INIT.register((client, screen, width, height) ->
-                ScreenEvents.afterExtract(screen).register((current, graphics, mouseX, mouseY, delta) ->
-                        HOST.render(new Canvas(graphics, client.font, mouseX, mouseY))));
+        Hud.addLayer("badge_notice", canvas -> {
+            if (Game.screen() == null) {
+                HOST.render(canvas);
+            }
+        });
+        Hud.afterEveryScreen(HOST::render);
     }
 
     public static void warn(String message) {

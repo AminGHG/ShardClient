@@ -173,7 +173,7 @@ public final class CombatHuds {
             int textX = x + PADDING;
             PlayerInfo info = mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(target.getUUID());
             if (info != null) {
-                canvas.face(info.getSkin(), x + PADDING, y + PADDING, 28);
+                canvas.face(target.getUUID(), x + PADDING, y + PADDING, 28);
                 textX += 32;
             }
             canvas.text(Theme.text(target.getName(), true), textX, y + PADDING + 1, colors.text(), false);

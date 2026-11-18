@@ -21,6 +21,8 @@ import net.am7n.shardclient.shared.ui.ScrollArea;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
 import net.am7n.shardclient.shared.ui.Stack;
+import net.am7n.shardclient.shared.render.Asset;
+import net.am7n.shardclient.shared.render.Assets;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmScreen;
@@ -56,15 +58,15 @@ public final class ShardServerListScreen extends ShardScreen {
     private static final int ICON_SHADOW = 2;
     private static final int PADDING = 10;
     private static final int COLUMN = 440;
-    private static final Identifier[] PING = sprites("server_list/ping_", 5);
-    private static final Identifier[] PINGING = sprites("server_list/pinging_", 5);
-    private static final Identifier INCOMPATIBLE = Identifier.withDefaultNamespace("server_list/incompatible");
-    private static final Identifier UNREACHABLE = Identifier.withDefaultNamespace("server_list/unreachable");
+    private static final Asset[] PING = sprites("server_list/ping_", 5);
+    private static final Asset[] PINGING = sprites("server_list/pinging_", 5);
+    private static final Asset INCOMPATIBLE = Asset.minecraft("server_list/incompatible");
+    private static final Asset UNREACHABLE = Asset.minecraft("server_list/unreachable");
 
-    private static Identifier[] sprites(String prefix, int count) {
-        Identifier[] out = new Identifier[count];
+    private static Asset[] sprites(String prefix, int count) {
+        Asset[] out = new Asset[count];
         for (int i = 0; i < count; i++) {
-            out[i] = Identifier.withDefaultNamespace(prefix + (i + 1));
+            out[i] = Asset.minecraft(prefix + (i + 1));
         }
         return out;
     }
@@ -562,7 +564,7 @@ public final class ShardServerListScreen extends ShardScreen {
             int iconY = y + (height - icon) / 2;
             Icon texture = icons.computeIfAbsent(server, Icon::new);
             if (texture.update(server.getIconBytes())) {
-                canvas.imageWithHardShadow(texture.texture.textureLocation(), 64, iconX, iconY, icon, ICON_SHADOW);
+                canvas.imageWithHardShadow(Assets.asset(texture.texture.textureLocation()), 64, iconX, iconY, icon, ICON_SHADOW);
             } else {
                 Theme.look().shape(canvas, iconX + ICON_SHADOW, iconY + ICON_SHADOW, icon, icon, 4f, 0xFF000000);
                 Theme.look().shape(canvas, iconX, iconY, icon, icon, 4f, colors.inset());
@@ -605,7 +607,7 @@ public final class ShardServerListScreen extends ShardScreen {
 
         private void drawStatus(Canvas canvas, Palette colors, boolean shadow) {
             int right = statusRight();
-            Identifier sprite;
+            Asset sprite;
             switch (server.state()) {
                 case SUCCESSFUL -> {
                     long ping = server.ping;

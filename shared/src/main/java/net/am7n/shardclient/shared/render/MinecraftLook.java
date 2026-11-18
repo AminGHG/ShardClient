@@ -1,18 +1,17 @@
 package net.am7n.shardclient.shared.render;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 
 public final class MinecraftLook implements Look {
     public static final MinecraftLook INSTANCE = new MinecraftLook();
 
-    private static final Identifier PANEL = Identifier.withDefaultNamespace("popup/background");
-    private static final Identifier BUTTON = Identifier.withDefaultNamespace("widget/button");
-    private static final Identifier BUTTON_HIGHLIGHTED = Identifier.withDefaultNamespace("widget/button_highlighted");
-    private static final Identifier BUTTON_DISABLED = Identifier.withDefaultNamespace("widget/button_disabled");
-    private static final Identifier SLOT = Identifier.withDefaultNamespace("container/slot");
-    private static final Identifier SCROLLER = Identifier.withDefaultNamespace("widget/scroller");
-    private static final Identifier SCROLLER_TRACK = Identifier.withDefaultNamespace("widget/scroller_background");
+    private static final Asset PANEL = Asset.minecraft("popup/background");
+    private static final Asset BUTTON = Asset.minecraft("widget/button");
+    private static final Asset BUTTON_HIGHLIGHTED = Asset.minecraft("widget/button_highlighted");
+    private static final Asset BUTTON_DISABLED = Asset.minecraft("widget/button_disabled");
+    private static final Asset SLOT = Asset.minecraft("container/slot");
+    private static final Asset SCROLLER = Asset.minecraft("widget/scroller");
+    private static final Asset SCROLLER_TRACK = Asset.minecraft("widget/scroller_background");
 
     private static final Palette COLORS = new Palette(
             0xFF101010, 0xFF1D1D21, 0xFFFFFFFF, 0xFFA0A0A0, 0xFF707070, 0xFFFFFFFF,

@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Lerp;
@@ -7,10 +8,9 @@ import net.am7n.shardclient.shared.anim.Motion;
 import net.am7n.shardclient.shared.hud.Overlay;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Theme;
-import net.minecraft.resources.Identifier;
 
 public final class ScreenTransition implements Overlay {
-    private static final Identifier LOGO = Identifier.fromNamespaceAndPath("shardclient-shared", "textures/gui/logo.png");
+    private static final Asset LOGO = Asset.shared("textures/gui/logo.png");
     private static final int LOGO_TEXTURE = 256;
     private static final int LOGO_SIZE = 56;
     private static final long COVER_MS = 160;

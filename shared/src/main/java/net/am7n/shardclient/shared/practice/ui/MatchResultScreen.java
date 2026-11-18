@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Easing;
@@ -13,7 +14,6 @@ import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.shared.ui.Button;
 import net.am7n.shardclient.shared.ui.Container;
 import net.am7n.shardclient.shared.ui.Element;
-import net.am7n.shardclient.shared.ui.PlayerFace;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -178,17 +178,17 @@ public final class MatchResultScreen extends ShardScreen {
             boolean won = result.result() == MatchEnded.Result.WIN;
             boolean lost = result.result() == MatchEnded.Result.LOSS;
 
-            drawPlayer(canvas, look, PlayerFace.skinOf(selfId), selfName, cx - gap, y, face, won, true);
+            drawPlayer(canvas, look, selfId, selfName, cx - gap, y, face, won, true);
             canvas.textCentered(Theme.text(Component.literal("VS"), true), cx, y + (face - 8) / 2,
                     colors.textMuted(), look.textShadow());
             if (match != null) {
-                drawPlayer(canvas, look, PlayerFace.skinOf(match.opponentId()), match.opponentName(), cx + gap, y,
+                drawPlayer(canvas, look, match.opponentId(), match.opponentName(), cx + gap, y,
                         face, lost, false);
             }
             endSettle(canvas);
         }
 
-        private void drawPlayer(Canvas canvas, Look look, net.minecraft.world.entity.player.PlayerSkin skin,
+        private void drawPlayer(Canvas canvas, Look look, java.util.UUID skin,
                                 String name, int centerX, int y, int face, boolean winner, boolean nameLeft) {
             Palette colors = look.colors();
             Component label = Theme.text(Component.literal(name), true);
@@ -207,7 +207,7 @@ public final class MatchResultScreen extends ShardScreen {
         }
 
         private int guiScaleStroke() {
-            return Math.round((float) minecraft.getWindow().getGuiScale());
+            return Game.guiScale();
         }
 
         private void score(Canvas canvas, long t, Look look, int cx, int y) {

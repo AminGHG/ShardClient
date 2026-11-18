@@ -14,6 +14,8 @@ import net.am7n.shardclient.shared.ui.Element;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
 import net.fabricmc.loader.api.FabricLoader;
+import net.am7n.shardclient.shared.render.Asset;
+import net.am7n.shardclient.shared.render.Assets;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
@@ -24,7 +26,7 @@ import net.minecraft.resources.Identifier;
 import java.util.List;
 
 public final class ShardTitleScreen extends ShardScreen {
-    private static final Identifier LOGO = Identifier.fromNamespaceAndPath("shardclient-shared", "textures/gui/logo.png");
+    private static final Asset LOGO = Asset.shared("textures/gui/logo.png");
     static final String SHARDPVP_ADDRESS = "shardpvp.xyz";
     private static final int COLUMN = 220;
     private static final int GAP = 6;

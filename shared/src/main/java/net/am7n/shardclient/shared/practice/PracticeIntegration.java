@@ -3,7 +3,6 @@ package net.am7n.shardclient.shared.practice;
 import net.am7n.shardclient.protocol.ClientKind;
 import net.am7n.shardclient.shared.hud.OverlayHost;
 import net.am7n.shardclient.shared.practice.ui.PracticeOverlays;
-import net.minecraft.resources.Identifier;
 
 public final class PracticeIntegration {
     private final PracticeSession session = new PracticeSession();
@@ -18,7 +17,7 @@ public final class PracticeIntegration {
 
     public void register() {
         link.register();
-        overlays.register(Identifier.fromNamespaceAndPath("shardclient-shared", "practice"));
+        overlays.register("practice");
     }
 
     public PracticeLink link() {

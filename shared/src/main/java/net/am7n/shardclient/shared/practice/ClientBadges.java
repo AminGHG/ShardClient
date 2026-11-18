@@ -2,14 +2,13 @@ package net.am7n.shardclient.shared.practice;
 
 import net.am7n.shardclient.protocol.packet.ClientUsers;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.am7n.shardclient.shared.render.Fonts;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,8 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class ClientBadges {
     private static final Set<UUID> USERS = ConcurrentHashMap.newKeySet();
-    private static final FontDescription BADGE_FONT =
-            new FontDescription.Resource(Identifier.fromNamespaceAndPath("shardclient-shared", "badge"));
     private static final String BADGE_GLYPH = "";
     private static final int REFRESH_TICKS = 10;
 
@@ -146,7 +143,7 @@ public final class ClientBadges {
     }
 
     private static Component badge() {
-        return Component.literal(BADGE_GLYPH).withStyle(style -> style.withFont(BADGE_FONT));
+        return Component.literal(BADGE_GLYPH).withStyle(Fonts::badge);
     }
 
     static int find(String text, String name) {

@@ -1,11 +1,6 @@
 package net.am7n.shardclient.shared.ui;
 
 import net.am7n.shardclient.shared.render.Canvas;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.world.entity.player.PlayerSkin;
 
 import java.util.UUID;
 
@@ -25,17 +20,6 @@ public final class PlayerFace extends Element {
 
     @Override
     public void render(Canvas canvas) {
-        canvas.face(skinOf(playerId), x + (width - size) / 2, y + (height - size) / 2, size);
-    }
-
-    public static PlayerSkin skinOf(UUID playerId) {
-        ClientPacketListener connection = Minecraft.getInstance().getConnection();
-        if (connection != null) {
-            PlayerInfo info = connection.getPlayerInfo(playerId);
-            if (info != null) {
-                return info.getSkin();
-            }
-        }
-        return DefaultPlayerSkin.get(playerId);
+        canvas.face(playerId, x + (width - size) / 2, y + (height - size) / 2, size);
     }
 }

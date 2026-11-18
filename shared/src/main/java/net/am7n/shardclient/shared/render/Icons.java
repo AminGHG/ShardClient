@@ -1,29 +1,27 @@
 package net.am7n.shardclient.shared.render;
 
-import net.minecraft.resources.Identifier;
-
 public final class Icons {
     private Icons() {
     }
 
-    private static Identifier icon(String name) {
-        return Identifier.fromNamespaceAndPath("shardclient-shared", "textures/gui/icons/" + name + ".png");
+    private static Asset icon(String name) {
+        return Asset.shared("textures/gui/icons/" + name + ".png");
     }
 
-    public static final Identifier PERSON = icon("person");
-    public static final Identifier PEOPLE = icon("people");
-    public static final Identifier GEAR = icon("gear");
-    public static final Identifier POWER = icon("power");
-    public static final Identifier SWAP = icon("swap");
-    public static final Identifier GRID = icon("grid");
-    public static final Identifier STAR = icon("star");
-    public static final Identifier STAR_FILLED = icon("star-filled");
-    public static final Identifier REFRESH = icon("refresh");
-    public static final Identifier PLUS = icon("plus");
-    public static final Identifier PENCIL = icon("pencil");
-    public static final Identifier TRASH = icon("trash");
-    public static final Identifier LINK = icon("link");
-    public static final Identifier BACK = icon("back");
-    public static final Identifier PLAY = icon("play");
-    public static final Identifier CHEVRON = icon("chevron");
+    public static final Asset PERSON = icon("person");
+    public static final Asset PEOPLE = icon("people");
+    public static final Asset GEAR = icon("gear");
+    public static final Asset POWER = icon("power");
+    public static final Asset SWAP = icon("swap");
+    public static final Asset GRID = icon("grid");
+    public static final Asset STAR = icon("star");
+    public static final Asset STAR_FILLED = icon("star-filled");
+    public static final Asset REFRESH = icon("refresh");
+    public static final Asset PLUS = icon("plus");
+    public static final Asset PENCIL = icon("pencil");
+    public static final Asset TRASH = icon("trash");
+    public static final Asset LINK = icon("link");
+    public static final Asset BACK = icon("back");
+    public static final Asset PLAY = icon("play");
+    public static final Asset CHEVRON = icon("chevron");
 }

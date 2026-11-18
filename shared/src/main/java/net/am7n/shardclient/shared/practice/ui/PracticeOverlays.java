@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.protocol.packet.MatchStarted;
 import net.am7n.shardclient.protocol.packet.Notification;
@@ -156,8 +157,8 @@ public final class PracticeOverlays implements PracticeListener {
         }
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer self = minecraft.player;
-        if (minecraft.gui.screen() == null && self != null) {
-            minecraft.gui.setScreen(new MatchResultScreen(null, pendingResult, lastMatch, self.getUUID(),
+        if (Game.screen() == null && self != null) {
+            Game.setScreen(new MatchResultScreen(null, pendingResult, lastMatch, self.getUUID(),
                     self.getScoreboardName()));
         } else {
             if (resultCard != null) {
@@ -179,8 +180,8 @@ public final class PracticeOverlays implements PracticeListener {
 
     private static void closeResultScreen() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.gui.screen() instanceof MatchResultScreen) {
-            minecraft.gui.setScreen(null);
+        if (Game.screen() instanceof MatchResultScreen) {
+            Game.setScreen(null);
         }
     }
 
