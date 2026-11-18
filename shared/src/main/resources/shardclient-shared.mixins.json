@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "PlayerTabOverlayMixin",
-    "EntityRendererMixin"
+    "EntityRendererMixin",
+    "TextDisplayMixin",
+    "ChatBadgeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -36,8 +36,22 @@ public final class HitColor extends Module {
         }
     }
 
+    public int armorTint() {
+        int rgb = rgb();
+        float amount = strength.floatValue() / 100f;
+        int r = Math.round(255 + (((rgb >> 16) & 0xFF) - 255) * amount);
+        int g = Math.round(255 + (((rgb >> 8) & 0xFF) - 255) * amount);
+        int b = Math.round(255 + ((rgb & 0xFF) - 255) * amount);
+        return 0xFF000000 | r << 16 | g << 8 | b;
+    }
+
     private int target() {
-        int rgb = switch (color.get()) {
+        int keep = Math.round((1 - strength.floatValue() / 100f) * 255);
+        return keep << 24 | rgb();
+    }
+
+    private int rgb() {
+        return switch (color.get()) {
             case "Red" -> 0xFF0000;
             case "Pink" -> 0xFF5FB4;
             case "Blue" -> 0x3D8BFF;
@@ -47,8 +61,6 @@ public final class HitColor extends Module {
             case "Black" -> 0x000000;
             default -> 0xB27BFF;
         };
-        int keep = Math.round((1 - strength.floatValue() / 100f) * 255);
-        return keep << 24 | rgb;
     }
 
     private void apply(int argb) {

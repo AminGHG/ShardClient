@@ -14,6 +14,7 @@ import net.minecraft.client.User;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -38,7 +39,7 @@ public final class GlobalBadges {
     private static final long ANSWER_TTL_MS = 5 * 60_000;
     private static final int MAX_LOOKUP = 200;
     private static final long RETRY_MIN_MS = 30_000;
-    private static final long RETRY_MAX_MS = 30 * 60_000;
+    private static final long RETRY_MAX_MS = 5 * 60_000;
 
     private static final Map<UUID, Answer> ANSWERS = new ConcurrentHashMap<>();
     private static final Set<UUID> USERS = ConcurrentHashMap.newKeySet();
@@ -55,10 +56,22 @@ public final class GlobalBadges {
     private static volatile UUID tokenOwner;
     private static volatile long retryAt;
     private static volatile long retryDelay = RETRY_MIN_MS;
+    private static volatile boolean failing;
+    private static volatile boolean failureShown;
     private static long lastHeartbeat;
     private static long lastLookup;
 
     private record Answer(boolean user, long at) {
+    }
+
+    private static final class BadgeException extends Exception {
+        BadgeException(String reason, Throwable cause) {
+            super(reason, cause);
+        }
+
+        BadgeException(String reason) {
+            super(reason);
+        }
     }
 
     private GlobalBadges() {
@@ -86,16 +99,16 @@ public final class GlobalBadges {
         return enabled;
     }
 
+    public static boolean connected() {
+        return token != null && !failing;
+    }
+
     public static boolean has(UUID player) {
         return enabled && player != null && USERS.contains(player);
     }
 
     private static void tick(Minecraft client) {
-        if (!enabled) {
-            return;
-        }
-        ClientPacketListener connection = client.getConnection();
-        if (connection == null || client.isLocalServer()) {
+        if (!enabled || !client.isGameLoadFinished()) {
             return;
         }
         long now = System.currentTimeMillis();
@@ -105,8 +118,9 @@ public final class GlobalBadges {
         User user = client.getUser();
 
         List<UUID> ask = new ArrayList<>();
-        boolean doLookup = now - lastLookup >= LOOKUP_EVERY_MS;
-        if (doLookup) {
+        ClientPacketListener connection = client.getConnection();
+        boolean onServer = connection != null && !client.isLocalServer();
+        if (onServer && now - lastLookup >= LOOKUP_EVERY_MS) {
             lastLookup = now;
             for (PlayerInfo info : connection.getOnlinePlayers()) {
                 UUID id = info.getProfile().id();
@@ -128,14 +142,44 @@ public final class GlobalBadges {
             try {
                 work(client, user, ask, doHeartbeat);
                 retryDelay = RETRY_MIN_MS;
+                succeeded();
+            } catch (BadgeException ex) {
+                failed(ex.getMessage(), ex.getCause() != null ? ex.getCause() : ex);
             } catch (Exception ex) {
-                retryAt = System.currentTimeMillis() + retryDelay;
-                retryDelay = Math.min(RETRY_MAX_MS, retryDelay * 2);
-                ShardClientRuntime.LOGGER.debug("Badges unavailable for now: {}", ex.toString());
+                failed("Unexpected error: " + ex.getClass().getSimpleName(), ex);
             } finally {
                 BUSY.set(false);
             }
         });
+    }
+
+    private static void succeeded() {
+        if (!failing) {
+            return;
+        }
+        failing = false;
+        ShardClientRuntime.LOGGER.info("Connected to the ShardClient badge service again");
+        if (failureShown) {
+            failureShown = false;
+            BadgeNotice.ok("Connected again. Badges are back.");
+        }
+    }
+
+    private static void failed(String reason, Throwable cause) {
+        retryAt = System.currentTimeMillis() + retryDelay;
+        long waited = retryDelay;
+        retryDelay = Math.min(RETRY_MAX_MS, retryDelay * 2);
+        if (!failing) {
+            failing = true;
+            ShardClientRuntime.LOGGER.warn("ShardClient badge service unavailable: {} (retrying in {}s)",
+                    reason, waited / 1000, cause);
+            if (!failureShown) {
+                failureShown = true;
+                BadgeNotice.warn("Badges offline: " + reason);
+            }
+        } else {
+            ShardClientRuntime.LOGGER.debug("Badge service still unavailable: {}", reason);
+        }
     }
 
     private static void work(Minecraft client, User user, List<UUID> ask, boolean heartbeat) throws Exception {
@@ -183,16 +227,16 @@ public final class GlobalBadges {
         token = null;
         JsonObject challenge = post("/auth/challenge", new JsonObject(), false);
         if (challenge == null || !(challenge.get("serverId") instanceof JsonElement id) || !id.isJsonPrimitive()) {
-            throw new IllegalStateException("no challenge");
+            throw new BadgeException("the server sent no sign-in challenge");
         }
         String serverId = id.getAsString();
         if (!serverId.matches("[0-9a-zA-Z-]{1,64}")) {
-            throw new IllegalStateException("bad challenge");
+            throw new BadgeException("the server sent a bad sign-in challenge");
         }
         try {
             client.services().sessionService().joinServer(user.getProfileId(), user.getAccessToken(), serverId);
         } catch (AuthenticationException ex) {
-            throw new IllegalStateException("Mojang refused the sign-in (offline account?)", ex);
+            throw new BadgeException("Mojang couldn't verify this account (offline account or expired session?)", ex);
         }
         ShardClientRuntime runtime = ShardClientRuntime.get();
         JsonObject verify = new JsonObject();
@@ -202,11 +246,12 @@ public final class GlobalBadges {
         verify.addProperty("version", runtime.version());
         JsonObject session = post("/auth/verify", verify, false);
         if (session == null || !(session.get("token") instanceof JsonElement value) || !value.isJsonPrimitive()) {
-            throw new IllegalStateException("sign-in refused");
+            throw new BadgeException("sign-in was refused");
         }
         token = value.getAsString();
         tokenOwner = user.getProfileId();
         lastHeartbeat = System.currentTimeMillis();
+        ShardClientRuntime.LOGGER.info("Signed in to the ShardClient badge service as {}", user.getName());
     }
 
     private static JsonObject post(String path, JsonObject body, boolean authorized) throws Exception {
@@ -222,19 +267,48 @@ public final class GlobalBadges {
             }
             request.header("Authorization", "Bearer " + current);
         }
-        HttpResponse<String> response = HTTP.send(request.build(), HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() == 401) {
+        HttpResponse<String> response;
+        try {
+            response = HTTP.send(request.build(), HttpResponse.BodyHandlers.ofString());
+        } catch (IOException ex) {
+            throw new BadgeException("can't reach " + URI.create(API).getHost(), ex);
+        }
+        int status = response.statusCode();
+        if (authorized && status == 401) {
             token = null;
             return null;
         }
-        if (response.statusCode() / 100 != 2) {
-            throw new IllegalStateException("HTTP " + response.statusCode() + " from " + path);
+        if (status / 100 != 2) {
+            String message = serverMessage(response.body());
+            if (status / 100 == 5) {
+                throw new BadgeException("the badge server has a problem (HTTP " + status + ")");
+            }
+            throw new BadgeException(message != null ? message : "HTTP " + status + " from " + path);
         }
         String text = response.body();
         if (text == null || text.isBlank()) {
             return new JsonObject();
         }
-        JsonElement parsed = JsonParser.parseString(text);
-        return parsed instanceof JsonObject object ? object : new JsonObject();
+        try {
+            JsonElement parsed = JsonParser.parseString(text);
+            return parsed instanceof JsonObject object ? object : new JsonObject();
+        } catch (RuntimeException ex) {
+            throw new BadgeException("the badge server sent an unreadable reply", ex);
+        }
+    }
+
+    private static String serverMessage(String body) {
+        if (body == null || body.isBlank()) {
+            return null;
+        }
+        try {
+            if (JsonParser.parseString(body) instanceof JsonObject object
+                    && object.get("message") instanceof JsonElement message && message.isJsonPrimitive()) {
+                String text = message.getAsString().strip();
+                return text.isEmpty() ? null : text.length() > 120 ? text.substring(0, 120) : text;
+            }
+        } catch (RuntimeException ignored) {
+        }
+        return null;
     }
 }

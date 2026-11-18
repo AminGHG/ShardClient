@@ -86,6 +86,12 @@ public abstract class Module {
         }
     }
 
+    public void resetSettings() {
+        for (Setting<?> setting : settings) {
+            setting.reset();
+        }
+    }
+
     protected void onEnable() {
     }
 

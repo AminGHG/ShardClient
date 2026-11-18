@@ -35,6 +35,8 @@ public final class ShardClientRuntime {
         runtime.practice.register();
         instance = runtime;
         net.am7n.shardclient.shared.badges.GlobalBadges.register();
+        net.am7n.shardclient.shared.practice.ClientBadges.register();
+        net.am7n.shardclient.shared.badges.BadgeNotice.register();
         LOGGER.info("ShardClient {} {} started", kind, version);
         return runtime;
     }

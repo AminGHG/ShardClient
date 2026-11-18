@@ -1,8 +1,5 @@
 #version 330
 
-// Frame-feedback motion blur, after Noryea's Motion Blur mod
-// (https://github.com/Noryea/motionblur-fabric, GPL-3.0).
-
 uniform sampler2D InSampler;
 uniform sampler2D PrevSampler;
 
