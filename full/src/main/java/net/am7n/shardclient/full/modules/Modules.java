@@ -23,10 +23,14 @@ import net.am7n.shardclient.full.modules.visual.WeatherChanger;
 import net.am7n.shardclient.full.modules.visual.Zoom;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.am7n.shardclient.shared.render.Canvas;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class Modules {
@@ -69,7 +73,8 @@ public final class Modules {
 
         modules.register(Features.crosshair = new Crosshair());
         modules.register(new LowHealthWarning());
-        modules.register(new net.am7n.shardclient.full.modules.pvp.HitColor());
+        modules.register(Features.hitColor = new net.am7n.shardclient.full.modules.pvp.HitColor());
+        modules.register(Features.totemPopChams = new net.am7n.shardclient.full.modules.pvp.TotemPopChams());
 
         modules.register(new ToggleKeys.Sprint());
         modules.register(new ToggleKeys.Sneak());
@@ -85,7 +90,19 @@ public final class Modules {
         new net.am7n.shardclient.full.modules.lyrics.WorldLyrics(Features.lyrics).register();
         net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(
                 context -> Features.waypoints.render(context));
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(
+                context -> Features.totemPopChams.render(context));
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> SimpleHuds.Session.joined());
+
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> dispatcher.register(
+                ClientCommands.literal("motionblur")
+                        .then(ClientCommands.argument("percent", IntegerArgumentType.integer(0, 100))
+                                .executes(command -> {
+                                    int percent = IntegerArgumentType.getInteger(command, "percent");
+                                    Features.motionBlur.setAmountFromCommand(percent);
+                                    command.getSource().sendFeedback(Component.literal("Motion Blur: " + percent + "%"));
+                                    return percent;
+                                }))));
 
         HudElementRegistry.addFirst(Identifier.fromNamespaceAndPath("shardclient", "click_counter"),
                 (graphics, delta) -> ClickCounter.sample(Minecraft.getInstance()));

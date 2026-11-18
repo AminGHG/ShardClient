@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "shardclient-gametest",
+  "version": "1.0.0",
+  "name": "ShardClient game tests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": ["net.am7n.shardclient.gametest.ShardClientGameTest"]
+  },
+  "depends": {
+    "shardclient": "*"
+  }
+}

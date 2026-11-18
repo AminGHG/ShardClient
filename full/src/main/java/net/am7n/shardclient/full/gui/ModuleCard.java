@@ -64,6 +64,10 @@ final class ModuleCard extends Container {
             addRow(new SettingRow(setting.name(), control(setting)), setting::shown);
         }
         addRow(new SettingRow("Keybind", new KeybindPill(module)), () -> true);
+        if (!all.isEmpty()) {
+            addRow(new SettingRow("Default settings", new Pill(() -> "Reset", direction -> module.resetSettings())),
+                    () -> true);
+        }
     }
 
     private void addRow(Element row, BooleanSupplier shown) {

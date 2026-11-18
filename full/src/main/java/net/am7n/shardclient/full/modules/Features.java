@@ -25,6 +25,8 @@ public final class Features {
     public static net.am7n.shardclient.full.modules.visual.MotionBlur motionBlur;
     public static net.am7n.shardclient.full.modules.utility.ScreenshotCopy screenshotCopy;
     public static net.am7n.shardclient.full.modules.utility.Waypoints waypoints;
+    public static net.am7n.shardclient.full.modules.pvp.TotemPopChams totemPopChams;
+    public static net.am7n.shardclient.full.modules.pvp.HitColor hitColor;
 
     private Features() {
     }

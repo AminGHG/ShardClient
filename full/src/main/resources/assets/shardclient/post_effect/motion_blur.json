@@ -23,9 +23,9 @@
             "uniforms": {
                 "MotionBlurConfig": [
                     {
-                        "name": "Amount",
+                        "name": "BlendFactor",
                         "type": "float",
-                        "value": 0.4
+                        "value": 0.5
                     }
                 ]
             }
