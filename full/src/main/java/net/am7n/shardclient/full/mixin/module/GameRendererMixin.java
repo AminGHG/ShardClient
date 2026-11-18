@@ -73,7 +73,6 @@ public abstract class GameRendererMixin {
             if (chain == null) {
                 return;
             }
-            // A resource reload builds a new chain with fresh buffers, so the value is written again then too.
             if (chain != shardclient$blurChain || blend != shardclient$blurApplied) {
                 shardclient$writeBlendFactor(chain, blend);
                 shardclient$blurChain = chain;

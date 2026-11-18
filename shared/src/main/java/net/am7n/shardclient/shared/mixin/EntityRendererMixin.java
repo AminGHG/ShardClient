@@ -15,8 +15,18 @@ public abstract class EntityRendererMixin {
     @Inject(method = "getNameTag", at = @At("RETURN"), cancellable = true)
     private void shardclient$badge(Entity entity, CallbackInfoReturnable<Component> cir) {
         Component name = cir.getReturnValue();
-        if (name != null && entity instanceof Player && ClientBadges.has(entity.getUUID())) {
-            cir.setReturnValue(ClientBadges.decorate(name));
+        if (name == null) {
+            return;
+        }
+        if (entity instanceof Player player) {
+            if (ClientBadges.has(player.getUUID())) {
+                cir.setReturnValue(ClientBadges.decorate(name, player.getGameProfile().name()));
+            }
+        } else {
+            Component decorated = ClientBadges.decorateAny(name);
+            if (decorated != name) {
+                cir.setReturnValue(decorated);
+            }
         }
     }
 }

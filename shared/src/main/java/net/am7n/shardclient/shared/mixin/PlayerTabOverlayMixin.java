@@ -14,7 +14,7 @@ public abstract class PlayerTabOverlayMixin {
     @Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true)
     private void shardclient$badge(PlayerInfo info, CallbackInfoReturnable<Component> cir) {
         if (ClientBadges.has(info.getProfile().id())) {
-            cir.setReturnValue(ClientBadges.decorate(cir.getReturnValue()));
+            cir.setReturnValue(ClientBadges.decorate(cir.getReturnValue(), info.getProfile().name()));
         }
     }
 }

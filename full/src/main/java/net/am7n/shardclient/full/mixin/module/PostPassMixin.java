@@ -9,10 +9,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-/**
- * Vanilla creates post-effect uniform buffers as read-only. ShardClient's own passes get
- * {@link GpuBuffer#USAGE_COPY_DST} as well, so values such as the motion blur amount can be rewritten at runtime.
- */
 @Mixin(PostPass.class)
 public abstract class PostPassMixin {
     @Shadow

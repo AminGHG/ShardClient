@@ -133,3 +133,15 @@ tasks.register('verifyProductJars') {
         check('Light Version', lightJar.get().archiveFile.get().asFile, ['light', 'shared', 'protocol'], ['full'])
     }
 }
+
+project(':full') {
+    fabricApi {
+        configureTests {
+            createSourceSet = true
+            modId = 'shardclient-gametest'
+            enableGameTests = false
+            enableClientGameTests = true
+            eula = true
+        }
+    }
+}

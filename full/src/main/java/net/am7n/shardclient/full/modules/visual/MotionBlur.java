@@ -6,11 +6,6 @@ import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.NumberSetting;
 import net.minecraft.resources.Identifier;
 
-/**
- * Frame-feedback motion blur, modelled on Noryea's Motion Blur mod
- * (https://github.com/Noryea/motionblur-fabric, GPL-3.0): every frame is mixed with the previous blurred
- * frame by a blend factor of {@code amount / 100}, capped at 0.99, and {@code /motionblur <percent>} sets it.
- */
 public final class MotionBlur extends Module {
     public static final Identifier EFFECT = Identifier.fromNamespaceAndPath("shardclient", "motion_blur");
     public static final String UNIFORM_BLOCK = "MotionBlurConfig";
@@ -22,7 +17,6 @@ public final class MotionBlur extends Module {
                 Category.VISUAL);
     }
 
-    /** How much of the previous frame stays on screen, from 0 (no blur) to 0.99. */
     public float blendFactor() {
         return Math.min(amount.intValue(), 99) / 100F;
     }
@@ -31,7 +25,6 @@ public final class MotionBlur extends Module {
         return amount.intValue();
     }
 
-    /** Applies {@code /motionblur <percent>}: sets the amount, turns the module on and saves. */
     public void setAmountFromCommand(int percent) {
         amount.set((double) percent);
         if (percent > 0) {

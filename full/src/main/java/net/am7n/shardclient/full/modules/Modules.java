@@ -73,7 +73,8 @@ public final class Modules {
 
         modules.register(Features.crosshair = new Crosshair());
         modules.register(new LowHealthWarning());
-        modules.register(new net.am7n.shardclient.full.modules.pvp.HitColor());
+        modules.register(Features.hitColor = new net.am7n.shardclient.full.modules.pvp.HitColor());
+        modules.register(Features.totemPopChams = new net.am7n.shardclient.full.modules.pvp.TotemPopChams());
 
         modules.register(new ToggleKeys.Sprint());
         modules.register(new ToggleKeys.Sneak());
@@ -89,6 +90,8 @@ public final class Modules {
         new net.am7n.shardclient.full.modules.lyrics.WorldLyrics(Features.lyrics).register();
         net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(
                 context -> Features.waypoints.render(context));
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(
+                context -> Features.totemPopChams.render(context));
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> SimpleHuds.Session.joined());
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> dispatcher.register(
