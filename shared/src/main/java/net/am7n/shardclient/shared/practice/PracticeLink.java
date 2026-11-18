@@ -54,9 +54,14 @@ public final class PracticeLink {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(this::reset));
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> client.execute(() -> {
-            ShardClientRuntime.LOGGER.info("Joined a server; ShardPvP channel offered: {}",
-                    ClientPlayNetworking.canSend(ShardPayload.TYPE));
-            sayHello();
+            boolean offered = ClientPlayNetworking.canSend(ShardPayload.TYPE);
+            ShardClientRuntime.LOGGER.info("Joined a server; ShardPvP channel offered: {}", offered);
+            if (offered) {
+                sayHello();
+            } else if (ShardPvpServers.isCurrent(client)) {
+                ShardClientRuntime.LOGGER.info("ShardPvP server did not offer the channel, saying hello anyway");
+                sayHello(true);
+            }
         }));
         ServerboundPlayChannelEvents.REGISTER.register((handler, sender, client, channels) -> {
             if (channels.contains(ShardPayload.TYPE.id())) {
@@ -86,11 +91,15 @@ public final class PracticeLink {
     }
 
     private void sayHello() {
+        sayHello(false);
+    }
+
+    private void sayHello(boolean evenIfNotOffered) {
         if (state != State.INACTIVE) {
             return;
         }
         try {
-            if (!ClientPlayNetworking.canSend(ShardPayload.TYPE)) {
+            if (!evenIfNotOffered && !ClientPlayNetworking.canSend(ShardPayload.TYPE)) {
                 return;
             }
             Hello hello = new Hello(Protocol.VERSION_MIN, Protocol.VERSION_MAX, kind, clientVersion, FEATURES);
