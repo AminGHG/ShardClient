@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Optional;
 
-public final class WindowsMedia {
+public final class WindowsMedia implements MediaSource {
     private static final String MANAGER_CLASS = "Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager";
     private static final String STATICS_IID = "2050c4ee-11a0-57de-aed7-c97c70338245";
     private static final String ASYNC_INFO_IID = "00000036-0000-0000-c000-000000000046";
@@ -40,6 +40,7 @@ public final class WindowsMedia {
         }
     }
 
+    @Override
     public Optional<NowPlaying> read() throws MediaException {
         if (!initialised) {
             call(combase.getFunction("RoInitialize"), 1);

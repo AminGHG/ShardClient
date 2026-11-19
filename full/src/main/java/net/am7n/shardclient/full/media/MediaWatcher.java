@@ -65,13 +65,13 @@ public final class MediaWatcher {
     }
 
     private void run() {
-        Optional<WindowsMedia> media = WindowsMedia.create();
+        Optional<MediaSource> media = MediaSource.forThisSystem();
         if (media.isEmpty()) {
             available = false;
             running.set(false);
             return;
         }
-        WindowsMedia windows = media.get();
+        MediaSource source = media.get();
         try {
             while (wanted) {
                 if (System.currentTimeMillis() - wantedAt > 3000) {
@@ -84,7 +84,7 @@ public final class MediaWatcher {
                     continue;
                 }
                 try {
-                    Optional<NowPlaying> now = windows.read();
+                    Optional<NowPlaying> now = source.read();
                     NowPlaying track = now.filter(t -> !onlySpotify || t.fromSpotify()).orElse(null);
                     NowPlaying before = playing;
                     playing = track;
@@ -103,7 +103,7 @@ public final class MediaWatcher {
                             lyricsLoading = false;
                         }
                     }
-                } catch (WindowsMedia.MediaException ex) {
+                } catch (Exception ex) {
                     ShardClientRuntime.LOGGER.debug("Now playing unavailable: {}", ex.getMessage());
                     playing = null;
                     wait = BACKOFF_MS;
