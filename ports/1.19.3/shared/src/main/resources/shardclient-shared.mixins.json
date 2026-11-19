@@ -6,7 +6,8 @@
   "client": [
     "PlayerTabOverlayMixin",
     "EntityRendererMixin",
-    "ChatBadgeMixin"
+    "ChatBadgeMixin",
+    "ClientBrandMixin"
   ],
   "injectors": {
     "defaultRequire": 1
