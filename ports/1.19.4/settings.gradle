@@ -1,0 +1,12 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'ShardClient-1.19.4'
+
+['protocol', 'shared', 'light', 'full'].each { new File(settingsDir, it).mkdirs() }
+include 'protocol', 'shared', 'light', 'full'

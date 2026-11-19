@@ -1,0 +1,145 @@
+def javaVersion = (rootProject.java_version as String).toInteger()
+def portsRoot = rootProject.projectDir.parentFile
+def repoRoot = portsRoot.parentFile
+def obfuscated = (rootProject.findProperty('obfuscated') ?: 'true').toString().toBoolean()
+def inheritList = { String key -> ((rootProject.findProperty(key) ?: '') as String).split(',').collect { it.trim() }.findAll { it } }
+def inheritedFor = { String module -> rootProject.hasProperty("inherits_${module}") ? inheritList("inherits_${module}") : inheritList('inherits') }
+def modVersion = new Properties().with { p ->
+    new File(repoRoot, 'gradle.properties').withInputStream { p.load(it) }
+    p.getProperty('mod_version')
+}
+
+def layers = { String module, String kind ->
+    def dirs = [new File(repoRoot, "${module}/src/main/${kind}")]
+    inheritedFor(module).each { dirs << new File(portsRoot, "${it}/${module}/src/main/${kind}") }
+    dirs << new File(rootProject.projectDir, "${module}/src/main/${kind}")
+    dirs.findAll { it.isDirectory() }
+}
+
+def relative = { File dir, File file -> dir.toPath().relativize(file.toPath()).toString().replace('\\', '/') }
+
+def removed = { String module ->
+    def folders = inheritedFor(module).collect { new File(portsRoot, it) } + [rootProject.projectDir]
+    folders.collect { new File(it, "${module}/exclude.txt") }.findAll { it.isFile() }
+            .collectMany { it.readLines().collect { l -> l.trim() }.findAll { l -> l && !l.startsWith('#') } } as Set
+}
+
+def portSources = { Project p, String module ->
+    def dropped = removed(module)
+    ['java', 'resources'].each { kind ->
+        def dirs = layers(module, kind)
+        def owners = [:]
+        dirs.each { dir ->
+            dir.eachFileRecurse { f -> if (f.isFile()) owners[relative(dir, f)] = dir }
+        }
+        def set = kind == 'java' ? p.sourceSets.main.java : p.sourceSets.main.resources
+        set.srcDirs = dirs
+        set.exclude { el ->
+            def path = el.relativePath.pathString
+            def owner = owners[path]
+            dropped.contains(path) || owner != null && !el.file.toPath().startsWith(owner.toPath())
+        }
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    group = rootProject.maven_group
+    version = modVersion
+    repositories {
+        mavenCentral()
+    }
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = javaVersion
+    }
+}
+
+project(':protocol') {
+    sourceSets.main.java.srcDirs = [new File(repoRoot, 'protocol/src/main/java')]
+    base { archivesName = 'shardclient-protocol' }
+}
+
+configure(subprojects.findAll { it.name in ['shared', 'light', 'full'] }) {
+    apply plugin: obfuscated ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+    }
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        if (obfuscated) {
+            mappings loom.officialMojangMappings()
+            modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+            modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+        } else {
+            implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+            implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+        }
+    }
+    portSources(project, project.name)
+    processResources {
+        def props = [
+                version           : project.version,
+                minecraft_version : rootProject.minecraft_version,
+                minecraft_range   : rootProject.minecraft_range,
+                loader_min_version: rootProject.loader_min_version,
+                java_version      : rootProject.java_version
+        ]
+        inputs.properties props
+        filteringCharset = 'UTF-8'
+        filesMatching(['fabric.mod.json', '*.mixins.json']) {
+            expand props
+        }
+    }
+    def widener = layers(project.name, 'resources').collect { new File(it, 'shardclient.accesswidener') }.findAll { it.isFile() }
+    if (!widener.isEmpty()) {
+        loom.accessWidenerPath = widener.last()
+        processResources {
+            filesMatching('fabric.mod.json') {
+                filter { line -> line.contains('"mixins"') ? line + '\n  "accessWidener": "shardclient.accesswidener",' : line }
+            }
+        }
+    }
+}
+
+project(':shared') {
+    base { archivesName = 'shardclient-shared' }
+    dependencies {
+        api project(':protocol')
+    }
+    jar {
+        from project(':protocol').sourceSets.main.output
+    }
+}
+
+configure(subprojects.findAll { it.name in ['light', 'full'] }) {
+    dependencies {
+        if (obfuscated) {
+            implementation project(path: ':shared', configuration: 'namedElements')
+        } else {
+            implementation project(':shared')
+        }
+        include project(':shared')
+    }
+    def extraLibs = ((rootProject.findProperty("${project.name}_libs") ?: '') as String).split(',').collect { it.trim() }.findAll { it }
+    dependencies {
+        extraLibs.each {
+            implementation it
+            include it
+        }
+    }
+    base { archivesName = "shardclient-${project.name}" }
+    def finalJar = obfuscated ? tasks.named('remapJar') : tasks.named('jar')
+    finalJar.configure {
+        archiveVersion = "${project.version}+mc${rootProject.minecraft_version}"
+    }
+    if (project.hasProperty('join')) {
+        def join = project.property('join') as String
+        if ((rootProject.minecraft_version as String).startsWith('1.19')) {
+            def parts = join.split(':')
+            loom.runs.client.programArgs('--server', parts[0], '--port', parts.length > 1 ? parts[1] : '25565')
+        } else {
+            loom.runs.client.programArgs('--quickPlayMultiplayer', join)
+        }
+    }
+}

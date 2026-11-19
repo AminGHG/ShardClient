@@ -1,21 +1,22 @@
 package net.am7n.shardclient.full.menu;
 
+import net.am7n.shardclient.shared.render.Asset;
+import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.full.ShardClientFull;
 import net.am7n.shardclient.full.config.ClientConfig;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.am7n.shardclient.full.platform.Menus;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.SpriteIconButton;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 
 public final class MenuScreens {
-    private static final Identifier TOGGLE_SPRITE = Identifier.fromNamespaceAndPath("shardclient-shared", "icon/shardclient");
+    private static final Asset TOGGLE_SPRITE = Asset.shared("icon/shardclient");
 
     private MenuScreens() {
     }
@@ -53,17 +54,16 @@ public final class MenuScreens {
         ClientConfig config = client.config();
         config.setMenuStyle(config.menuStyle() == ClientConfig.MenuStyle.SHARD
                 ? ClientConfig.MenuStyle.VANILLA : ClientConfig.MenuStyle.SHARD);
-        Minecraft.getInstance().gui.setScreen(new TitleScreen());
+        Game.setScreen(new TitleScreen());
     }
 
     public static void registerVanillaToggle() {
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             if (screen.getClass() == TitleScreen.class) {
                 Component label = Component.literal("Switch to ShardClient's menu");
-                SpriteIconButton button = SpriteIconButton.builder(label, pressed -> toggle(), true)
-                        .sprite(TOGGLE_SPRITE, 16, 16).width(20).withTootip().build();
-                button.setPosition(4, height - 36);
-                Screens.getWidgets(screen).add(button);
+                AbstractWidget button = Menus.iconButton(label, TOGGLE_SPRITE, MenuScreens::toggle);
+                Menus.place(button, 4, height - 36);
+                Menus.addWidget(screen, button);
             }
         });
     }

@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.shared.anim.Clock;
@@ -281,7 +282,7 @@ public final class MatchResultScreen extends ShardScreen {
         }
 
         private void autoContinue(Canvas canvas, long t, Palette colors) {
-            float left = 1 - Math.clamp(t / (float) AUTO_CLOSE_MS, 0f, 1f);
+            float left = 1 - Maths.clamp(t / (float) AUTO_CLOSE_MS, 0f, 1f);
             canvas.fill(x, y + height - 2, Math.round(width * left), 2, colors.accentStrong());
         }
 
@@ -326,7 +327,7 @@ public final class MatchResultScreen extends ShardScreen {
     }
 
     private static float window(long t, long startMs, long durationMs) {
-        return Math.clamp((t - startMs) / (float) durationMs, 0f, 1f);
+        return Maths.clamp((t - startMs) / (float) durationMs, 0f, 1f);
     }
 
     private String headingText() {

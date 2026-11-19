@@ -1,13 +1,13 @@
 package net.am7n.shardclient.full.modules.visual;
 
+import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.full.ShardClientFull;
 import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.NumberSetting;
-import net.minecraft.resources.Identifier;
 
 public final class MotionBlur extends Module {
-    public static final Identifier EFFECT = Identifier.fromNamespaceAndPath("shardclient", "motion_blur");
+    public static final Asset EFFECT = Asset.of("shardclient", "motion_blur");
     public static final String UNIFORM_BLOCK = "MotionBlurConfig";
 
     private final NumberSetting amount = number("amount", "Amount", 50, 0, 100, 1, "%");

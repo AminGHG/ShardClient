@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.modules.utility;
 
+import net.am7n.shardclient.full.platform.Chat;
 import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.modules.Keys;
@@ -20,7 +21,7 @@ public final class CopyCoordinates extends Module {
             }
             String text = mc.player.getBlockX() + " " + mc.player.getBlockY() + " " + mc.player.getBlockZ();
             mc.keyboardHandler.setClipboard(text);
-            mc.player.sendOverlayMessage(Component.literal("Copied " + text));
+            Chat.actionBar(Component.literal("Copied " + text));
         }
     }
 }

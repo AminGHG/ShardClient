@@ -1,0 +1,33 @@
+package net.am7n.shardclient.shared.mixin;
+
+import net.am7n.shardclient.shared.platform.Profiles;
+import net.am7n.shardclient.shared.practice.ClientBadges;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(EntityRenderer.class)
+public abstract class EntityRendererMixin {
+    @Inject(method = "getNameTag", at = @At("RETURN"), cancellable = true)
+    private void shardclient$badge(Entity entity, CallbackInfoReturnable<Component> cir) {
+        Component name = cir.getReturnValue();
+        if (name == null) {
+            return;
+        }
+        if (entity instanceof Player player) {
+            if (ClientBadges.has(player.getUUID())) {
+                cir.setReturnValue(ClientBadges.decorate(name, Profiles.name(player.getGameProfile())));
+            }
+        } else {
+            Component decorated = ClientBadges.decorateAny(name);
+            if (decorated != name) {
+                cir.setReturnValue(decorated);
+            }
+        }
+    }
+}

@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.modules.hud;
 
+import net.am7n.shardclient.shared.platform.Game;
 import net.minecraft.client.Minecraft;
 
 import java.util.ArrayDeque;
@@ -15,7 +16,7 @@ public final class ClickCounter {
 
     public static void sample(Minecraft mc) {
         long now = System.currentTimeMillis();
-        boolean playing = mc.gui.screen() == null;
+        boolean playing = Game.screen() == null;
         boolean left = playing && mc.mouseHandler.isLeftPressed();
         boolean right = playing && mc.mouseHandler.isRightPressed();
         if (left && !leftWas) {

@@ -2,6 +2,7 @@ package net.am7n.shardclient.full.modules.hud;
 
 import net.am7n.shardclient.full.module.setting.BooleanSetting;
 import net.am7n.shardclient.full.module.setting.ChoiceSetting;
+import net.am7n.shardclient.full.platform.Client;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
@@ -23,7 +24,7 @@ public final class SimpleHuds {
 
         @Override
         protected Component text() {
-            return labelled("FPS", Integer.toString(mc.getFps()));
+            return labelled("FPS", Integer.toString(Client.fps()));
         }
     }
 

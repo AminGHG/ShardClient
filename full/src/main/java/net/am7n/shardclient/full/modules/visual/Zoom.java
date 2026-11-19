@@ -1,5 +1,7 @@
 package net.am7n.shardclient.full.modules.visual;
 
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.BooleanSetting;
@@ -68,7 +70,7 @@ public final class Zoom extends Module {
 
     @Override
     public void tick() {
-        boolean free = mc.gui.screen() == null;
+        boolean free = Game.screen() == null;
         if (key.is("Toggle")) {
             while (Keys.zoom.consumeClick()) {
                 if (free) {
@@ -101,7 +103,7 @@ public final class Zoom extends Module {
         double base = 1 / multiplier;
         double raw = base * Math.pow(perStep.get() / 100.0, scrollSmooth * progressForScroll());
         previousDivisor = divisor;
-        divisor = Math.clamp(raw, 1, MAX_DIVISOR);
+        divisor = Maths.clamp(raw, 1, MAX_DIVISOR);
     }
 
     private double progressForScroll() {
@@ -125,8 +127,8 @@ public final class Zoom extends Module {
             return false;
         }
         int max = steps.intValue();
-        int min = -Math.clamp((int) Math.ceil(Math.log(initial.get()) / Math.log(perStep.get() / 100.0)), 0, max);
-        scrollSteps = Math.clamp(scrollSteps + (amount > 0 ? 1 : -1), min, max);
+        int min = -Maths.clamp((int) Math.ceil(Math.log(initial.get()) / Math.log(perStep.get() / 100.0)), 0, max);
+        scrollSteps = Maths.clamp(scrollSteps + (amount > 0 ? 1 : -1), min, max);
         return true;
     }
 

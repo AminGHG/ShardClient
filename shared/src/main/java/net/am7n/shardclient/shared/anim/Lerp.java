@@ -13,7 +13,7 @@ public final class Lerp {
     }
 
     public static int color(int from, int to, float t) {
-        float clamped = Math.clamp(t, 0f, 1f);
+        float clamped = Maths.clamp(t, 0f, 1f);
         int a = channel(from >>> 24, to >>> 24, clamped);
         int r = channel(from >> 16 & 0xFF, to >> 16 & 0xFF, clamped);
         int g = channel(from >> 8 & 0xFF, to >> 8 & 0xFF, clamped);

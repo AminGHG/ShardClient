@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Tween;
 import net.am7n.shardclient.shared.render.Canvas;
@@ -33,7 +34,7 @@ public final class ScrollArea extends Container {
     protected void layout() {
         contentHeight = children.get(0).measure().height() + INSET * 2;
 
-        float clamped = Math.clamp(scroll.target(), 0, maxScroll());
+        float clamped = Maths.clamp(scroll.target(), 0, maxScroll());
         if (clamped != scroll.target()) {
             scroll.set(clamped);
         }
@@ -76,7 +77,7 @@ public final class ScrollArea extends Container {
         if (max == 0) {
             return false;
         }
-        scroll.set(Math.clamp(scroll.target() - (float) amount * WHEEL_STEP, 0, max));
+        scroll.set(Maths.clamp(scroll.target() - (float) amount * WHEEL_STEP, 0, max));
         return true;
     }
 

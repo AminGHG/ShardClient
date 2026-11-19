@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.modules.hud;
 
+import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.full.hud.HudModule;
 import net.am7n.shardclient.full.module.setting.BooleanSetting;
 import net.am7n.shardclient.shared.anim.Easing;
@@ -26,8 +27,8 @@ public final class KeystrokesHud extends HudModule {
     private final Key a = new Key(() -> down(mc.options.keyLeft));
     private final Key s = new Key(() -> down(mc.options.keyDown));
     private final Key d = new Key(() -> down(mc.options.keyRight));
-    private final Key lmb = new Key(() -> mc.gui.screen() == null && mc.mouseHandler.isLeftPressed());
-    private final Key rmb = new Key(() -> mc.gui.screen() == null && mc.mouseHandler.isRightPressed());
+    private final Key lmb = new Key(() -> Game.screen() == null && mc.mouseHandler.isLeftPressed());
+    private final Key rmb = new Key(() -> Game.screen() == null && mc.mouseHandler.isRightPressed());
     private final Key jump = new Key(() -> down(mc.options.keyJump));
 
     public KeystrokesHud() {

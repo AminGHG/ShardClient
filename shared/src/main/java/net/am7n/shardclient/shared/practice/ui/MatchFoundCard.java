@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Lerp;
@@ -74,11 +75,11 @@ public final class MatchFoundCard implements Overlay {
         boolean shadow = look.textShadow();
         int x = (canvas.width() - WIDTH) / 2;
         int y = TOP;
-        float linear = Math.clamp(elapsedMs / (float) parts.totalMs(), 0f, 1f);
+        float linear = Maths.clamp(elapsedMs / (float) parts.totalMs(), 0f, 1f);
 
         canvas.push();
         canvas.scale(Lerp.of(Motion.POPOVER_START_SCALE, 1f, progress), x + WIDTH / 2f, y + HEIGHT / 2f);
-        canvas.pushAlpha(Math.clamp(progress, 0f, 1f));
+        canvas.pushAlpha(Maths.clamp(progress, 0f, 1f));
         look.panel(canvas, x, y, WIDTH, HEIGHT);
 
         part(canvas, linear, 0, () -> canvas.textCentered(Theme.text(Component.literal("MATCH FOUND"), true),

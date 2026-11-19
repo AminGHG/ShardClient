@@ -1,35 +1,24 @@
 package net.am7n.shardclient.full.modules.pvp;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.am7n.shardclient.full.mixin.module.ModelPartAccessor;
 import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.BooleanSetting;
 import net.am7n.shardclient.full.module.setting.ChoiceSetting;
 import net.am7n.shardclient.full.module.setting.NumberSetting;
+import net.am7n.shardclient.full.platform.PlayerPose;
+import net.am7n.shardclient.full.platform.Poses;
+import net.am7n.shardclient.full.platform.Verts;
+import net.am7n.shardclient.full.platform.World;
 import net.am7n.shardclient.shared.ShardClientRuntime;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-import net.minecraft.client.Camera;
-import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -102,35 +91,21 @@ public final class TotemPopChams extends Module {
     }
 
     private Ghost capture(Player player) {
-        EntityRenderState raw = mc.getEntityRenderDispatcher().getRenderer(player).createRenderState(player, 1.0F);
-        if (!(raw instanceof AvatarRenderState state)) {
-            return null;
-        }
-        boolean slim = state.skin != null && state.skin.model() == PlayerModelType.SLIM;
-        PlayerModel model = new PlayerModel(
-                mc.getEntityModels().bakeLayer(slim ? ModelLayers.PLAYER_SLIM : ModelLayers.PLAYER), slim);
-        model.setupAnim(state);
-        model.hat.visible = false;
-        model.jacket.visible = false;
-        model.leftSleeve.visible = false;
-        model.rightSleeve.visible = false;
-        model.leftPants.visible = false;
-        model.rightPants.visible = false;
-        return new Ghost(player.position(), player.yBodyRot, model, state.fallFlyingScale(), state.xRot,
-                state.flyingYRot, state.isAutoSpinAttack, state.shouldApplyFlyingYRot);
+        PlayerPose pose = PlayerPose.capture(player);
+        return pose == null ? null : new Ghost(player.position(), player.yBodyRot, pose);
     }
 
-    public void render(LevelRenderContext context) {
+    public void render(World world) {
         if (!isEnabled() || ghosts.isEmpty()) {
             return;
         }
-        Camera camera = context.gameRenderer().mainCamera();
-        if (camera == null) {
+        World.View view = world.view();
+        if (view == null) {
             return;
         }
-        Vec3 cam = camera.position();
-        PoseStack pose = context.poseStack();
-        float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        Vec3 cam = view.position();
+        PoseStack pose = world.pose();
+        float partial = world.partialTick();
         int fillArgb = argb(fillColour.get());
         int wireArgb = argb(wireColour.get());
         float thickness = wireThickness.floatValue();
@@ -141,18 +116,14 @@ public final class TotemPopChams extends Module {
                 int colour = fade(fillArgb, alpha);
                 place(pose, ghost, cam);
                 if (!disperse.on()) {
-                    context.submitNodeCollector().submitCustomGeometry(pose, Types.FILL,
-                            (p, consumer) -> ghost.model.renderToBuffer(stack(p), consumer, FULL_BRIGHT,
-                                    OverlayTexture.NO_OVERLAY, colour));
+                    world.chamsFill(pose, out -> ghost.pose.render(out, FULL_BRIGHT, colour));
                 } else {
                     for (BodyPart part : BodyPart.values()) {
                         Vec3 offset = offset(ghost, part, spread);
                         pose.pushPose();
                         pose.translate(offset.x, offset.y, offset.z);
-                        ModelPart modelPart = part.of(ghost.model);
-                        context.submitNodeCollector().submitCustomGeometry(pose, Types.FILL,
-                                (p, consumer) -> modelPart.render(stack(p), consumer, FULL_BRIGHT,
-                                        OverlayTexture.NO_OVERLAY, colour));
+                        ModelPart modelPart = part.of(ghost.pose);
+                        world.chamsFill(pose, out -> out.part(modelPart, FULL_BRIGHT, colour));
                         pose.popPose();
                     }
                 }
@@ -165,9 +136,8 @@ public final class TotemPopChams extends Module {
                     Vec3 offset = offset(ghost, part, spread);
                     pose.pushPose();
                     pose.translate(offset.x, offset.y, offset.z);
-                    ModelPart modelPart = part.of(ghost.model);
-                    context.submitNodeCollector().submitCustomGeometry(pose, Types.WIRE,
-                            (p, consumer) -> wire(modelPart, stack(p), consumer, colour, thickness));
+                    ModelPart modelPart = part.of(ghost.pose);
+                    world.chamsWire(pose, thickness, out -> wire(modelPart, out, colour, thickness));
                     pose.popPose();
                 }
                 pose.popPose();
@@ -212,22 +182,17 @@ public final class TotemPopChams extends Module {
     private static void place(PoseStack pose, Ghost ghost, Vec3 cam) {
         pose.pushPose();
         pose.translate(ghost.position.x - cam.x, ghost.position.y - cam.y, ghost.position.z - cam.z);
-        pose.mulPose(Axis.YP.rotationDegrees(180 - ghost.bodyYaw));
+        Poses.rotate(pose, new Quaternionf().rotationY((float) Math.toRadians(180 - ghost.bodyYaw)));
         pose.scale(-1.0F, -1.0F, 1.0F);
         pose.scale(0.8f, 0.9f, 0.8f);
         pose.translate(0.0F, -1.5F, 0.0F);
-        if (!ghost.autoSpinAttack) {
-            pose.mulPose(Axis.XP.rotationDegrees(ghost.glidingProcess * (90.0F - ghost.pitch)));
+        if (!ghost.pose.autoSpinAttack) {
+            Poses.rotate(pose, new Quaternionf().rotationX(
+                    (float) Math.toRadians(ghost.pose.glidingProcess * (90.0F - ghost.pose.pitch))));
         }
-        if (ghost.applyFlyingYRot) {
-            pose.mulPose(Axis.YP.rotation(ghost.flyingRotation));
+        if (ghost.pose.applyFlyingYRot) {
+            Poses.rotate(pose, new Quaternionf().rotationY(ghost.pose.flyingRotation));
         }
-    }
-
-    private static PoseStack stack(PoseStack.Pose pose) {
-        PoseStack stack = new PoseStack();
-        stack.last().set(pose);
-        return stack;
     }
 
     private static final int[][] EDGES = {
@@ -236,11 +201,10 @@ public final class TotemPopChams extends Module {
             {0, 4}, {1, 5}, {2, 6}, {3, 7}
     };
 
-    private static void wire(ModelPart part, PoseStack stack, VertexConsumer consumer, int argb, float width) {
+    private static void wire(ModelPart part, Verts out, int argb, float width) {
+        PoseStack stack = out.stack();
         stack.pushPose();
         part.translateAndRotate(stack);
-        PoseStack.Pose pose = stack.last();
-        Matrix4f matrix = pose.pose();
         for (ModelPart.Cube cube : ((ModelPartAccessor) (Object) part).shardclient$cubes()) {
             float x1 = cube.minX / 16f, y1 = cube.minY / 16f, z1 = cube.minZ / 16f;
             float x2 = cube.maxX / 16f, y2 = cube.maxY / 16f, z2 = cube.maxZ / 16f;
@@ -253,10 +217,8 @@ public final class TotemPopChams extends Module {
                 Vector3f from = corners[edge[0]];
                 Vector3f to = corners[edge[1]];
                 Vector3f normal = new Vector3f(to).sub(from).normalize();
-                consumer.addVertex(matrix, from.x, from.y, from.z).setColor(argb).setLineWidth(width)
-                        .setNormal(pose, normal.x, normal.y, normal.z);
-                consumer.addVertex(matrix, to.x, to.y, to.z).setColor(argb).setLineWidth(width)
-                        .setNormal(pose, normal.x, normal.y, normal.z);
+                out.line(from.x, from.y, from.z, argb, width, normal.x, normal.y, normal.z);
+                out.line(to.x, to.y, to.z, argb, width, normal.x, normal.y, normal.z);
             }
         }
         stack.popPose();
@@ -297,58 +259,22 @@ public final class TotemPopChams extends Module {
             this.direction = direction;
         }
 
-        ModelPart of(PlayerModel model) {
-            return switch (this) {
-                case HEAD -> model.head;
-                case BODY -> model.body;
-                case LEFT_ARM -> model.leftArm;
-                case RIGHT_ARM -> model.rightArm;
-                case LEFT_LEG -> model.leftLeg;
-                case RIGHT_LEG -> model.rightLeg;
-            };
+        ModelPart of(PlayerPose pose) {
+            return pose.parts()[ordinal()];
         }
     }
 
     private static final class Ghost {
         final Vec3 position;
         final float bodyYaw;
-        final PlayerModel model;
-        final float glidingProcess;
-        final float pitch;
-        final float flyingRotation;
-        final boolean autoSpinAttack;
-        final boolean applyFlyingYRot;
+        final PlayerPose pose;
         final UUID seed = UUID.randomUUID();
         int age;
 
-        Ghost(Vec3 position, float bodyYaw, PlayerModel model, float glidingProcess, float pitch,
-              float flyingRotation, boolean autoSpinAttack, boolean applyFlyingYRot) {
+        Ghost(Vec3 position, float bodyYaw, PlayerPose pose) {
             this.position = position;
             this.bodyYaw = bodyYaw;
-            this.model = model;
-            this.glidingProcess = glidingProcess;
-            this.pitch = pitch;
-            this.flyingRotation = flyingRotation;
-            this.autoSpinAttack = autoSpinAttack;
-            this.applyFlyingYRot = applyFlyingYRot;
+            this.pose = pose;
         }
-    }
-
-    private static final RenderPipeline FILL_PIPELINE = RenderPipelines.register(
-            RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
-                    .withLocation(Identifier.fromNamespaceAndPath("shardclient", "pipeline/totem_pop_chams_fill"))
-                    .withCull(true)
-                    .build());
-    private static final RenderPipeline WIRE_PIPELINE = RenderPipelines.register(
-            RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
-                    .withLocation(Identifier.fromNamespaceAndPath("shardclient", "pipeline/totem_pop_chams_wire"))
-                    .withCull(false)
-                    .build());
-
-    private static final class Types {
-        static final RenderType FILL = RenderType.create("shardclient_totem_pop_chams_fill",
-                RenderSetup.builder(FILL_PIPELINE).sortOnUpload().createRenderSetup());
-        static final RenderType WIRE = RenderType.create("shardclient_totem_pop_chams_wire",
-                RenderSetup.builder(WIRE_PIPELINE).createRenderSetup());
     }
 }

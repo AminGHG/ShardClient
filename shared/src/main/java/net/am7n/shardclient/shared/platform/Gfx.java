@@ -1,7 +1,6 @@
 package net.am7n.shardclient.shared.platform;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.NativeImage;
 import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.shared.render.Assets;
 import net.am7n.shardclient.shared.render.Canvas;
@@ -12,7 +11,6 @@ import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -125,13 +123,6 @@ public final class Gfx {
     }
 
     public static void registerTexture(Asset asset, int width, int height, int[] argb) {
-        NativeImage image = new NativeImage(width, height, true);
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                image.setPixel(x, y, argb[y * width + x]);
-            }
-        }
-        Minecraft.getInstance().getTextureManager().register(Assets.id(asset),
-                new DynamicTexture(asset::toString, image));
+        Textures.register(asset, width, height, argb);
     }
 }

@@ -1,5 +1,7 @@
 package net.am7n.shardclient.full.modules.utility;
 
+import net.am7n.shardclient.full.platform.Chat;
+import net.am7n.shardclient.shared.anim.Maths;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -7,19 +9,19 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.BooleanSetting;
 import net.am7n.shardclient.full.module.setting.NumberSetting;
 import net.am7n.shardclient.full.modules.Keys;
+import net.am7n.shardclient.full.platform.Poses;
+import net.am7n.shardclient.full.platform.Servers;
+import net.am7n.shardclient.full.platform.Verts;
+import net.am7n.shardclient.full.platform.World;
 import net.am7n.shardclient.shared.ShardClientRuntime;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Camera;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -95,7 +97,7 @@ public final class Waypoints extends Module {
 
     private void say(String text) {
         if (mc.player != null) {
-            mc.player.sendOverlayMessage(Component.literal(text));
+            Chat.actionBar(Component.literal(text));
         }
     }
 
@@ -134,7 +136,7 @@ public final class Waypoints extends Module {
             if (to.lengthSqr() < 1.0e-4) {
                 return point;
             }
-            double angle = Math.acos(Math.clamp(to.normalize().dot(look), -1, 1));
+            double angle = Math.acos(Maths.clamp(to.normalize().dot(look), -1, 1));
             if (angle < bestAngle) {
                 bestAngle = angle;
                 best = point;
@@ -144,7 +146,7 @@ public final class Waypoints extends Module {
     }
 
     private String dimension() {
-        return mc.level == null ? "" : mc.level.dimension().identifier().toString();
+        return Servers.dimension();
     }
 
     private String context() {
@@ -162,7 +164,7 @@ public final class Waypoints extends Module {
         return all.computeIfAbsent(context(), key -> new ArrayList<>());
     }
 
-    public void render(LevelRenderContext context) {
+    public void render(World world) {
         if (!isEnabled() || mc.player == null || mc.level == null) {
             return;
         }
@@ -176,14 +178,13 @@ public final class Waypoints extends Module {
         if (here.isEmpty()) {
             return;
         }
-        Camera camera = context.gameRenderer().mainCamera();
-        if (camera == null) {
+        World.View view = world.view();
+        if (view == null) {
             return;
         }
-        Vec3 cam = camera.position();
-        PoseStack pose = context.poseStack();
+        Vec3 cam = view.position();
+        PoseStack pose = world.pose();
         Font font = mc.font;
-        Font.DisplayMode mode = throughWalls.on() ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
         double maxShown = Math.max(24, mc.options.getEffectiveRenderDistance() * 16 * 0.7);
 
         for (Point point : here) {
@@ -200,18 +201,17 @@ public final class Waypoints extends Module {
                         : new Vec3(-delta.z / horizontal * half, 0, delta.x / horizontal * half);
                 float height = (float) (220 * k);
                 int rgb = point.color();
-                context.submitNodeCollector().submitCustomGeometry(pose, RenderTypes.textBackground(),
-                        (p, consumer) -> beam(p, consumer, at, side, height, rgb));
+                world.flat(pose, out -> beam(out, at, side, height, rgb));
             }
 
             pose.pushPose();
             pose.translate(at.x, at.y + 1.6 * k, at.z);
-            pose.mulPose(camera.rotation());
+            Poses.rotate(pose, view.rotation());
             float scale = 0.025f * size.floatValue() * (float) Math.max(1, shown / 8.0);
             pose.scale(scale, -scale, scale);
             Component label = label(point, distance);
             float x = -font.width(label) / 2f;
-            context.submitNodeCollector().submitText(pose, x, 0, label.getVisualOrderText(), false, mode, FULL_BRIGHT,
+            world.text(pose, x, 0, label, false, throughWalls.on(), FULL_BRIGHT,
                     0xFFFFFFFF, 0x66000000, 0);
             pose.popPose();
         }
@@ -226,20 +226,20 @@ public final class Waypoints extends Module {
         return label;
     }
 
-    private static void beam(PoseStack.Pose pose, VertexConsumer out, Vec3 at, Vec3 side, float height, int rgb) {
+    private static void beam(Verts out, Vec3 at, Vec3 side, float height, int rgb) {
         int bottom = 0x88 << 24 | rgb;
         int top = rgb;
         float x0 = (float) (at.x - side.x), z0 = (float) (at.z - side.z);
         float x1 = (float) (at.x + side.x), z1 = (float) (at.z + side.z);
         float y0 = (float) at.y, y1 = (float) at.y + height;
-        out.addVertex(pose, x0, y0, z0).setColor(bottom).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x1, y0, z1).setColor(bottom).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x1, y1, z1).setColor(top).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x0, y1, z0).setColor(top).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x0, y1, z0).setColor(top).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x1, y1, z1).setColor(top).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x1, y0, z1).setColor(bottom).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x0, y0, z0).setColor(bottom).setLight(FULL_BRIGHT);
+        out.color(x0, y0, z0, bottom, FULL_BRIGHT);
+        out.color(x1, y0, z1, bottom, FULL_BRIGHT);
+        out.color(x1, y1, z1, top, FULL_BRIGHT);
+        out.color(x0, y1, z0, top, FULL_BRIGHT);
+        out.color(x0, y1, z0, top, FULL_BRIGHT);
+        out.color(x1, y1, z1, top, FULL_BRIGHT);
+        out.color(x1, y0, z1, bottom, FULL_BRIGHT);
+        out.color(x0, y0, z0, bottom, FULL_BRIGHT);
     }
 
     private void load() {

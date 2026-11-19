@@ -6,6 +6,7 @@ import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.ChoiceSetting;
 import net.am7n.shardclient.full.module.setting.NumberSetting;
+import net.am7n.shardclient.full.platform.Images;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 
 public final class HitColor extends Module {
@@ -83,12 +84,12 @@ public final class HitColor extends Module {
             return false;
         }
         if (!saved) {
-            original = pixels.getPixel(0, 0);
+            original = Images.argb(pixels, 0, 0);
             saved = true;
         }
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 16; x++) {
-                pixels.setPixel(x, y, argb);
+                Images.setArgb(pixels, x, y, argb);
             }
         }
         texture.upload();

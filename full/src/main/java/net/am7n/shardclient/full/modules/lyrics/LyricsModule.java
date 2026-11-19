@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.modules.lyrics;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.full.hud.HudModule;
 import net.am7n.shardclient.full.media.Lyrics;
 import net.am7n.shardclient.full.media.MediaWatcher;
@@ -8,15 +9,16 @@ import net.am7n.shardclient.full.module.setting.BooleanSetting;
 import net.am7n.shardclient.full.module.setting.ChoiceSetting;
 import net.am7n.shardclient.full.module.setting.NumberSetting;
 import net.am7n.shardclient.shared.anim.Easing;
+import net.am7n.shardclient.full.platform.Glow;
+import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.shared.render.Canvas;
+import net.am7n.shardclient.shared.render.Fonts;
 import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.shared.ui.Element;
 import net.am7n.shardclient.shared.ui.Size;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -271,8 +273,8 @@ public final class LyricsModule extends HudModule {
         int index = timeline.index;
         int lastIndex = timeline.last;
         float since = (System.currentTimeMillis() - timeline.changedAt) / (1000f / speed.floatValue());
-        float in = Math.clamp(since / 0.45f, 0f, 1f);
-        float out_ = Math.clamp(since / 0.35f, 0f, 1f);
+        float in = Maths.clamp(since / 0.45f, 0f, 1f);
+        float out_ = Maths.clamp(since / 0.35f, 0f, 1f);
 
         if (previous.on() && lastIndex >= 0 && lastIndex < lyrics.lines().size() && lastIndex != index && out_ < 1
                 && !exit.is("None")) {
@@ -370,7 +372,7 @@ public final class LyricsModule extends HudModule {
     private static float fill(Lyrics lyrics, int at, long position) {
         long start = lyrics.lines().get(at).startMillis();
         long end = at + 1 < lyrics.lines().size() ? lyrics.lines().get(at + 1).startMillis() : start + 4000;
-        return Math.clamp((position - start) / (float) Math.max(1, (end - start) * 0.85f), 0f, 1f);
+        return Maths.clamp((position - start) / (float) Math.max(1, (end - start) * 0.85f), 0f, 1f);
     }
 
     private String shownText(Lyrics lyrics, int at) {
@@ -436,10 +438,10 @@ public final class LyricsModule extends HudModule {
         Style style = Style.EMPTY.withBold(bold.on());
         String chosen = fontFor(styleLine);
         if (chosen.equals("Minecraft Uniform")) {
-            style = style.withFont(new FontDescription.Resource(Identifier.withDefaultNamespace("uniform")));
+            style = Fonts.font(style, Asset.minecraft("uniform"));
         } else if (!chosen.equals("Minecraft") && !chosen.equals("ShardClient")) {
             String id = "lyrics_" + chosen.toLowerCase(Locale.ROOT).replace(' ', '_');
-            style = style.withFont(new FontDescription.Resource(Identifier.fromNamespaceAndPath("shardclient", id)));
+            style = Fonts.font(style, Asset.of("shardclient", id));
         }
         return style;
     }
@@ -580,8 +582,8 @@ public final class LyricsModule extends HudModule {
         if (canvas.faint()) {
             return;
         }
-        canvas.gfx().pipelineBlit(GlowPipelines.GUI, glowTexture.id(), rowX - LyricGlow.PAD, -LyricGlow.PAD, quadWidth,
-                LyricGlow.QUAD_HEIGHT, 0, 0, uWidth, glowTexture.height(), glowTexture.width(),
+        Glow.gui(canvas.gfx(), glowTexture.id(), rowX - LyricGlow.PAD, -LyricGlow.PAD, quadWidth,
+                LyricGlow.QUAD_HEIGHT, uWidth, glowTexture.height(), glowTexture.width(),
                 glowTexture.height(), canvas.tint(alpha << 24 | rgb));
     }
 

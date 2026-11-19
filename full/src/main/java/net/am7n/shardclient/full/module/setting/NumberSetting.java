@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.module.setting;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
@@ -50,7 +51,7 @@ public final class NumberSetting extends Setting<Double> {
             return defaultValue();
         }
         double snapped = step > 0 ? min + Math.round((value - min) / step) * step : value;
-        return Math.clamp(snapped, min, max);
+        return Maths.clamp(snapped, min, max);
     }
 
     @Override

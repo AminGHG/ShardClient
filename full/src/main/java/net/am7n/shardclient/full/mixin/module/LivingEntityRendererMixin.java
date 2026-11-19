@@ -6,7 +6,6 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Team;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -31,7 +30,7 @@ public abstract class LivingEntityRendererMixin {
         if (self.isInvisibleTo(Minecraft.getInstance().player)) {
             return true;
         }
-        PlayerTeam team = self.getTeam();
+        Team team = self.getTeam();
         if (team != null) {
             Team.Visibility visibility = team.getNameTagVisibility();
             if (visibility == Team.Visibility.NEVER || visibility == Team.Visibility.HIDE_FOR_OWN_TEAM) {

@@ -9,8 +9,8 @@ public record Stagger(int count, long delayMs, long itemMs) {
         if (itemMs <= 0) {
             return linear > 0 ? 1 : 0;
         }
-        float elapsed = Math.clamp(linear, 0f, 1f) * totalMs();
+        float elapsed = Maths.clamp(linear, 0f, 1f) * totalMs();
         float t = (elapsed - index * delayMs) / (float) itemMs;
-        return easing.apply(Math.clamp(t, 0f, 1f));
+        return easing.apply(Maths.clamp(t, 0f, 1f));
     }
 }

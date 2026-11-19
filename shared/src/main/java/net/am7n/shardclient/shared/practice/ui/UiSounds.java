@@ -1,6 +1,7 @@
 package net.am7n.shardclient.shared.practice.ui;
 
 import net.am7n.shardclient.protocol.packet.Notification;
+import net.am7n.shardclient.shared.platform.Sounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
@@ -38,10 +39,10 @@ public final class UiSounds {
 
     public static void matchFound() {
         for (int i = 0; i < MATCH_ARPEGGIO.length; i++) {
-            play(SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE.value(), pitch(MATCH_ARPEGGIO[i]), 0.55f,
+            play(Sounds.xylophone(), pitch(MATCH_ARPEGGIO[i]), 0.55f,
                     i * ARPEGGIO_STEP_TICKS);
         }
-        play(SoundEvents.AMETHYST_BLOCK_RESONATE, 1.2f, 0.7f, MATCH_ARPEGGIO.length * ARPEGGIO_STEP_TICKS);
+        play(Sounds.resonate(), 1.2f, 0.7f, MATCH_ARPEGGIO.length * ARPEGGIO_STEP_TICKS);
     }
 
     public static void roundWon() {
@@ -54,7 +55,7 @@ public final class UiSounds {
 
     public static void matchWon() {
         notes(new int[]{0, 4, 7, 12, 16}, 0.55f);
-        play(SoundEvents.AMETHYST_BLOCK_RESONATE, 1.3f, 0.7f, 5 * ARPEGGIO_STEP_TICKS);
+        play(Sounds.resonate(), 1.3f, 0.7f, 5 * ARPEGGIO_STEP_TICKS);
     }
 
     public static void matchLost() {
@@ -63,20 +64,20 @@ public final class UiSounds {
 
     private static void notes(int[] semitones, float volume) {
         for (int i = 0; i < semitones.length; i++) {
-            play(SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE.value(), pitch(semitones[i]), volume, i * ARPEGGIO_STEP_TICKS);
+            play(Sounds.xylophone(), pitch(semitones[i]), volume, i * ARPEGGIO_STEP_TICKS);
         }
     }
 
     public static void barTick(float progress, boolean rising) {
         float pitch = rising ? 0.8f + progress * 0.8f : 1.2f - progress * 0.2f;
-        play(SoundEvents.NOTE_BLOCK_HAT.value(), pitch, 0.18f, 0);
+        play(Sounds.hat(), pitch, 0.18f, 0);
     }
 
     public static void rankChanged(boolean up) {
         if (up) {
             play(SoundEvents.PLAYER_LEVELUP, 1.0f, 0.6f, 0);
         } else {
-            play(SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE.value(), pitch(-7), 0.5f, 0);
+            play(Sounds.xylophone(), pitch(-7), 0.5f, 0);
         }
     }
 
@@ -91,7 +92,7 @@ public final class UiSounds {
     public static void notification(Notification.Level level) {
         play(SoundEvents.UI_TOAST_IN, 1.1f, 0.6f, 0);
         if (level == Notification.Level.WARNING || level == Notification.Level.ERROR) {
-            play(SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE.value(), pitch(-6), 0.45f, 1);
+            play(Sounds.xylophone(), pitch(-6), 0.45f, 1);
         }
     }
 

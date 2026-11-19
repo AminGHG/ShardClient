@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.anim.Cycle;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Tween;
@@ -22,7 +23,7 @@ public final class ProgressBar extends Element {
 
     public ProgressBar progress(float progress) {
         indeterminate = false;
-        fill.set(Math.clamp(progress, 0f, 1f));
+        fill.set(Maths.clamp(progress, 0f, 1f));
         return this;
     }
 

@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Easing;
@@ -58,12 +59,12 @@ public final class MatchResultCard implements Overlay {
         int x = (canvas.width() - WIDTH) / 2;
         int y = TOP;
         int center = x + WIDTH / 2;
-        float linear = Math.clamp(elapsedMs / (float) parts.totalMs(), 0f, 1f);
+        float linear = Maths.clamp(elapsedMs / (float) parts.totalMs(), 0f, 1f);
         boolean rated = result.rated();
 
         canvas.push();
         canvas.scale(Lerp.of(Motion.POPOVER_START_SCALE, 1f, progress), center, y + HEIGHT / 2f);
-        canvas.pushAlpha(Math.clamp(progress, 0f, 1f));
+        canvas.pushAlpha(Maths.clamp(progress, 0f, 1f));
         look.panel(canvas, x, y, WIDTH, HEIGHT);
 
         part(canvas, linear, 0, () -> canvas.textCentered(Theme.text(Component.literal(heading()), true),
@@ -73,7 +74,7 @@ public final class MatchResultCard implements Overlay {
                 center, y + PADDING + 16, colors.text(), shadow));
         if (rated) {
             part(canvas, linear, 2, () -> {
-                float count = Easing.OUT_CUBIC.apply(Math.clamp(
+                float count = Easing.OUT_CUBIC.apply(Maths.clamp(
                         (elapsedMs - parts.delayMs() * 2) / (float) COUNT_MS, 0f, 1f));
                 int rating = Math.round(Lerp.of(result.ratingBefore(), result.ratingAfter(), count));
                 int change = result.ratingChange();

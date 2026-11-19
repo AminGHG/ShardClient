@@ -1,9 +1,14 @@
 package net.am7n.shardclient.full.menu;
 
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.platform.Gfx;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.am7n.shardclient.full.ShardClientFull;
 import net.am7n.shardclient.full.config.ClientConfig;
+import net.am7n.shardclient.full.platform.Favicon;
+import net.am7n.shardclient.full.platform.Menus;
+import net.am7n.shardclient.full.platform.Servers;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Easing;
@@ -23,26 +28,15 @@ import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
 import net.am7n.shardclient.shared.ui.Stack;
 import net.am7n.shardclient.shared.render.Asset;
-import net.am7n.shardclient.shared.render.Assets;
-import net.minecraft.SharedConstants;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmScreen;
-import net.minecraft.client.gui.screens.ConnectScreen;
-import net.minecraft.client.gui.screens.DirectJoinServerScreen;
-import net.minecraft.client.gui.screens.FaviconTexture;
-import net.minecraft.client.gui.screens.ManageServerScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;
 import net.minecraft.client.multiplayer.ServerStatusPinger;
-import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.network.EventLoopGroupHolder;
-import net.minecraft.util.Util;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -86,7 +80,7 @@ public final class ShardServerListScreen extends ShardScreen {
     private final Screen parent;
     private final ServerList servers;
     private final ServerStatusPinger pinger = new ServerStatusPinger();
-    private final ServerData featured = new ServerData("ShardPvP", ShardTitleScreen.SHARDPVP_ADDRESS, ServerData.Type.OTHER);
+    private final ServerData featured = Servers.create("ShardPvP", ShardTitleScreen.SHARDPVP_ADDRESS);
     private final Map<ServerData, Icon> icons = new HashMap<>();
 
     private final Map<String, ServerData> recentData = new HashMap<>();
@@ -115,15 +109,13 @@ public final class ShardServerListScreen extends ShardScreen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        if (minecraft.level == null) {
-            extractPanorama(graphics, partialTick);
-        }
-        Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
+    protected boolean blurBehind() {
+        return Theme.light();
+    }
+
+    @Override
+    protected void drawBackdrop(Canvas canvas) {
         int bg = Theme.colors().bg0() & 0xFFFFFF;
-        if (Theme.light()) {
-            extractBlurredBackground(graphics);
-        }
         canvas.pushAlpha(openProgress());
         canvas.gradient(0, 0, width, height, 0xA0 << 24 | bg, 0xD8 << 24 | bg);
         canvas.popAlpha();
@@ -145,13 +137,13 @@ public final class ShardServerListScreen extends ShardScreen {
 
     @Override
     public void onClose() {
-        minecraft.gui.setScreen(parent);
+        Game.setScreen(parent);
     }
 
     private void returnHere() {
         servers.load();
         selected = null;
-        minecraft.gui.setScreen(this);
+        Game.setScreen(this);
         if (view != null) {
             view.rebuild();
         }
@@ -170,18 +162,18 @@ public final class ShardServerListScreen extends ShardScreen {
             return;
         }
         config.markJoined(server.name, server.ip);
-        ConnectScreen.startConnecting(this, minecraft, ServerAddress.parseString(server.ip), server, false, null);
+        Servers.connect(this, server);
     }
 
     private void add() {
-        ServerData server = new ServerData("Minecraft Server", "", ServerData.Type.OTHER);
-        minecraft.gui.setScreen(new ManageServerScreen(this, Component.literal("Add Server"), accepted -> {
+        ServerData server = Servers.create("Minecraft Server", "");
+        Game.setScreen(Menus.editServer(this, "Add Server", server, accepted -> {
             if (accepted) {
                 servers.add(server, false);
                 servers.save();
             }
             returnHere();
-        }, server));
+        }));
     }
 
     private void edit() {
@@ -189,14 +181,14 @@ public final class ShardServerListScreen extends ShardScreen {
         if (server == null || server == featured) {
             return;
         }
-        minecraft.gui.setScreen(new ManageServerScreen(this, Component.literal("Edit Server Info"), accepted -> {
+        Game.setScreen(Menus.editServer(this, "Edit Server Info", server, accepted -> {
             if (accepted) {
                 servers.save();
             } else {
                 servers.load();
             }
             returnHere();
-        }, server));
+        }));
     }
 
     private void delete() {
@@ -204,7 +196,7 @@ public final class ShardServerListScreen extends ShardScreen {
         if (server == null || server == featured) {
             return;
         }
-        minecraft.gui.setScreen(new ConfirmScreen(accepted -> {
+        Game.setScreen(new ConfirmScreen(accepted -> {
             if (accepted) {
                 servers.remove(server);
                 servers.save();
@@ -216,46 +208,42 @@ public final class ShardServerListScreen extends ShardScreen {
     }
 
     private void directConnect() {
-        ServerData server = new ServerData("Minecraft Server", "", ServerData.Type.OTHER);
-        minecraft.gui.setScreen(new DirectJoinServerScreen(this, accepted -> {
+        ServerData server = Servers.create("Minecraft Server", "");
+        Game.setScreen(Menus.directJoin(this, server, accepted -> {
             if (accepted) {
                 join(server);
             } else {
-                minecraft.gui.setScreen(this);
+                Game.setScreen(this);
             }
-        }, server));
+        }));
     }
 
     private void refresh() {
         pinger.removeAll();
         icons.values().forEach(Icon::close);
         icons.clear();
-        featured.setState(ServerData.State.INITIAL);
+        Servers.setStatus(featured, Servers.Status.INITIAL);
         for (int i = 0; i < servers.size(); i++) {
-            servers.get(i).setState(ServerData.State.INITIAL);
+            Servers.setStatus(servers.get(i), Servers.Status.INITIAL);
         }
         view.rebuild();
     }
 
     private void ping(ServerData server) {
-        if (server.state() != ServerData.State.INITIAL) {
+        if (Servers.status(server) != Servers.Status.INITIAL) {
             return;
         }
-        server.setState(ServerData.State.PINGING);
+        Servers.setStatus(server, Servers.Status.PINGING);
         server.motd = Component.empty();
         server.status = Component.empty();
-        Util.backgroundExecutor().execute(() -> {
+        Servers.inBackground(() -> {
             try {
-                pinger.pingServer(server, () -> minecraft.execute(servers::save),
-
-                        () -> server.setState(server.protocol == SharedConstants.getCurrentVersion().protocolVersion()
-                                ? ServerData.State.SUCCESSFUL : ServerData.State.INCOMPATIBLE),
-                        EventLoopGroupHolder.remote(minecraft.options.useNativeTransport()));
+                Servers.ping(pinger, server, servers::save);
             } catch (UnknownHostException ex) {
-                server.setState(ServerData.State.UNREACHABLE);
+                Servers.setStatus(server, Servers.Status.UNREACHABLE);
                 server.motd = Component.literal("Can't resolve hostname");
             } catch (Exception ex) {
-                server.setState(ServerData.State.UNREACHABLE);
+                Servers.setStatus(server, Servers.Status.UNREACHABLE);
                 server.motd = Component.literal("Can't connect to server");
             }
         });
@@ -274,7 +262,7 @@ public final class ShardServerListScreen extends ShardScreen {
                         lines.add(new ArrayList<>());
                     }
                     if (!pieces[i].isEmpty()) {
-                        lines.getLast().add(new Part(style, pieces[i]));
+                        lines.get(lines.size() - 1).add(new Part(style, pieces[i]));
                     }
                 }
                 return Optional.empty();
@@ -283,21 +271,21 @@ public final class ShardServerListScreen extends ShardScreen {
         List<Component> out = new ArrayList<>();
         for (List<Part> parts : lines) {
             while (!parts.isEmpty()) {
-                String stripped = parts.getFirst().text().stripLeading();
+                String stripped = parts.get(0).text().stripLeading();
                 if (stripped.isEmpty()) {
-                    parts.removeFirst();
+                    parts.remove(0);
                 } else {
-                    parts.set(0, new Part(parts.getFirst().style(), stripped));
+                    parts.set(0, new Part(parts.get(0).style(), stripped));
                     break;
                 }
             }
 
             while (!parts.isEmpty()) {
-                String stripped = parts.getLast().text().stripTrailing();
+                String stripped = parts.get(parts.size() - 1).text().stripTrailing();
                 if (stripped.isEmpty()) {
-                    parts.removeLast();
+                    parts.remove(parts.size() - 1);
                 } else {
-                    parts.set(parts.size() - 1, new Part(parts.getLast().style(), stripped));
+                    parts.set(parts.size() - 1, new Part(parts.get(parts.size() - 1).style(), stripped));
                     break;
                 }
             }
@@ -308,11 +296,11 @@ public final class ShardServerListScreen extends ShardScreen {
             out.add(line);
         }
 
-        while (!out.isEmpty() && out.getFirst().getString().isEmpty()) {
-            out.removeFirst();
+        while (!out.isEmpty() && out.get(0).getString().isEmpty()) {
+            out.remove(0);
         }
-        while (!out.isEmpty() && out.getLast().getString().isEmpty()) {
-            out.removeLast();
+        while (!out.isEmpty() && out.get(out.size() - 1).getString().isEmpty()) {
+            out.remove(out.size() - 1);
         }
         return out;
     }
@@ -336,7 +324,7 @@ public final class ShardServerListScreen extends ShardScreen {
                     ServerData known = saved.stream().filter(s -> s.ip.equalsIgnoreCase(recent.address()))
                             .findFirst().orElse(isFeatured(recent.address()) ? featured : null);
                     out.add(known != null ? known : recentData.computeIfAbsent(recent.address().toLowerCase(),
-                            address -> new ServerData(recent.name(), recent.address(), ServerData.Type.OTHER)));
+                            address -> Servers.create(recent.name(), recent.address())));
                 }
             }
         }
@@ -344,11 +332,11 @@ public final class ShardServerListScreen extends ShardScreen {
     }
 
     private final class Icon implements AutoCloseable {
-        private final FaviconTexture texture;
+        private final Favicon texture;
         private byte[] uploaded;
 
         Icon(ServerData server) {
-            texture = FaviconTexture.forServer(minecraft.getTextureManager(), server.ip);
+            texture = Favicon.forServer(server.ip);
         }
 
         boolean update(byte[] bytes) {
@@ -357,7 +345,7 @@ public final class ShardServerListScreen extends ShardScreen {
             }
             if (!Arrays.equals(bytes, uploaded)) {
                 try {
-                    texture.upload(NativeImage.read(bytes));
+                    texture.upload(bytes);
                     uploaded = bytes;
                 } catch (Exception ex) {
                     ShardClientRuntime.LOGGER.debug("Invalid server icon", ex);
@@ -538,7 +526,7 @@ public final class ShardServerListScreen extends ShardScreen {
         @Override
         public void render(Canvas canvas) {
             ping(server);
-            float appear = Motion.ENTER.apply(Math.clamp((Clock.SYSTEM.nanos() - appearAt) / 240_000_000f, 0f, 1f));
+            float appear = Motion.ENTER.apply(Maths.clamp((Clock.SYSTEM.nanos() - appearAt) / 240_000_000f, 0f, 1f));
             if (appear <= 0) {
                 return;
             }
@@ -564,8 +552,8 @@ public final class ShardServerListScreen extends ShardScreen {
             int iconX = x + 7;
             int iconY = y + (height - icon) / 2;
             Icon texture = icons.computeIfAbsent(server, Icon::new);
-            if (texture.update(server.getIconBytes())) {
-                canvas.imageWithHardShadow(Assets.asset(texture.texture.textureLocation()), 64, iconX, iconY, icon, ICON_SHADOW);
+            if (texture.update(Servers.iconBytes(server))) {
+                canvas.imageWithHardShadow(texture.texture.asset(), 64, iconX, iconY, icon, ICON_SHADOW);
             } else {
                 Theme.look().shape(canvas, iconX + ICON_SHADOW, iconY + ICON_SHADOW, icon, icon, 4f, 0xFF000000);
                 Theme.look().shape(canvas, iconX, iconY, icon, icon, 4f, colors.inset());
@@ -600,16 +588,17 @@ public final class ShardServerListScreen extends ShardScreen {
         }
 
         private int maxPlayersWidth(Canvas canvas) {
-            if (server.players == null || server.state() != ServerData.State.SUCCESSFUL) {
+            int[] count = Servers.players(server);
+            if (count == null || Servers.status(server) != Servers.Status.SUCCESSFUL) {
                 return 0;
             }
-            return canvas.textWidth(Component.literal(server.players.online() + " / " + server.players.max()));
+            return canvas.textWidth(Component.literal(count[0] + " / " + count[1]));
         }
 
         private void drawStatus(Canvas canvas, Palette colors, boolean shadow) {
             int right = statusRight();
             Asset sprite;
-            switch (server.state()) {
+            switch (Servers.status(server)) {
                 case SUCCESSFUL -> {
                     long ping = server.ping;
                     int level = ping < 0 ? 0 : ping < 150 ? 5 : ping < 300 ? 4 : ping < 600 ? 3 : ping < 1000 ? 2 : 1;
@@ -631,9 +620,10 @@ public final class ShardServerListScreen extends ShardScreen {
                 }
             }
             canvas.sprite(sprite, right - 10, y + 9, 10, 8);
-            if (server.players != null && server.state() != ServerData.State.PINGING
-                    && server.state() != ServerData.State.INITIAL && server.state() != ServerData.State.UNREACHABLE) {
-                Component players = Component.literal(server.players.online() + "/" + server.players.max());
+            int[] count = Servers.players(server);
+            if (count != null && Servers.status(server) != Servers.Status.PINGING
+                    && Servers.status(server) != Servers.Status.INITIAL && Servers.status(server) != Servers.Status.UNREACHABLE) {
+                Component players = Component.literal(count[0] + "/" + count[1]);
                 canvas.textRight(players, right - 14, y + 9, colors.textMuted(),
                         net.am7n.shardclient.shared.render.Theme.mcShadow());
             }

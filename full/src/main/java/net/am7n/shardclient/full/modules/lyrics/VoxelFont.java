@@ -1,15 +1,16 @@
 package net.am7n.shardclient.full.modules.lyrics;
 
+import net.am7n.shardclient.full.platform.Images;
+import net.am7n.shardclient.full.platform.Verts;
+import net.am7n.shardclient.shared.render.Asset;
+import net.am7n.shardclient.shared.render.Assets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 
 import java.io.InputStream;
@@ -51,7 +52,7 @@ final class VoxelFont {
         return Math.max(0, width - 1);
     }
 
-    static void draw(PoseStack.Pose pose, VertexConsumer out, String text, int[] colors, float x, float y,
+    static void draw(Verts out, String text, int[] colors, float x, float y,
                      float depth, boolean bold, int light) {
         float pen = x;
         int index = 0;
@@ -65,7 +66,7 @@ final class VoxelFont {
                 for (int row = 0; row < ROWS; row++) {
                     for (int col = 0; col < px[row].length; col++) {
                         if (px[row][col]) {
-                            cube(pose, out, px, row, col, pen + col, y + row, depth, color, light);
+                            cube(out, px, row, col, pen + col, y + row, depth, color, light);
                         }
                     }
                 }
@@ -92,41 +93,41 @@ final class VoxelFont {
         return row >= 0 && row < px.length && col >= 0 && col < px[row].length && px[row][col];
     }
 
-    private static void cube(PoseStack.Pose pose, VertexConsumer out, boolean[][] px, int row, int col, float x0,
+    private static void cube(Verts out, boolean[][] px, int row, int col, float x0,
                              float y0, float depth, int color, int light) {
         float x1 = x0 + 1;
         float y1 = y0 + 1;
         float zf = 0;
         float zb = -depth;
-        quad(pose, out, x0, y0, zf, x1, y0, zf, x1, y1, zf, x0, y1, zf, color, light);
+        quad(out, x0, y0, zf, x1, y0, zf, x1, y1, zf, x0, y1, zf, color, light);
         if (depth <= 0) {
             return;
         }
-        quad(pose, out, x0, y0, zb, x0, y1, zb, x1, y1, zb, x1, y0, zb, shade(color, 0.45f), light);
+        quad(out, x0, y0, zb, x0, y1, zb, x1, y1, zb, x1, y0, zb, shade(color, 0.45f), light);
         if (!lit(px, row - 1, col)) {
-            quad(pose, out, x0, y0, zb, x1, y0, zb, x1, y0, zf, x0, y0, zf, shade(color, 0.82f), light);
+            quad(out, x0, y0, zb, x1, y0, zb, x1, y0, zf, x0, y0, zf, shade(color, 0.82f), light);
         }
         if (!lit(px, row + 1, col)) {
-            quad(pose, out, x0, y1, zf, x1, y1, zf, x1, y1, zb, x0, y1, zb, shade(color, 0.5f), light);
+            quad(out, x0, y1, zf, x1, y1, zf, x1, y1, zb, x0, y1, zb, shade(color, 0.5f), light);
         }
         if (!lit(px, row, col - 1)) {
-            quad(pose, out, x0, y0, zb, x0, y0, zf, x0, y1, zf, x0, y1, zb, shade(color, 0.66f), light);
+            quad(out, x0, y0, zb, x0, y0, zf, x0, y1, zf, x0, y1, zb, shade(color, 0.66f), light);
         }
         if (!lit(px, row, col + 1)) {
-            quad(pose, out, x1, y0, zf, x1, y0, zb, x1, y1, zb, x1, y1, zf, shade(color, 0.6f), light);
+            quad(out, x1, y0, zf, x1, y0, zb, x1, y1, zb, x1, y1, zf, shade(color, 0.6f), light);
         }
     }
 
-    private static void quad(PoseStack.Pose pose, VertexConsumer out, float ax, float ay, float az, float bx, float by,
+    private static void quad(Verts out, float ax, float ay, float az, float bx, float by,
                              float bz, float cx, float cy, float cz, float dx, float dy, float dz, int color, int light) {
-        out.addVertex(pose, ax, ay, az).setColor(color).setLight(light);
-        out.addVertex(pose, bx, by, bz).setColor(color).setLight(light);
-        out.addVertex(pose, cx, cy, cz).setColor(color).setLight(light);
-        out.addVertex(pose, dx, dy, dz).setColor(color).setLight(light);
-        out.addVertex(pose, dx, dy, dz).setColor(color).setLight(light);
-        out.addVertex(pose, cx, cy, cz).setColor(color).setLight(light);
-        out.addVertex(pose, bx, by, bz).setColor(color).setLight(light);
-        out.addVertex(pose, ax, ay, az).setColor(color).setLight(light);
+        out.color(ax, ay, az, color, light);
+        out.color(bx, by, bz, color, light);
+        out.color(cx, cy, cz, color, light);
+        out.color(dx, dy, dz, color, light);
+        out.color(dx, dy, dz, color, light);
+        out.color(cx, cy, cz, color, light);
+        out.color(bx, by, bz, color, light);
+        out.color(ax, ay, az, color, light);
     }
 
     private static int shade(int argb, float factor) {
@@ -139,15 +140,15 @@ final class VoxelFont {
     private static Map<Integer, Glyph> load() {
         Map<Integer, Glyph> out = new HashMap<>();
         try {
-            readProviders(Identifier.withDefaultNamespace("font/include/default.json"), out);
+            readProviders(Asset.minecraft("font/include/default.json"), out);
         } catch (Exception ex) {
             ShardClientRuntime.LOGGER.warn("Could not read Minecraft's font for 3D lyrics", ex);
         }
         return out;
     }
 
-    private static void readProviders(Identifier file, Map<Integer, Glyph> out) throws Exception {
-        Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(file);
+    private static void readProviders(Asset file, Map<Integer, Glyph> out) throws Exception {
+        Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(Assets.id(file));
         if (resource.isEmpty()) {
             return;
         }
@@ -164,9 +165,9 @@ final class VoxelFont {
     }
 
     private static void readBitmap(JsonObject provider, Map<Integer, Glyph> out) throws Exception {
-        Identifier file = Identifier.parse(provider.get("file").getAsString());
-        Identifier texture = Identifier.fromNamespaceAndPath(file.getNamespace(), "textures/" + file.getPath());
-        Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(texture);
+        Asset file = Asset.parse(provider.get("file").getAsString());
+        Asset texture = Asset.of(file.namespace(), "textures/" + file.path());
+        Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(Assets.id(texture));
         if (resource.isEmpty()) {
             return;
         }
@@ -202,7 +203,7 @@ final class VoxelFont {
             for (int col = 0; col < columns; col++) {
                 int sx = x0 + Math.min(cellWidth - 1, Math.round((col + 0.5f) * step - 0.5f));
                 int sy = y0 + Math.min(cellHeight - 1, Math.round((row + 0.5f) * step - 0.5f));
-                int alpha = image.getPixel(sx, sy) >>> 24;
+                int alpha = Images.alpha(image, sx, sy);
                 if (alpha > 127) {
                     px[row][col] = true;
                     width = Math.max(width, col + 1);

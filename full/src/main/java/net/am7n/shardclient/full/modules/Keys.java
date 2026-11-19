@@ -1,14 +1,15 @@
 package net.am7n.shardclient.full.modules;
 
+import net.am7n.shardclient.shared.render.Assets;
+import net.am7n.shardclient.shared.render.Asset;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public final class Keys {
     private static final KeyMapping.Category CATEGORY =
-            KeyMapping.Category.register(Identifier.fromNamespaceAndPath("shardclient", "main"));
+            KeyMapping.Category.register(Assets.id(Asset.of("shardclient", "main")));
 
     public static KeyMapping zoom;
     public static KeyMapping freelook;

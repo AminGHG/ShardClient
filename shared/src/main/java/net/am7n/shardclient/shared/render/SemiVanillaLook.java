@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.render;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.minecraft.network.chat.Component;
 
@@ -62,7 +63,7 @@ public final class SemiVanillaLook implements Look {
     }
 
     private static int gridRadius(float radius) {
-        return Math.clamp(Math.round(radius / 2f), 0, Theme.RADIUS_PANEL);
+        return Maths.clamp(Math.round(radius / 2f), 0, Theme.RADIUS_PANEL);
     }
 
     @Override

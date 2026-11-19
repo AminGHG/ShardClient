@@ -88,7 +88,7 @@ public final class Transition {
         if (showing == show) {
             return;
         }
-        float current = Math.clamp(progress(), 0f, 1f);
+        float current = Maths.clamp(progress(), 0f, 1f);
         showing = show;
         from = current;
         float distance = show ? 1 - current : current;

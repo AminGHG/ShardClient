@@ -5,6 +5,7 @@ import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Palette;
 import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.shared.ui.Size;
+import net.am7n.shardclient.full.platform.ItemCooldowns;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 
@@ -33,11 +34,11 @@ public final class PotionHud extends HudModule {
     private Component line(MobEffectInstance effect) {
         int amplifier = effect.getAmplifier();
         String level = amplifier >= 0 && amplifier < ROMAN.length ? ROMAN[amplifier] : " " + (amplifier + 1);
-        return Component.empty().append(effect.getEffect().value().getDisplayName()).append(level);
+        return Component.empty().append(ItemCooldowns.effectName(effect)).append(level);
     }
 
     private static String time(MobEffectInstance effect) {
-        if (effect.isInfiniteDuration()) {
+        if (ItemCooldowns.infinite(effect)) {
             return "∞";
         }
         int seconds = effect.getDuration() / 20;
@@ -61,7 +62,7 @@ public final class PotionHud extends HudModule {
         int rowY = y + PADDING;
         for (MobEffectInstance effect : effects()) {
             canvas.text(line(effect), x + PADDING, rowY, colors.text(), net.am7n.shardclient.shared.render.Theme.mcShadow());
-            boolean ending = !effect.isInfiniteDuration() && effect.endsWithin(200);
+            boolean ending = !ItemCooldowns.infinite(effect) && effect.getDuration() <= 200;
             canvas.textRight(Component.literal(time(effect)), x + size.width() - PADDING, rowY,
                     ending ? 0xFFFF5A5A : colors.textMuted(), net.am7n.shardclient.shared.render.Theme.mcShadow());
             rowY += 11;

@@ -1,12 +1,12 @@
 package net.am7n.shardclient.full.mixin.module;
 
+import net.am7n.shardclient.shared.render.Assets;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
-import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.am7n.shardclient.full.modules.Features;
+import net.am7n.shardclient.full.platform.Frames;
 import net.am7n.shardclient.full.modules.visual.MotionBlur;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.minecraft.client.DeltaTracker;
@@ -15,7 +15,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.PostPass;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
 import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,10 +34,6 @@ public abstract class GameRendererMixin {
 
     @Shadow
     @Final
-    private RenderTarget mainRenderTarget;
-
-    @Shadow
-    @Final
     private CrossFrameResourcePool resourcePool;
 
     @Unique
@@ -49,13 +44,6 @@ public abstract class GameRendererMixin {
 
     @Unique
     private float shardclient$blurApplied = -1;
-
-    @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
-    private void shardclient$noHurtCam(CameraRenderState camera, PoseStack pose, CallbackInfo ci) {
-        if (Features.on(Features.noHurtCam)) {
-            ci.cancel();
-        }
-    }
 
     @Inject(method = "render", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/fog/FogRenderer;endFrame()V"))
@@ -68,7 +56,7 @@ public abstract class GameRendererMixin {
             return;
         }
         try {
-            PostChain chain = minecraft.getShaderManager().getPostChain(MotionBlur.EFFECT,
+            PostChain chain = minecraft.getShaderManager().getPostChain(Assets.id(MotionBlur.EFFECT),
                     LevelTargetBundle.MAIN_TARGETS);
             if (chain == null) {
                 return;
@@ -78,7 +66,7 @@ public abstract class GameRendererMixin {
                 shardclient$blurChain = chain;
                 shardclient$blurApplied = blend;
             }
-            chain.process(mainRenderTarget, resourcePool);
+            chain.process(Frames.mainTarget(), resourcePool);
         } catch (RuntimeException ex) {
             shardclient$blurFailed = true;
             ShardClientRuntime.LOGGER.error("Motion blur failed and was turned off", ex);

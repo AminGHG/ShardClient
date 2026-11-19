@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.render;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.platform.Game;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FontDescription;
@@ -28,13 +29,17 @@ public final class Fonts {
         return style.withFont(BADGE);
     }
 
+    public static net.minecraft.network.chat.Style font(net.minecraft.network.chat.Style style, Asset font) {
+        return style.withFont(new FontDescription.Resource(Assets.id(font)));
+    }
+
     static Component inter(Component text, boolean emphasis) {
         return inter(text, emphasis, 1f);
     }
 
     static Component inter(Component text, boolean emphasis, float sizeFactor) {
         int guiScale = Game.guiScale();
-        int scale = Math.clamp(Math.round(guiScale * Math.max(1f, sizeFactor)), 1, MAX_SCALE);
+        int scale = Maths.clamp(Math.round(guiScale * Math.max(1f, sizeFactor)), 1, MAX_SCALE);
         FontDescription font = (emphasis ? SEMIBOLD : REGULAR)[scale - 1];
         return text.copy().withStyle(style -> style.withFont(font));
     }

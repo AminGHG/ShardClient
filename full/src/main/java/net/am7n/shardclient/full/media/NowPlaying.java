@@ -4,7 +4,7 @@ public record NowPlaying(String app, String title, String artist, String album, 
                          long positionMillis, long sampledAtMillis, boolean playing) {
     public long positionNow() {
         long position = playing ? positionMillis + (System.currentTimeMillis() - sampledAtMillis) : positionMillis;
-        return durationMillis > 0 ? Math.clamp(position, 0, durationMillis) : Math.max(0, position);
+        return durationMillis > 0 ? Math.max(0, Math.min(durationMillis, position)) : Math.max(0, position);
     }
 
     public boolean sameTrack(NowPlaying other) {

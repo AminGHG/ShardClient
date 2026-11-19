@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.hud;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import com.google.gson.JsonObject;
 import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
@@ -10,6 +11,7 @@ import net.am7n.shardclient.shared.render.Look;
 import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.shared.ui.Size;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public abstract class HudModule extends Module {
     protected static final int PADDING = 4;
@@ -48,8 +50,8 @@ public abstract class HudModule extends Module {
     public void moveTo(int x, int y, int width, int height, int screenWidth, int screenHeight) {
         float freeX = screenWidth - width * scaleFactor();
         float freeY = screenHeight - height * scaleFactor();
-        anchorX = freeX <= 0 ? 0 : Math.clamp(x / freeX, 0f, 1f);
-        anchorY = freeY <= 0 ? 0 : Math.clamp(y / freeY, 0f, 1f);
+        anchorX = freeX <= 0 ? 0 : Maths.clamp(x / freeX, 0f, 1f);
+        anchorY = freeY <= 0 ? 0 : Maths.clamp(y / freeY, 0f, 1f);
     }
 
     public void render(Canvas canvas) {
@@ -84,8 +86,8 @@ public abstract class HudModule extends Module {
 
     protected static Component labelled(String label, String value) {
         var colors = Theme.colors();
-        return Theme.text(Component.literal(label + " ").withColor(colors.textMuted() & 0xFFFFFF)
-                .append(Component.literal(value).withColor(colors.text() & 0xFFFFFF)), false);
+        return Theme.text(Component.literal(label + " ").withStyle(Style.EMPTY.withColor(colors.textMuted() & 0xFFFFFF))
+                .append(Component.literal(value).withStyle(Style.EMPTY.withColor(colors.text() & 0xFFFFFF))), false);
     }
 
     @Override
@@ -100,10 +102,10 @@ public abstract class HudModule extends Module {
     public void fromJson(JsonObject json) {
         super.fromJson(json);
         if (json.has("x") && json.get("x").isJsonPrimitive()) {
-            anchorX = Math.clamp(json.get("x").getAsFloat(), 0f, 1f);
+            anchorX = Maths.clamp(json.get("x").getAsFloat(), 0f, 1f);
         }
         if (json.has("y") && json.get("y").isJsonPrimitive()) {
-            anchorY = Math.clamp(json.get("y").getAsFloat(), 0f, 1f);
+            anchorY = Maths.clamp(json.get("y").getAsFloat(), 0f, 1f);
         }
     }
 }

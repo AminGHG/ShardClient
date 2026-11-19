@@ -1,6 +1,7 @@
 package net.am7n.shardclient.full.modules.utility;
 
 import net.am7n.shardclient.full.module.Category;
+import net.am7n.shardclient.full.platform.Client;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.ChoiceSetting;
 import net.am7n.shardclient.protocol.packet.MatchEnded;
@@ -28,7 +29,7 @@ public final class AutoGG extends Module {
         if (sendIn > 0 && --sendIn == 0) {
             sendIn = -1;
             if (mc.player != null && mc.getConnection() != null) {
-                mc.getConnection().sendChat(message.get());
+                Client.sendChat(message.get());
             }
         }
     }

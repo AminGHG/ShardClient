@@ -1,6 +1,7 @@
 package net.am7n.shardclient.full.module;
 
-import com.mojang.blaze3d.platform.InputConstants;
+import net.am7n.shardclient.full.platform.Input;
+import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.full.hud.HudModule;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.minecraft.client.Minecraft;
@@ -60,13 +61,13 @@ public final class ModuleManager {
     }
 
     public void tick(Minecraft mc) {
-        if (mc.gui.screen() == null) {
+        if (Game.screen() == null) {
             for (Module module : modules.values()) {
                 int key = module.key();
                 if (key == Module.NO_KEY) {
                     continue;
                 }
-                boolean down = InputConstants.isKeyDown(mc.getWindow(), key);
+                boolean down = Input.isDown(key);
                 if (down && !keyWasDown.getOrDefault(key, false)) {
                     module.toggle();
                 }

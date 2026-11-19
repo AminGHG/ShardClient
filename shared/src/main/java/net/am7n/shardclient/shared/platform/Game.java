@@ -24,4 +24,8 @@ public final class Game {
             throws AuthenticationException {
         Minecraft.getInstance().services().sessionService().joinServer(profileId, accessToken, serverId);
     }
+
+    public static boolean loaded() {
+        return Minecraft.getInstance().isGameLoadFinished();
+    }
 }

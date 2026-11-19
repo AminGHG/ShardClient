@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.modules.visual;
 
+import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.modules.Keys;
@@ -32,7 +33,7 @@ public final class Freelook extends Module {
 
     @Override
     public void tick() {
-        boolean held = Keys.freelook != null && Keys.freelook.isDown() && mc.gui.screen() == null && mc.player != null;
+        boolean held = Keys.freelook != null && Keys.freelook.isDown() && Game.screen() == null && mc.player != null;
         if (held && !active) {
             active = true;
             yaw = mc.player.getYRot();

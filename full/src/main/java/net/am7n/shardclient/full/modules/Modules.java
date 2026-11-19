@@ -1,7 +1,8 @@
 package net.am7n.shardclient.full.modules;
 
-import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.full.module.ModuleManager;
+import net.am7n.shardclient.full.platform.Commands;
+import net.am7n.shardclient.full.platform.HudHooks;
 import net.am7n.shardclient.full.modules.hud.ArmorHud;
 import net.am7n.shardclient.full.modules.hud.ClickCounter;
 import net.am7n.shardclient.full.modules.hud.KeystrokesHud;
@@ -24,22 +25,17 @@ import net.am7n.shardclient.full.modules.visual.WeatherChanger;
 import net.am7n.shardclient.full.modules.visual.Zoom;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.am7n.shardclient.shared.render.Canvas;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 
 public final class Modules {
     private Modules() {
     }
 
     public static void registerAll(ModuleManager modules, ShardClientRuntime runtime) {
-        net.am7n.shardclient.full.modules.lyrics.GlowPipelines.init();
+        net.am7n.shardclient.full.platform.Glow.init();
+        net.am7n.shardclient.full.platform.World.init();
         Keys.register();
 
         modules.register(Features.fullbright = new Fullbright());
@@ -90,33 +86,27 @@ public final class Modules {
     public static void registerHooks(ModuleManager modules) {
         CombatTracker.register();
         new net.am7n.shardclient.full.modules.lyrics.WorldLyrics(Features.lyrics).register();
-        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(
-                context -> Features.waypoints.render(context));
-        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(
-                context -> Features.totemPopChams.render(context));
+        net.am7n.shardclient.full.platform.World.onRender(
+                world -> Features.waypoints.render(world));
+        net.am7n.shardclient.full.platform.World.onRender(
+                world -> Features.totemPopChams.render(world));
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> SimpleHuds.Session.joined());
 
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> dispatcher.register(
-                ClientCommands.literal("motionblur")
-                        .then(ClientCommands.argument("percent", IntegerArgumentType.integer(0, 100))
-                                .executes(command -> {
-                                    int percent = IntegerArgumentType.getInteger(command, "percent");
-                                    Features.motionBlur.setAmountFromCommand(percent);
-                                    command.getSource().sendFeedback(Component.literal("Motion Blur: " + percent + "%"));
-                                    return percent;
-                                }))));
+        Commands.number("motionblur", "percent", 0, 100, percent -> {
+            Features.motionBlur.setAmountFromCommand(percent);
+            return Component.literal("Motion Blur: " + percent + "%");
+        });
 
-        HudElementRegistry.addFirst(Identifier.fromNamespaceAndPath("shardclient", "click_counter"),
-                (graphics, delta) -> ClickCounter.sample(Minecraft.getInstance()));
+        HudHooks.beforeHud("click_counter", () -> ClickCounter.sample(Minecraft.getInstance()));
 
-        HudElementRegistry.replaceElement(VanillaHudElements.CROSSHAIR, original -> (graphics, delta) -> {
+        HudHooks.crosshair(canvas -> {
             Minecraft mc = Minecraft.getInstance();
             if (Features.on(Features.crosshair) && mc.options.getCameraType().isFirstPerson()
                     && mc.player != null && !mc.player.isSpectator()) {
-                Features.crosshair.draw(Gfx.canvas(graphics, mc.font, -1, -1));
-            } else {
-                original.extractRenderState(graphics, delta);
+                Features.crosshair.draw(canvas);
+                return true;
             }
+            return false;
         });
     }
 }

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 
 import java.net.URI;
@@ -75,7 +76,8 @@ public final class Lrclib {
                 continue;
             }
             long distance = 0;
-            if (track.durationMillis() > 0 && object.get("duration") instanceof JsonElement d && d.isJsonPrimitive()) {
+            JsonElement d = object.get("duration");
+            if (track.durationMillis() > 0 && d != null && d.isJsonPrimitive()) {
                 distance = Math.abs(Math.round(d.getAsDouble() * 1000) - track.durationMillis());
             }
             if (distance < bestDistance) {
@@ -88,7 +90,7 @@ public final class Lrclib {
     }
 
     private static Optional<Lyrics> synced(JsonObject object) {
-        if (object.get("syncedLyrics") instanceof JsonElement lrc && lrc.isJsonPrimitive()) {
+        if (object.get("syncedLyrics") instanceof JsonPrimitive lrc) {
             Lyrics lyrics = Lyrics.parseLrc(lrc.getAsString());
             return lyrics.isEmpty() ? Optional.empty() : Optional.of(lyrics);
         }

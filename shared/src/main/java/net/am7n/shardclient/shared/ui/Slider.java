@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.anim.Motion;
 import net.am7n.shardclient.shared.anim.Tween;
 import net.am7n.shardclient.shared.render.Canvas;
@@ -47,7 +48,7 @@ public final class Slider extends Element {
     }
 
     private float fraction() {
-        return max > min ? (float) Math.clamp((value.getAsDouble() - min) / (max - min), 0, 1) : 0;
+        return max > min ? (float) Maths.clamp((value.getAsDouble() - min) / (max - min), 0, 1) : 0;
     }
 
     @Override
@@ -104,7 +105,7 @@ public final class Slider extends Element {
         float travel = TRACK_WIDTH - KNOB;
         float pointer = (float) (mouseX - trackLeft() - KNOB / 2.0);
         float t = pointer / travel;
-        change.accept(min + (max - min) * Math.clamp(t, 0f, 1f));
+        change.accept(min + (max - min) * Maths.clamp(t, 0f, 1f));
         float past = pointer < 0 ? pointer : pointer > travel ? pointer - travel : 0;
         overshoot = net.am7n.shardclient.shared.anim.Motion.rubberBand(past, OVERSCROLL);
     }

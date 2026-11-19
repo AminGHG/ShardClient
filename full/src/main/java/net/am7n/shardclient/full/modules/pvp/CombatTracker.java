@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.modules.pvp;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
@@ -51,9 +52,9 @@ public final class CombatTracker {
 
     private static void attacked(Vec3 eye, Entity entity) {
         AABB box = entity.getBoundingBox();
-        double x = Math.clamp(eye.x, box.minX, box.maxX);
-        double y = Math.clamp(eye.y, box.minY, box.maxY);
-        double z = Math.clamp(eye.z, box.minZ, box.maxZ);
+        double x = Maths.clamp(eye.x, box.minX, box.maxX);
+        double y = Maths.clamp(eye.y, box.minY, box.maxY);
+        double z = Maths.clamp(eye.z, box.minZ, box.maxZ);
         lastReach = eye.distanceTo(new Vec3(x, y, z));
         long now = System.currentTimeMillis();
         lastReachAt = now;

@@ -1,5 +1,7 @@
 package net.am7n.shardclient.full.gui;
 
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.full.config.ClientConfig;
 import net.am7n.shardclient.full.hud.HudEditorScreen;
 import net.am7n.shardclient.full.module.Category;
@@ -25,7 +27,6 @@ import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.shared.render.Assets;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -51,8 +52,8 @@ public final class ClickGuiScreen extends ShardScreen {
 
     @Override
     protected void arrange(Element root, int screenWidth, int screenHeight) {
-        int width = Math.clamp(screenWidth - 24, 300, 460);
-        int height = Math.clamp(screenHeight - 24, 190, 290);
+        int width = Maths.clamp(screenWidth - 24, 300, 460);
+        int height = Maths.clamp(screenHeight - 24, 190, 290);
         root.place((screenWidth - width) / 2, (screenHeight - height) / 2, width, height);
     }
 
@@ -125,7 +126,7 @@ public final class ClickGuiScreen extends ShardScreen {
         }
 
         private void openHudEditor() {
-            minecraft.gui.setScreen(new HudEditorScreen(ClickGuiScreen.this, modules, config));
+            Game.setScreen(new HudEditorScreen(ClickGuiScreen.this, modules, config));
         }
 
         private void show(int index) {

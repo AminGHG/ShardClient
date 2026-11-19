@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.gui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.BooleanSetting;
 import net.am7n.shardclient.full.module.setting.ChoiceSetting;
@@ -81,12 +82,16 @@ final class ModuleCard extends Container {
     }
 
     private static Element control(Setting<?> setting) {
-        return switch (setting) {
-            case BooleanSetting bool -> new Toggle(bool::on, bool::set);
-            case NumberSetting number -> new Slider(number.min(), number.max(), number::get, number::set, number::display);
-            case ChoiceSetting choice -> new Pill(choice::get, choice::cycle);
-            default -> throw new IllegalArgumentException("No control for " + setting.getClass());
-        };
+        if (setting instanceof BooleanSetting bool) {
+            return new Toggle(bool::on, bool::set);
+        }
+        if (setting instanceof NumberSetting number) {
+            return new Slider(number.min(), number.max(), number::get, number::set, number::display);
+        }
+        if (setting instanceof ChoiceSetting choice) {
+            return new Pill(choice::get, choice::cycle);
+        }
+        throw new IllegalArgumentException("No control for " + setting.getClass());
     }
 
     private int settingsHeight() {
@@ -125,7 +130,7 @@ final class ModuleCard extends Container {
 
     @Override
     public void render(Canvas canvas) {
-        float appear = Motion.ENTER.apply(Math.clamp((Clock.SYSTEM.nanos() - appearAt) / (240f * 1_000_000f), 0f, 1f));
+        float appear = Motion.ENTER.apply(Maths.clamp((Clock.SYSTEM.nanos() - appearAt) / (240f * 1_000_000f), 0f, 1f));
         if (appear <= 0) {
             return;
         }

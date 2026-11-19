@@ -1,15 +1,13 @@
 package net.am7n.shardclient.full.hud;
 
-import net.am7n.shardclient.shared.platform.Gfx;
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.platform.Hud;
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.full.module.ModuleManager;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.ui.Size;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +23,7 @@ public final class HudRenderer {
     }
 
     public void register() {
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("shardclient", "hud"), this::render);
+        Hud.addLayer("hud", this::render);
     }
 
     private record Box(HudModule module, int x, int y, int w, int h) {
@@ -39,12 +37,11 @@ public final class HudRenderer {
         }
     }
 
-    private void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
+    private void render(Canvas canvas) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui.screen() instanceof HudEditorScreen || mc.player == null) {
+        if (Game.screen() instanceof HudEditorScreen || mc.player == null) {
             return;
         }
-        Canvas canvas = Gfx.canvas(graphics, mc.font, -1, -1);
         for (var module : modules.all()) {
             if (module.isEnabled() && !(module instanceof HudModule)) {
                 try {
@@ -100,7 +97,7 @@ public final class HudRenderer {
                 if (nx < 0 || nx + box.w() > screenWidth) {
                     return box;
                 }
-                box = box.at(nx, Math.clamp(box.y(), 0, Math.max(0, screenHeight - box.h())));
+                box = box.at(nx, Maths.clamp(box.y(), 0, Math.max(0, screenHeight - box.h())));
             }
         }
         return box;

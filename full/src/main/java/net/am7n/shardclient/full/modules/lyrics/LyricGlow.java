@@ -1,12 +1,11 @@
 package net.am7n.shardclient.full.modules.lyrics;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
+import net.am7n.shardclient.shared.anim.Maths;
+import net.am7n.shardclient.full.platform.Glow;
 import net.am7n.shardclient.shared.ShardClientRuntime;
+import net.am7n.shardclient.shared.render.Asset;
+import net.am7n.shardclient.shared.render.Assets;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 
 import java.awt.Font;
@@ -34,7 +33,7 @@ final class LyricGlow {
     private static final float WIDE = 2.8f;
     private static final int CACHE = 16;
 
-    record Texture(Identifier id, int width, int height) {
+    record Texture(Asset id, int width, int height) {
     }
 
     private record Key(String text, String font, boolean bold, int width) {
@@ -90,29 +89,14 @@ final class LyricGlow {
         while (READY.size() > CACHE && it.hasNext()) {
             Texture old = it.next().getValue();
             it.remove();
-            Minecraft.getInstance().getTextureManager().release(old.id());
-            GlowPipelines.forget(old.id());
+            Glow.release(old.id());
         }
     }
 
     private static Texture upload(Mask mask) {
-        NativeImage image = new NativeImage(mask.width(), mask.height(), false);
-        for (int y = 0; y < mask.height(); y++) {
-            for (int x = 0; x < mask.width(); x++) {
-                int a = mask.alpha()[y * mask.width() + x] & 0xFF;
-                image.setPixel(x, y, a << 24 | 0xFFFFFF);
-            }
-        }
-        Identifier id = Identifier.fromNamespaceAndPath("shardclient", "lyrics_glow/" + counter++);
-        Minecraft.getInstance().getTextureManager().register(id, new Smooth(image));
+        Asset id = Asset.of("shardclient", "lyrics_glow/" + counter++);
+        Glow.upload(id, mask.width(), mask.height(), mask.alpha());
         return new Texture(id, mask.width(), mask.height());
-    }
-
-    private static final class Smooth extends DynamicTexture {
-        Smooth(NativeImage image) {
-            super(() -> "ShardClient lyrics glow", image);
-            this.sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-        }
     }
 
     private static Mask build(Key key) {
@@ -184,7 +168,7 @@ final class LyricGlow {
         Font font = awtFont(key.font()).deriveFont(key.bold() ? Font.BOLD : Font.PLAIN, 11f * RES);
         FontRenderContext context = g.getFontRenderContext();
         double advance = font.getStringBounds(key.text(), context).getWidth();
-        double scale = advance <= 0 ? 1 : Math.clamp(key.width() * RES / advance, 0.5, 2.0);
+        double scale = advance <= 0 ? 1 : Maths.clamp(key.width() * RES / advance, 0.5, 2.0);
         g.translate(PAD * RES, (PAD + 7.5) * RES);
         g.scale(scale, scale);
         g.setColor(java.awt.Color.WHITE);
@@ -206,14 +190,14 @@ final class LyricGlow {
     }
 
     private static Font loadFont(String name) {
-        Identifier file = switch (name) {
-            case "ShardClient" -> Identifier.fromNamespaceAndPath("shardclient-shared", "font/inter_tight_semibold.ttf");
+        Asset file = switch (name) {
+            case "ShardClient" -> Asset.shared("font/inter_tight_semibold.ttf");
             case "Minecraft Uniform" -> null;
-            default -> Identifier.fromNamespaceAndPath("shardclient",
+            default -> Asset.of("shardclient",
                     "font/lyrics/" + name.toLowerCase(Locale.ROOT).replace(' ', '_') + ".ttf");
         };
         if (file != null) {
-            Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(file);
+            Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(Assets.id(file));
             if (resource.isPresent()) {
                 try (InputStream in = resource.get().open()) {
                     return Font.createFont(Font.TRUETYPE_FONT, in);
@@ -242,7 +226,7 @@ final class LyricGlow {
             int row = y * width;
             float sum = 0;
             for (int x = -radius; x <= radius; x++) {
-                sum += in[row + Math.clamp(x, 0, width - 1)];
+                sum += in[row + Maths.clamp(x, 0, width - 1)];
             }
             for (int x = 0; x < width; x++) {
                 out[row + x] = sum * norm;
@@ -256,7 +240,7 @@ final class LyricGlow {
         for (int x = 0; x < width; x++) {
             float sum = 0;
             for (int y = -radius; y <= radius; y++) {
-                sum += in[Math.clamp(y, 0, height - 1) * width + x];
+                sum += in[Maths.clamp(y, 0, height - 1) * width + x];
             }
             for (int y = 0; y < height; y++) {
                 out[y * width + x] = sum * norm;

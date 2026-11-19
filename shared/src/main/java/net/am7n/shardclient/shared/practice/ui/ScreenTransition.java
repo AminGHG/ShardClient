@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Easing;
@@ -64,7 +65,7 @@ public final class ScreenTransition implements Overlay {
                 phase = Phase.REVEALING;
                 revealAt = now;
             }
-            cover = Motion.ENTER.apply(Math.clamp(elapsedMs / (float) COVER_MS, 0f, 1f));
+            cover = Motion.ENTER.apply(Maths.clamp(elapsedMs / (float) COVER_MS, 0f, 1f));
         } else if (phase == Phase.REVEALING) {
             float t = revealProgress(now);
             if (t >= 1) {
@@ -81,7 +82,7 @@ public final class ScreenTransition implements Overlay {
     }
 
     private float revealProgress(long now) {
-        return Math.clamp((now - revealAt) / (REVEAL_MS * 1_000_000f), 0f, 1f);
+        return Maths.clamp((now - revealAt) / (REVEAL_MS * 1_000_000f), 0f, 1f);
     }
 
     private void drawCover(Canvas canvas, float alpha, float opening) {
@@ -93,7 +94,7 @@ public final class ScreenTransition implements Overlay {
         int top = (height - holeHeight) / 2;
         int color = Theme.colors().bg0();
 
-        canvas.pushAlpha(Math.clamp(alpha, 0f, 1f));
+        canvas.pushAlpha(Maths.clamp(alpha, 0f, 1f));
         if (holeWidth <= 0 || holeHeight <= 0) {
             canvas.fill(0, 0, width, height, color);
         } else {
@@ -102,7 +103,7 @@ public final class ScreenTransition implements Overlay {
             canvas.fill(0, top, left, holeHeight, color);
             canvas.fill(left + holeWidth, top, width - left - holeWidth, holeHeight, color);
         }
-        float logoScale = Lerp.of(Motion.POPOVER_START_SCALE, 1f, Math.clamp(alpha, 0f, 1f));
+        float logoScale = Lerp.of(Motion.POPOVER_START_SCALE, 1f, Maths.clamp(alpha, 0f, 1f));
         int size = Math.round(LOGO_SIZE * logoScale);
         canvas.pushAlpha(1 - opening);
         canvas.image(LOGO, LOGO_TEXTURE, (width - size) / 2, (height - size) / 2, size);

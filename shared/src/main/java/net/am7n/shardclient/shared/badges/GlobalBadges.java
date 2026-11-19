@@ -10,6 +10,7 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 import net.am7n.shardclient.protocol.ClientKind;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
@@ -110,7 +111,7 @@ public final class GlobalBadges {
     }
 
     private static void tick(Minecraft client) {
-        if (!enabled || !client.isGameLoadFinished()) {
+        if (!enabled || !Game.loaded()) {
             return;
         }
         long now = System.currentTimeMillis();
@@ -228,7 +229,8 @@ public final class GlobalBadges {
     private static void signIn(Minecraft client, User user) throws Exception {
         token = null;
         JsonObject challenge = post("/auth/challenge", new JsonObject(), false);
-        if (challenge == null || !(challenge.get("serverId") instanceof JsonElement id) || !id.isJsonPrimitive()) {
+        JsonElement id = challenge == null ? null : challenge.get("serverId");
+        if (id == null || !id.isJsonPrimitive()) {
             throw new BadgeException("the server sent no sign-in challenge");
         }
         String serverId = id.getAsString();
@@ -246,8 +248,10 @@ public final class GlobalBadges {
         verify.addProperty("serverId", serverId);
         verify.addProperty("kind", runtime.kind() == ClientKind.FULL ? "FULL" : "LIGHT");
         verify.addProperty("version", runtime.version());
+        verify.addProperty("minecraft", minecraftVersion());
         JsonObject session = post("/auth/verify", verify, false);
-        if (session == null || !(session.get("token") instanceof JsonElement value) || !value.isJsonPrimitive()) {
+        JsonElement value = session == null ? null : session.get("token");
+        if (value == null || !value.isJsonPrimitive()) {
             throw new BadgeException("sign-in was refused");
         }
         token = value.getAsString();
@@ -304,13 +308,19 @@ public final class GlobalBadges {
             return null;
         }
         try {
-            if (JsonParser.parseString(body) instanceof JsonObject object
-                    && object.get("message") instanceof JsonElement message && message.isJsonPrimitive()) {
+            JsonElement message = JsonParser.parseString(body) instanceof JsonObject object ? object.get("message") : null;
+            if (message != null && message.isJsonPrimitive()) {
                 String text = message.getAsString().strip();
                 return text.isEmpty() ? null : text.length() > 120 ? text.substring(0, 120) : text;
             }
         } catch (RuntimeException ignored) {
         }
         return null;
+    }
+
+    private static String minecraftVersion() {
+        return FabricLoader.getInstance().getModContainer("minecraft")
+                .map(mod -> mod.getMetadata().getVersion().getFriendlyString())
+                .orElse("unknown");
     }
 }

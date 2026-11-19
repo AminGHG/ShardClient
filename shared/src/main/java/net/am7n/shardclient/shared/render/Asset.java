@@ -13,6 +13,11 @@ public record Asset(String namespace, String path) {
         return new Asset("minecraft", path);
     }
 
+    public static Asset parse(String id) {
+        int colon = id.indexOf(':');
+        return colon < 0 ? minecraft(id) : new Asset(id.substring(0, colon), id.substring(colon + 1));
+    }
+
     @Override
     public String toString() {
         return namespace + ":" + path;

@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.anim.Cycle;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Motion;
@@ -58,7 +59,7 @@ public final class QueueIndicator implements Overlay {
 
     @Override
     public boolean render(Canvas canvas) {
-        float progress = Math.clamp(transition.progress(), 0f, 1f);
+        float progress = Maths.clamp(transition.progress(), 0f, 1f);
         if (!transition.isVisible() || queue == null) {
             return false;
         }

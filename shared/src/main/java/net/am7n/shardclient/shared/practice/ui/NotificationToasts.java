@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.protocol.packet.Notification;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Motion;
@@ -86,7 +87,7 @@ public final class NotificationToasts implements Overlay {
             if (card.transition.isShowing() && card.expired()) {
                 card.transition.hide();
             }
-            float progress = Math.clamp(card.transition.progress(), 0f, 1f);
+            float progress = Maths.clamp(card.transition.progress(), 0f, 1f);
             if (!card.transition.isVisible()) {
                 cards.remove(card);
                 continue;

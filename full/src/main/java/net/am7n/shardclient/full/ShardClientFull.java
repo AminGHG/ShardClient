@@ -1,5 +1,7 @@
 package net.am7n.shardclient.full;
 
+import net.am7n.shardclient.full.platform.Input;
+import net.am7n.shardclient.shared.platform.Game;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.am7n.shardclient.full.config.ClientConfig;
 import net.am7n.shardclient.full.gui.ClickGuiScreen;
@@ -44,15 +46,15 @@ public final class ShardClientFull implements ClientModInitializer {
 
     private void tick(Minecraft mc) {
         modules.tick(mc);
-        boolean down = InputConstants.isKeyDown(mc.getWindow(), InputConstants.KEY_RSHIFT);
-        if (down && !menuKeyWasDown && mc.gui.screen() == null) {
+        boolean down = Input.isDown(InputConstants.KEY_RSHIFT);
+        if (down && !menuKeyWasDown && Game.screen() == null) {
             openMenu(mc);
         }
         menuKeyWasDown = down;
     }
 
     public void openMenu(Minecraft mc) {
-        mc.gui.setScreen(new ClickGuiScreen(mc.gui.screen(), modules, config));
+        Game.setScreen(new ClickGuiScreen(Game.screen(), modules, config));
     }
 
     public ModuleManager modules() {

@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.ShardClientRuntime;
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.am7n.shardclient.shared.anim.Motion;
@@ -61,7 +62,7 @@ public abstract class ShardScreen extends ScreenBase {
 
     @Override
     protected void drawBackdrop(Canvas canvas) {
-        canvas.pushAlpha(Math.clamp(transition.progress(), 0f, 1f));
+        canvas.pushAlpha(Maths.clamp(transition.progress(), 0f, 1f));
         canvas.fill(0, 0, width, height, Theme.colors().backdrop());
         canvas.popAlpha();
     }
@@ -74,7 +75,7 @@ public abstract class ShardScreen extends ScreenBase {
         float progress = transition.progress();
         canvas.push();
         canvas.scale(Lerp.of(Motion.POPOVER_START_SCALE, 1f, progress), width / 2f, height / 2f);
-        canvas.pushAlpha(Math.clamp(progress, 0f, 1f));
+        canvas.pushAlpha(Maths.clamp(progress, 0f, 1f));
         root.render(canvas);
         canvas.popAlpha();
         canvas.pop();
@@ -94,7 +95,7 @@ public abstract class ShardScreen extends ScreenBase {
     }
 
     protected float openProgress() {
-        return Math.clamp(transition.progress(), 0f, 1f);
+        return Maths.clamp(transition.progress(), 0f, 1f);
     }
 
     public void reopen() {

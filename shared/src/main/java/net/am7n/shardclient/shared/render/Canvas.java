@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.render;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.platform.Gfx;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
@@ -53,7 +54,7 @@ public final class Canvas {
 
     public void pushAlpha(float factor) {
         alphaStack[alphaDepth++] = alpha;
-        alpha *= Math.clamp(factor, 0f, 1f);
+        alpha *= Maths.clamp(factor, 0f, 1f);
     }
 
     public void popAlpha() {
@@ -184,7 +185,7 @@ public final class Canvas {
     }
 
     public void glow(int cx, int cy, int radiusX, int radiusY, int argb, float amount) {
-        float a = Math.clamp(amount, 0f, 1f);
+        float a = Maths.clamp(amount, 0f, 1f);
         pushAlpha(a);
         glow(cx, cy, Math.round(radiusX * (0.6f + 0.4f * a)), Math.round(radiusY * (0.6f + 0.4f * a)), argb);
         popAlpha();

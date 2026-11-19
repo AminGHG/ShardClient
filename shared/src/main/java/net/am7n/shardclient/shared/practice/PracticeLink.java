@@ -112,16 +112,15 @@ public final class PracticeLink {
             ShardClientRuntime.LOGGER.warn("Ignoring an unreadable Practice Server packet: {}", ex.getMessage());
             return;
         }
-        switch (packet) {
-            case null -> {
-            }
-            case Welcome welcome -> welcomed(welcome);
-            case Rejected rejected -> rejected(rejected.reason());
-            default -> {
-                if (isActive() && packet.feature() != null && packet.feature().in(features)) {
-                    session.handle(packet);
-                }
-            }
+        if (packet == null) {
+            return;
+        }
+        if (packet instanceof Welcome welcome) {
+            welcomed(welcome);
+        } else if (packet instanceof Rejected rejected) {
+            rejected(rejected.reason());
+        } else if (isActive() && packet.feature() != null && packet.feature().in(features)) {
+            session.handle(packet);
         }
     }
 

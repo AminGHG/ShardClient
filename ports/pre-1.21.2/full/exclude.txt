@@ -1,0 +1,2 @@
+net/am7n/shardclient/full/mixin/module/EquipmentLayerRendererMixin.java
+assets/shardclient/post_effect/motion_blur.json

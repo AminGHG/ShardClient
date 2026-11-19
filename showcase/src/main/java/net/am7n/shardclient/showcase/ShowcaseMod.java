@@ -10,6 +10,14 @@ public final class ShowcaseMod implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         boolean capture = Boolean.getBoolean("shardclient.showcase.capture");
+        if (Boolean.getBoolean("shardclient.showcase.check")) {
+            FeatureCheck.register();
+            return;
+        }
+        if (Boolean.getBoolean("shardclient.showcase.render")) {
+            RenderCapture.register();
+            return;
+        }
         if (Boolean.getBoolean("shardclient.showcase.menus")) {
             MenuCapture.register();
             return;

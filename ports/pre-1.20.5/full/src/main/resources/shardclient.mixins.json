@@ -1,0 +1,34 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.am7n.shardclient.full.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "GuiScreenMixin",
+    "JoinMultiplayerScreenMixin",
+    "SelectWorldScreenMixin",
+    "WorldListEntryAccessor",
+    "WorldSelectionListAccessor",
+    "module.CameraMixin",
+    "module.CrosshairMixin",
+    "module.ZoomMixin",
+    "module.ChatComponentMixin",
+    "module.EntityTurnMixin",
+    "module.GameRendererMixin",
+    "module.HurtCamMixin",
+    "module.LevelWeatherMixin",
+    "module.LightmapMixin",
+    "module.LegacyPostChainAccessor",
+    "module.TotemPopMixin",
+    "module.HumanoidArmorLayerMixin",
+    "module.LivingEntityRendererMixin",
+    "module.ModelPartAccessor",
+    "module.MouseHandlerMixin",
+    "module.OverlayTextureAccessor",
+    "module.ScreenEffectRendererMixin",
+    "module.ScreenshotMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

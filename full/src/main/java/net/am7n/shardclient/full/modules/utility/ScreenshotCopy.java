@@ -1,5 +1,6 @@
 package net.am7n.shardclient.full.modules.utility;
 
+import net.am7n.shardclient.full.platform.Chat;
 import net.am7n.shardclient.full.module.Category;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.setting.BooleanSetting;
@@ -21,16 +22,37 @@ public final class ScreenshotCopy extends Module {
         setEnabled(true);
     }
 
-    public void saved(File file) {
-        if (!isEnabled() || file == null || !file.isFile()) {
+    public void expect(File file) {
+        if (!isEnabled() || file == null) {
             return;
         }
+        Thread waiter = new Thread(() -> {
+            long last = -1;
+            for (int i = 0; i < 100; i++) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                    return;
+                }
+                long size = file.isFile() ? file.length() : -1;
+                if (size > 0 && size == last) {
+                    saved(file);
+                    return;
+                }
+                last = size;
+            }
+        }, "ShardClient-Screenshot");
+        waiter.setDaemon(true);
+        waiter.start();
+    }
+
+    private void saved(File file) {
         boolean copied = copy(file.getAbsoluteFile());
         if (notify.on()) {
             Minecraft mc = Minecraft.getInstance();
             mc.execute(() -> {
                 if (mc.player != null) {
-                    mc.player.sendOverlayMessage(Component.literal(copied ? "Screenshot copied to clipboard"
+                    Chat.actionBar(Component.literal(copied ? "Screenshot copied to clipboard"
                             : "Couldn't copy the screenshot"));
                 }
             });

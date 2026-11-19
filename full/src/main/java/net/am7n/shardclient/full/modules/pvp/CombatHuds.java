@@ -6,12 +6,12 @@ import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Palette;
 import net.am7n.shardclient.shared.render.Theme;
 import net.am7n.shardclient.shared.ui.Size;
+import net.am7n.shardclient.full.platform.ItemCooldowns;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,12 +102,11 @@ public final class CombatHuds {
 
         private List<ItemStack> active() {
             if (items == null) {
-                items = List.of(new ItemStack(Items.ENDER_PEARL), new ItemStack(Items.WIND_CHARGE),
-                        new ItemStack(Items.SHIELD), new ItemStack(Items.CHORUS_FRUIT));
+                items = ItemCooldowns.tracked();
             }
             List<ItemStack> out = new ArrayList<>();
             for (ItemStack stack : items) {
-                if (mc.player.getCooldowns().isOnCooldown(stack)) {
+                if (ItemCooldowns.active(mc.player, stack)) {
                     out.add(stack);
                 }
             }
@@ -132,7 +131,7 @@ public final class CombatHuds {
             int ix = x + PADDING;
             for (ItemStack stack : active()) {
                 canvas.item(stack, ix, y + PADDING);
-                float left = mc.player.getCooldowns().getCooldownPercent(stack, 0f);
+                float left = ItemCooldowns.percent(mc.player, stack, 0f);
                 canvas.fill(ix, y + PADDING + 18, 16, 2, colors.ghost());
                 canvas.fill(ix, y + PADDING + 18, Math.round(16 * left), 2, colors.accentStrong());
                 ix += 22;

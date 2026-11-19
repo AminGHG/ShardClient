@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.ui;
 
+import net.am7n.shardclient.shared.platform.Sounds;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.am7n.shardclient.shared.anim.Tween;
@@ -84,7 +85,7 @@ public final class Pill extends Element {
             return false;
         }
         click.accept(button == 0 ? 1 : -1);
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.2f, 0.5f));
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(Sounds.click(), 1.2f, 0.5f));
         return true;
     }
 }

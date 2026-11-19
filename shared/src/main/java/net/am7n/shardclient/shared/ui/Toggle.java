@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.ui;
 
+import net.am7n.shardclient.shared.platform.Sounds;
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.am7n.shardclient.shared.anim.Motion;
 import net.am7n.shardclient.shared.anim.Tween;
@@ -76,7 +77,7 @@ public final class Toggle extends Element {
             return false;
         }
         change.accept(!state.getAsBoolean());
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.4f, 0.5f));
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(Sounds.click(), 1.4f, 0.5f));
         return true;
     }
 }

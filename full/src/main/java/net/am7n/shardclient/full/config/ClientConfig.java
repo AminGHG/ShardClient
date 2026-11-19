@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import net.am7n.shardclient.full.module.Module;
 import net.am7n.shardclient.full.module.ModuleManager;
 import net.am7n.shardclient.shared.ShardClientRuntime;
@@ -127,35 +128,38 @@ public final class ClientConfig {
         }
 
         if (json.get("client") instanceof JsonObject client) {
-            if (string(client.get("look")) instanceof String look) {
+            String look = string(client.get("look"));
+            if (look != null) {
                 Theme.use(Theme.byId(look));
             }
-            if (string(client.get("menuStyle")) instanceof String style) {
+            String style = string(client.get("menuStyle"));
+            if (style != null) {
                 menuStyle = "vanilla".equals(style) ? MenuStyle.VANILLA : MenuStyle.SHARD;
             }
-            if (client.get("uiSounds") instanceof JsonElement sounds && sounds.isJsonPrimitive()
-                    && sounds.getAsJsonPrimitive().isBoolean()) {
+            if (client.get("uiSounds") instanceof JsonPrimitive sounds
+                    && sounds.isBoolean()) {
                 uiSounds = sounds.getAsBoolean();
             }
-            if (client.get("badgesEverywhere") instanceof JsonElement badges && badges.isJsonPrimitive()
-                    && badges.getAsJsonPrimitive().isBoolean()) {
+            if (client.get("badgesEverywhere") instanceof JsonPrimitive badges
+                    && badges.isBoolean()) {
                 badgesEverywhere = badges.getAsBoolean();
             }
-            if (client.get("hoverEffects") instanceof JsonElement effects && effects.isJsonPrimitive()
-                    && effects.getAsJsonPrimitive().isBoolean()) {
+            if (client.get("hoverEffects") instanceof JsonPrimitive effects
+                    && effects.isBoolean()) {
                 hoverEffects = effects.getAsBoolean();
             }
-            if (client.get("hoverSounds") instanceof JsonElement hoverSound && hoverSound.isJsonPrimitive()
-                    && hoverSound.getAsJsonPrimitive().isBoolean()) {
+            if (client.get("hoverSounds") instanceof JsonPrimitive hoverSound
+                    && hoverSound.isBoolean()) {
                 hoverSounds = hoverSound.getAsBoolean();
             }
         }
         if (json.get("servers") instanceof JsonObject servers) {
             if (servers.get("recent") instanceof com.google.gson.JsonArray list) {
                 for (JsonElement entry : list) {
-                    if (entry instanceof JsonObject server && string(server.get("address")) instanceof String address
-                            && server.get("at") instanceof JsonElement at && at.isJsonPrimitive()
-                            && at.getAsJsonPrimitive().isNumber()) {
+                    String address = entry instanceof JsonObject o ? string(o.get("address")) : null;
+                    if (entry instanceof JsonObject server && address != null
+                            && server.get("at") instanceof JsonPrimitive at
+                            && at.isNumber()) {
                         String name = string(server.get("name"));
                         recent.put(address.toLowerCase(java.util.Locale.ROOT),
                                 new RecentServer(name == null ? address : name, address, at.getAsLong()));

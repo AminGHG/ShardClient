@@ -74,8 +74,8 @@ final class LyricLayout {
     private static List<Row> linesLayout(Component full, List<int[]> spans, int maxWidth,
                                          ToIntFunction<Component> measure) {
         List<Row> rows = new ArrayList<>();
-        int start = spans.getFirst()[0];
-        int end = spans.getFirst()[1];
+        int start = spans.get(0)[0];
+        int end = spans.get(0)[1];
         for (int i = 1; i < spans.size(); i++) {
             int[] word = spans.get(i);
             if (measure.applyAsInt(slice(full, start, word[1])) > maxWidth) {
@@ -91,7 +91,7 @@ final class LyricLayout {
     private static List<Row> wordsLayout(Component full, String plain, List<int[]> spans, int maxWidth,
                                          ToIntFunction<Component> measure) {
         if (spans.size() == 1) {
-            int[] only = spans.getFirst();
+            int[] only = spans.get(0);
             return List.of(fitted(full, only[0], only[1], BIG, maxWidth, measure));
         }
         int big = longest(plain, spans, 0, spans.size(), -1);

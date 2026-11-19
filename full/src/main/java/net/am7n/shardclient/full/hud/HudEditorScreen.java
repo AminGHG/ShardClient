@@ -12,7 +12,6 @@ import net.am7n.shardclient.shared.ui.Container;
 import net.am7n.shardclient.shared.ui.Element;
 import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -39,8 +38,12 @@ public final class HudEditorScreen extends ShardScreen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
+    protected boolean blurBehind() {
+        return false;
+    }
+
+    @Override
+    protected void drawBackdrop(Canvas canvas) {
         canvas.pushAlpha(openProgress());
         canvas.fill(0, 0, width, height, 0x40000000);
         canvas.popAlpha();

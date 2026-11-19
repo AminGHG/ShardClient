@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.am7n.shardclient.shared.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "PlayerTabOverlayMixin",
+    "EntityRendererMixin",
+    "TextDisplayMixin",
+    "ChatBadgeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,5 +1,7 @@
 package net.am7n.shardclient.full.menu;
 
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.full.ShardClientFull;
 import net.am7n.shardclient.shared.anim.Clock;
@@ -17,12 +19,10 @@ import net.am7n.shardclient.shared.ui.Size;
 import net.fabricmc.loader.api.FabricLoader;
 import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.shared.render.Assets;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.am7n.shardclient.full.platform.Menus;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
-import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
@@ -58,26 +58,29 @@ public final class ShardTitleScreen extends ShardScreen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        extractPanorama(graphics, partialTick);
-        Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
+    protected boolean blurBehind() {
+        return Theme.light();
+    }
+
+    @Override
+    protected void drawBackdrop(Canvas canvas) {
         int bg = Theme.colors().bg0() & 0xFFFFFF;
         if (Theme.light()) {
-            extractBlurredBackground(graphics);
             canvas.gradient(0, 0, width, height, 0x9C << 24 | bg, 0xD0 << 24 | bg);
         } else {
             canvas.gradient(0, 0, width, height, 0x30 << 24 | bg, 0x90 << 24 | bg);
         }
     }
 
+
     private final class View extends Container {
         private final Button multiplayer = new Button("Multiplayer",
-                () -> minecraft.gui.setScreen(new JoinMultiplayerScreen(ShardTitleScreen.this)))
+                () -> Game.setScreen(new JoinMultiplayerScreen(ShardTitleScreen.this)))
                 .style(Button.Style.PRIMARY).tall();
         private final Button singleplayer = new Button("Singleplayer",
-                () -> minecraft.gui.setScreen(new SelectWorldScreen(ShardTitleScreen.this))).tall();
+                () -> Game.setScreen(new SelectWorldScreen(ShardTitleScreen.this))).tall();
         private final Button options = new Button("Options",
-                () -> minecraft.gui.setScreen(new OptionsScreen(ShardTitleScreen.this, minecraft.options, false)));
+                () -> Game.setScreen(Menus.options(ShardTitleScreen.this)));
         private final Button quit = new Button("Quit", minecraft::stop);
         private final Button style = new Button("Switch to Minecraft's menu", MenuScreens::toggle).iconOnly(Icons.SWAP);
         private final Button client = new Button("Client menu · Right Shift",
@@ -162,7 +165,7 @@ public final class ShardTitleScreen extends ShardScreen {
         }
 
         private float window(long t, long start, long duration) {
-            return Math.clamp((t - start) / (float) duration, 0f, 1f);
+            return Maths.clamp((t - start) / (float) duration, 0f, 1f);
         }
     }
 }

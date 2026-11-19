@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.fabricmc.fabric.api.client.sound.v1.FabricSoundInstance;
 import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -62,7 +63,7 @@ public final class GlassTick extends AbstractSoundInstance implements FabricSoun
             double attack = Math.min(1, t / 0.0015);
             double release = Math.min(1, (LENGTH_S - t) / 0.01);
             double value = s / total * attack * release * 0.8;
-            out.putShort((short) Math.round(Math.clamp(value, -1, 1) * 32767));
+            out.putShort((short) Math.round(Maths.clamp(value, -1, 1) * 32767));
         }
         return out.flip();
     }

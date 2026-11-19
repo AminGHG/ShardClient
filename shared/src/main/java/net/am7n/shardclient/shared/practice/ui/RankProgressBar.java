@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.protocol.packet.MatchEnded;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Lerp;
@@ -47,7 +48,7 @@ public final class RankProgressBar {
         long moving = Math.max(0, t - HOLD_MS);
 
         if (!changed) {
-            float p = Math.clamp(moving / (float) FILL_MS, 0f, 1f);
+            float p = Maths.clamp(moving / (float) FILL_MS, 0f, 1f);
             float position = Lerp.of(startBefore, endAfter, (up ? Motion.ENTER : Motion.MOVE).apply(p));
             return new Frame(false, position, ghost(t, startBefore, endAfter, FILL_MS), ratingAt(false, position), 0);
         }
@@ -62,7 +63,7 @@ public final class RankProgressBar {
             return new Frame(afterEdge > FLASH_MS / 2, edge, edge, ratingAt(false, edge),
                     1 - afterEdge / (float) FLASH_MS);
         }
-        float p = Motion.ENTER.apply(Math.clamp((afterEdge - FLASH_MS) / (float) OVERFLOW_HALF_MS, 0f, 1f));
+        float p = Motion.ENTER.apply(Maths.clamp((afterEdge - FLASH_MS) / (float) OVERFLOW_HALF_MS, 0f, 1f));
         float position = Lerp.of(1f - edge, endAfter, p);
         long total = HOLD_MS + OVERFLOW_HALF_MS * 2 + FLASH_MS;
         float ghost = up ? position : ghost(t - (total - FILL_MS), 1f, endAfter, FILL_MS);
@@ -74,7 +75,7 @@ public final class RankProgressBar {
             return to;
         }
         long start = HOLD_MS + fillMs + GHOST_DELAY_MS;
-        float p = Motion.MOVE.apply(Math.clamp((t - start) / (float) GHOST_MS, 0f, 1f));
+        float p = Motion.MOVE.apply(Maths.clamp((t - start) / (float) GHOST_MS, 0f, 1f));
         return Lerp.of(from, to, p);
     }
 
@@ -84,14 +85,14 @@ public final class RankProgressBar {
         int value = Math.round(floor + (ceiling - floor) * position);
         int low = Math.min(result.ratingBefore(), result.ratingAfter());
         int high = Math.max(result.ratingBefore(), result.ratingAfter());
-        return Math.clamp(value, low, high);
+        return Maths.clamp(value, low, high);
     }
 
     private static float fraction(int rating, int floor, int ceiling) {
         if (ceiling <= floor) {
             return 1f;
         }
-        return Math.clamp((rating - floor) / (float) (ceiling - floor), 0f, 1f);
+        return Maths.clamp((rating - floor) / (float) (ceiling - floor), 0f, 1f);
     }
 
     public void render(Canvas canvas, int cx, int y, int width, long t) {
@@ -136,7 +137,7 @@ public final class RankProgressBar {
         canvas.pop();
 
         int labelY = barY + BAR_HEIGHT + 5;
-        float swap = changed ? Math.clamp(frame.newRank() ? 1f : 0f, 0f, 1f) : 1f;
+        float swap = changed ? Maths.clamp(frame.newRank() ? 1f : 0f, 0f, 1f) : 1f;
         String rankName = frame.newRank() || !changed ? result.rankAfter() : result.rankBefore();
         canvas.pushAlpha(changed && frame.flash() > 0 ? 1 - Math.abs(frame.flash() * 2 - 1) : 1f);
         canvas.text(Theme.text(Component.literal(rankName), true), x, labelY,
@@ -150,7 +151,7 @@ public final class RankProgressBar {
     }
 
     private static void fillTo(Canvas canvas, Look look, int x, int y, int width, float fraction, int color) {
-        int filled = Math.round(width * Math.clamp(fraction, 0f, 1f));
+        int filled = Math.round(width * Maths.clamp(fraction, 0f, 1f));
         if (filled > 0) {
             look.barFill(canvas, x, y, filled, BAR_HEIGHT, color);
         }

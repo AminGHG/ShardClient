@@ -1,8 +1,8 @@
 package net.am7n.shardclient.full.menu;
 
+import net.am7n.shardclient.shared.platform.Game;
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.platform.Gfx;
-import net.am7n.shardclient.full.mixin.WorldListEntryAccessor;
-import net.am7n.shardclient.full.mixin.WorldSelectionListAccessor;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.anim.Lerp;
@@ -20,20 +20,13 @@ import net.am7n.shardclient.shared.ui.ShardScreen;
 import net.am7n.shardclient.shared.ui.Size;
 import net.am7n.shardclient.shared.ui.Stack;
 import net.am7n.shardclient.shared.render.Asset;
-import net.am7n.shardclient.shared.render.Assets;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.FaviconTexture;
+import net.am7n.shardclient.full.platform.WorldList;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
-import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
-import net.minecraft.client.gui.screens.worldselection.WorldSelectionList.WorldListEntry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.storage.LevelSummary;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,9 +37,9 @@ public final class ShardWorldListScreen extends ShardScreen {
     private static final int COLUMN = 440;
 
     private final Screen parent;
-    private WorldSelectionList worlds;
-    private List<WorldListEntry> shown = List.of();
-    private WorldListEntry selected;
+    private WorldList worlds;
+    private List<WorldList.Entry> shown = List.of();
+    private WorldList.Entry selected;
     private View view;
 
     public ShardWorldListScreen(Screen parent) {
@@ -56,7 +49,7 @@ public final class ShardWorldListScreen extends ShardScreen {
 
     @Override
     protected Element build() {
-        worlds = new WorldSelectionList.Builder(minecraft, this).width(width).height(height).build();
+        worlds = new WorldList(this, parent, width, height);
         view = new View();
         return view;
     }
@@ -68,15 +61,13 @@ public final class ShardWorldListScreen extends ShardScreen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        if (minecraft.level == null) {
-            extractPanorama(graphics, partialTick);
-        }
-        Canvas canvas = Gfx.canvas(graphics, font, mouseX, mouseY);
+    protected boolean blurBehind() {
+        return Theme.light();
+    }
+
+    @Override
+    protected void drawBackdrop(Canvas canvas) {
         int bg = Theme.colors().bg0() & 0xFFFFFF;
-        if (Theme.light()) {
-            extractBlurredBackground(graphics);
-        }
         canvas.pushAlpha(openProgress());
         canvas.gradient(0, 0, width, height, 0xA0 << 24 | bg, 0xD8 << 24 | bg);
         canvas.popAlpha();
@@ -84,24 +75,14 @@ public final class ShardWorldListScreen extends ShardScreen {
 
     @Override
     public void onClose() {
-        minecraft.gui.setScreen(parent);
+        Game.setScreen(parent);
     }
 
     private void poll() {
         if (worlds == null) {
             return;
         }
-        WorldSelectionListAccessor access = (WorldSelectionListAccessor) worlds;
-        List<LevelSummary> levels = access.shardclient$pollLevels();
-        if (levels != access.shardclient$displayedLevels()) {
-            access.shardclient$handleNewLevels(levels);
-        }
-        List<WorldListEntry> now = new ArrayList<>();
-        for (Object entry : worlds.children()) {
-            if (entry instanceof WorldListEntry world) {
-                now.add(world);
-            }
-        }
+        List<WorldList.Entry> now = worlds.poll();
         if (!sameEntries(now, shown)) {
             shown = now;
             if (selected != null && !shown.contains(selected)) {
@@ -113,7 +94,7 @@ public final class ShardWorldListScreen extends ShardScreen {
         }
     }
 
-    private static boolean sameEntries(List<WorldListEntry> a, List<WorldListEntry> b) {
+    private static boolean sameEntries(List<WorldList.Entry> a, List<WorldList.Entry> b) {
         if (a.size() != b.size()) {
             return false;
         }
@@ -126,7 +107,7 @@ public final class ShardWorldListScreen extends ShardScreen {
     }
 
     private boolean loading() {
-        return worlds != null && ((WorldSelectionListAccessor) worlds).shardclient$displayedLevels() == null;
+        return worlds != null && worlds.loading();
     }
 
     @Override
@@ -135,37 +116,37 @@ public final class ShardWorldListScreen extends ShardScreen {
         poll();
     }
 
-    private void play(WorldListEntry entry) {
-        if (entry != null && entry.getLevelSummary().primaryActionActive()) {
-            entry.joinWorld();
+    private void play(WorldList.Entry entry) {
+        if (entry != null && entry.canPlay()) {
+            entry.join();
         }
     }
 
     private void create() {
-        CreateWorldScreen.openFresh(minecraft, worlds::returnToScreen);
+        worlds.createNew();
     }
 
     private void edit() {
-        if (selected != null && selected.getLevelSummary().canEdit()) {
-            selected.editWorld();
+        if (selected != null && selected.canEdit()) {
+            selected.edit();
         }
     }
 
     private void delete() {
-        if (selected != null && selected.getLevelSummary().canDelete()) {
-            selected.deleteWorld();
+        if (selected != null && selected.canDelete()) {
+            selected.delete();
         }
     }
 
     private void recreate() {
-        if (selected != null && selected.getLevelSummary().canRecreate()) {
-            selected.recreateWorld();
+        if (selected != null && selected.canRecreate()) {
+            selected.recreate();
         }
     }
 
-    private void select(WorldListEntry entry) {
+    private void select(WorldList.Entry entry) {
         selected = entry;
-        worlds.setSelected(entry);
+        worlds.select(entry);
     }
 
     private final class View extends Container {
@@ -189,7 +170,7 @@ public final class ShardWorldListScreen extends ShardScreen {
         void rebuild() {
             list.children().clear();
             int index = 0;
-            for (WorldListEntry entry : shown) {
+            for (WorldList.Entry entry : shown) {
                 list.add(new WorldCard(entry, index++));
             }
             layout();
@@ -223,12 +204,12 @@ public final class ShardWorldListScreen extends ShardScreen {
         @Override
         public void render(Canvas canvas) {
             poll();
-            LevelSummary summary = selected == null ? null : selected.getLevelSummary();
-            play.enabled(summary != null && summary.primaryActionActive());
-            play.label(summary != null ? summary.primaryActionMessage() : LevelSummary.PLAY_WORLD);
-            edit.enabled(summary != null && summary.canEdit());
-            delete.enabled(summary != null && summary.canDelete());
-            recreate.enabled(summary != null && summary.canRecreate());
+            WorldList.Entry chosen = selected;
+            play.enabled(chosen != null && chosen.canPlay());
+            play.label(chosen != null ? chosen.playLabel() : WorldList.PLAY_WORLD);
+            edit.enabled(chosen != null && chosen.canEdit());
+            delete.enabled(chosen != null && chosen.canDelete());
+            recreate.enabled(chosen != null && chosen.canRecreate());
             layout();
             Look look = Theme.look();
             Palette colors = look.colors();
@@ -255,7 +236,7 @@ public final class ShardWorldListScreen extends ShardScreen {
     private final class WorldCard extends Element {
         private static final int PADDING = 10;
 
-        private final WorldListEntry entry;
+        private final WorldList.Entry entry;
         private final long appearAt;
         private final Tween hover = new Tween(0, Theme.FAST_MS, Easing.OUT_CUBIC);
         private final net.am7n.shardclient.shared.ui.Hover hoverFeedback = new net.am7n.shardclient.shared.ui.Hover();
@@ -263,10 +244,10 @@ public final class ShardWorldListScreen extends ShardScreen {
         private final boolean hasIcon;
         private long lastClick;
 
-        WorldCard(WorldListEntry entry, int index) {
+        WorldCard(WorldList.Entry entry, int index) {
             this.entry = entry;
             this.appearAt = Clock.SYSTEM.nanos() + index * Motion.ROW_STAGGER_MS * 1_000_000L;
-            Path icon = entry.getLevelSummary().getIcon();
+            Path icon = entry.summary().getIcon();
             this.hasIcon = icon != null && Files.isRegularFile(icon);
         }
 
@@ -277,11 +258,11 @@ public final class ShardWorldListScreen extends ShardScreen {
 
         @Override
         public void render(Canvas canvas) {
-            float appear = Motion.ENTER.apply(Math.clamp((Clock.SYSTEM.nanos() - appearAt) / 240_000_000f, 0f, 1f));
+            float appear = Motion.ENTER.apply(Maths.clamp((Clock.SYSTEM.nanos() - appearAt) / 240_000_000f, 0f, 1f));
             if (appear <= 0) {
                 return;
             }
-            LevelSummary summary = entry.getLevelSummary();
+            LevelSummary summary = entry.summary();
             Look look = Theme.look();
             Palette colors = look.colors();
             boolean shadow = look.textShadow();
@@ -302,9 +283,9 @@ public final class ShardWorldListScreen extends ShardScreen {
             int icon = 32;
             int iconX = x + 7;
             int iconY = y + (height - icon) / 2;
-            FaviconTexture texture = ((WorldListEntryAccessor) (Object) entry).shardclient$icon();
-            if (hasIcon && texture != null && !texture.isClosed()) {
-                canvas.imageWithHardShadow(Assets.asset(texture.textureLocation()), 64, iconX, iconY, icon, ICON_SHADOW);
+            Asset texture = entry.icon();
+            if (hasIcon && texture != null) {
+                canvas.imageWithHardShadow(texture, 64, iconX, iconY, icon, ICON_SHADOW);
             } else {
                 String name = summary.getLevelName();
                 Theme.look().shape(canvas, iconX + ICON_SHADOW, iconY + ICON_SHADOW, icon, icon, 4f, 0xFF000000);
@@ -320,7 +301,7 @@ public final class ShardWorldListScreen extends ShardScreen {
                     textX, y + 9, colors.text(), shadow);
 
             String date = summary.getLastPlayed() > 0
-                    ? WorldSelectionList.DATE_FORMAT.format(Instant.ofEpochMilli(summary.getLastPlayed()).atZone(ZoneId.systemDefault()))
+                    ? WorldList.date(summary.getLastPlayed())
                     : "";
             String idLine = summary.getLevelId() + (date.isEmpty() ? "" : "  ·  " + date);
             canvas.text(Component.literal(clip(canvas, idLine, right - textX)), textX, y + 22, colors.textMuted(), net.am7n.shardclient.shared.render.Theme.mcShadow());

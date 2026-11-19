@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.anim.Clock;
 import net.am7n.shardclient.shared.anim.Lerp;
 import net.am7n.shardclient.shared.anim.Motion;
@@ -53,7 +54,7 @@ public final class TopBanner implements Overlay {
         if (elapsedMs > holdMs) {
             transition.hide();
         }
-        float progress = Math.clamp(transition.progress(), 0f, 1f);
+        float progress = Maths.clamp(transition.progress(), 0f, 1f);
         if (!transition.isVisible()) {
             return false;
         }

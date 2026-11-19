@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.practice.ui;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.anim.Easing;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Palette;
@@ -30,7 +31,7 @@ public final class ResultEffects {
             int size = 1 + Math.round(rand(i, 5) * 2);
 
             float edge = Math.min(along, travel - along) / 40f;
-            float alpha = Math.clamp(edge, 0f, 1f) * (0.35f + rand(i, 6) * 0.5f) * opacity;
+            float alpha = Maths.clamp(edge, 0f, 1f) * (0.35f + rand(i, 6) * 0.5f) * opacity;
             int color = victory ? pick(i, colors.accent(), colors.accentStrong(), colors.primary())
                     : pick(i, colors.textMuted(), colors.textDisabled(), colors.negative());
             canvas.pushAlpha(alpha);

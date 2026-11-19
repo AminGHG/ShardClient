@@ -1,16 +1,14 @@
 package net.am7n.shardclient.full.modules.lyrics;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.am7n.shardclient.full.media.MediaWatcher;
+import net.am7n.shardclient.full.platform.Poses;
+import net.am7n.shardclient.full.platform.Verts;
+import net.am7n.shardclient.full.platform.World;
 import net.am7n.shardclient.shared.ShardClientRuntime;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
@@ -51,26 +49,26 @@ public final class WorldLyrics {
     }
 
     public void register() {
-        LevelRenderEvents.COLLECT_SUBMITS.register(this::render);
+        World.onRender(this::render);
     }
 
-    private void render(LevelRenderContext context) {
+    private void render(World world) {
         if (!module.isEnabled() || !module.inWorld()) {
             spots.clear();
             return;
         }
         try {
-            draw(context);
+            draw(world);
         } catch (RuntimeException ex) {
             ShardClientRuntime.LOGGER.error("World lyrics failed and were switched to the screen", ex);
             module.place.set("Screen");
         }
     }
 
-    private void draw(LevelRenderContext context) {
+    private void draw(World world) {
         Minecraft mc = Minecraft.getInstance();
-        Camera camera = context.gameRenderer().mainCamera();
-        if (mc.player == null || camera == null) {
+        World.View view = world.view();
+        if (mc.player == null || view == null) {
             return;
         }
 
@@ -84,10 +82,9 @@ public final class WorldLyrics {
         if (frames.isEmpty()) {
             return;
         }
-        Vec3 cam = camera.position();
-        PoseStack pose = context.poseStack();
+        Vec3 cam = view.position();
+        PoseStack pose = world.pose();
         Font font = mc.font;
-        Font.DisplayMode mode = module.throughWalls.on() ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
 
         int currentId = frames.stream().filter(f -> f.role() == LyricFrame.Role.CURRENT)
                 .mapToInt(LyricFrame::lineId).findFirst().orElse(-1);
@@ -102,18 +99,18 @@ public final class WorldLyrics {
             List<LyricLayout.Row> rows = rows(font, frame);
             int spotId = next ? currentId : frame.lineId();
             int widthPx = Math.max(1, LyricLayout.width(rows));
-            Spot spot = module.place.is("Follow view") ? place(camera, spotId, widthPx)
-                    : spots.computeIfAbsent(spotId, id -> place(camera, id, widthPx));
+            Spot spot = module.place.is("Follow view") ? place(view, spotId, widthPx)
+                    : spots.computeIfAbsent(spotId, id -> place(view, id, widthPx));
             if (spot == null) {
                 continue;
             }
-            int alpha = Math.round(Math.clamp(frame.alpha(), 0f, 1f) * 255);
+            int alpha = Math.round(Maths.clamp(frame.alpha(), 0f, 1f) * 255);
             if (alpha <= 3) {
                 continue;
             }
             pose.pushPose();
             pose.translate(spot.position().x - cam.x, spot.position().y - cam.y, spot.position().z - cam.z);
-            pose.mulPose(module.facePlayer.on() || module.place.is("Follow view") ? camera.rotation() : spot.facing(cam));
+            Poses.rotate(pose, module.facePlayer.on() || module.place.is("Follow view") ? view.rotation() : spot.facing(cam));
             float scale = spot.scale() * frame.scale() * (next ? 0.75f : 1f);
             pose.scale(scale, -scale, scale);
 
@@ -144,9 +141,8 @@ public final class WorldLyrics {
                         int glowAlpha = Math.round(Math.min(1f, glow) * alpha) << 24;
                         int left = glowAlpha | glowColors[0] & 0xFFFFFF;
                         int right = glowAlpha | LyricsModule.lerp(glowColors[0], glowColors[1], u1) & 0xFFFFFF;
-                        RenderType type = GlowPipelines.world(texture.id(), module.throughWalls.on());
-                        context.submitNodeCollector().submitCustomGeometry(pose, type,
-                                (p, consumer) -> glowQuad(p, consumer, x0, x1, z, u1, left, right));
+                        world.glow(pose, texture.id(), module.throughWalls.on(),
+                                out -> glowQuad(out, x0, x1, z, u1, left, right));
                     }
                 }
                 if (solid) {
@@ -163,14 +159,14 @@ public final class WorldLyrics {
                     if (!colors.isEmpty()) {
                         String line = plain.toString();
                         int[] perChar = colors.stream().mapToInt(Integer::intValue).toArray();
-                        context.submitNodeCollector().submitCustomGeometry(pose, RenderTypes.textBackground(),
-                                (p, consumer) -> VoxelFont.draw(p, consumer, line, perChar, x, 0, depth, bold,
+                        world.flat(pose,
+                                out -> VoxelFont.draw(out, line, perChar, x, 0, depth, bold,
                                         FULL_BRIGHT));
                     }
                 } else {
                     int outline = module.outline.on() ? alpha << 24 : 0;
-                    context.submitNodeCollector().submitText(pose, x, 0, part.getVisualOrderText(),
-                            module.shadow.on() && !module.outline.on(), mode, FULL_BRIGHT, alpha << 24 | 0xFFFFFF, 0,
+                    world.text(pose, x, 0, part,
+                            module.shadow.on() && !module.outline.on(), module.throughWalls.on(), FULL_BRIGHT, alpha << 24 | 0xFFFFFF, 0,
                             outline);
                 }
                 pose.popPose();
@@ -182,18 +178,18 @@ public final class WorldLyrics {
         spots.keySet().removeIf(id -> Math.abs(id - currentId) > 2);
     }
 
-    private static void glowQuad(PoseStack.Pose pose, VertexConsumer out, float x0, float x1, float z, float u1,
+    private static void glowQuad(Verts out, float x0, float x1, float z, float u1,
                                  int left, int right) {
         float y0 = -LyricGlow.PAD;
         float y1 = y0 + LyricGlow.QUAD_HEIGHT;
-        out.addVertex(pose, x0, y0, z).setColor(left).setUv(0, 0).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x0, y1, z).setColor(left).setUv(0, 1).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x1, y1, z).setColor(right).setUv(u1, 1).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x1, y0, z).setColor(right).setUv(u1, 0).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x1, y0, z).setColor(right).setUv(u1, 0).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x1, y1, z).setColor(right).setUv(u1, 1).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x0, y1, z).setColor(left).setUv(0, 1).setLight(FULL_BRIGHT);
-        out.addVertex(pose, x0, y0, z).setColor(left).setUv(0, 0).setLight(FULL_BRIGHT);
+        out.textured(x0, y0, z, left, 0, 0, FULL_BRIGHT);
+        out.textured(x0, y1, z, left, 0, 1, FULL_BRIGHT);
+        out.textured(x1, y1, z, right, u1, 1, FULL_BRIGHT);
+        out.textured(x1, y0, z, right, u1, 0, FULL_BRIGHT);
+        out.textured(x1, y0, z, right, u1, 0, FULL_BRIGHT);
+        out.textured(x1, y1, z, right, u1, 1, FULL_BRIGHT);
+        out.textured(x0, y1, z, left, 0, 1, FULL_BRIGHT);
+        out.textured(x0, y0, z, left, 0, 0, FULL_BRIGHT);
     }
 
     private boolean solid(LyricFrame frame) {
@@ -210,9 +206,9 @@ public final class WorldLyrics {
         return LyricLayout.rows(frame.full(), words, module.maxLineWidth(), style, measure);
     }
 
-    private Spot place(Camera camera, int id, int widthPx) {
-        Vec3 cam = camera.position();
-        Vec3 look = new Vec3(camera.forwardVector());
+    private Spot place(World.View view, int id, int widthPx) {
+        Vec3 cam = view.position();
+        Vec3 look = view.forward();
         Vec3 flat = new Vec3(look.x, 0, look.z);
         flat = flat.lengthSqr() < 1.0e-4 ? new Vec3(0, 0, 1) : flat.normalize();
         double distance = module.distance.get();
@@ -288,7 +284,8 @@ public final class WorldLyrics {
             double across = -halfWidth + 2 * halfWidth * i / 6.0;
             for (double up : new double[]{top, (top + bottom) / 2, bottom}) {
                 Vec3 sample = at.add(right.scale(across)).add(0, up, 0);
-                net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(sample);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(net.minecraft.util.Mth.floor(sample.x),
+                        net.minecraft.util.Mth.floor(sample.y), net.minecraft.util.Mth.floor(sample.z));
                 var state = mc.level.getBlockState(pos);
                 if (!state.isAir() && !state.getCollisionShape(mc.level, pos).isEmpty()) {
                     return false;

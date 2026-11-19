@@ -1,5 +1,6 @@
 package net.am7n.shardclient.shared.render;
 
+import net.am7n.shardclient.shared.anim.Maths;
 import net.am7n.shardclient.shared.platform.Game;
 import net.am7n.shardclient.shared.platform.Gfx;
 
@@ -217,7 +218,7 @@ final class SmoothShapes {
     }
 
     private static float shadowAlpha(float distance, float blur) {
-        float t = Math.clamp((distance + blur / 2f) / blur, 0f, 1f);
+        float t = Maths.clamp((distance + blur / 2f) / blur, 0f, 1f);
         return 1 - t * t * (3 - 2 * t);
     }
 
@@ -227,6 +228,6 @@ final class SmoothShapes {
     }
 
     private static int white(float alpha) {
-        return Math.round(Math.clamp(alpha, 0f, 1f) * 255) << 24 | 0xFFFFFF;
+        return Math.round(Maths.clamp(alpha, 0f, 1f) * 255) << 24 | 0xFFFFFF;
     }
 }
