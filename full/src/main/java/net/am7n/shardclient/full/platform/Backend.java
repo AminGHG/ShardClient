@@ -44,6 +44,10 @@ final class Backend {
         return builder.withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false));
     }
 
+    static RenderPipeline.Builder skyDepth(RenderPipeline.Builder builder) {
+        return builder.withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false));
+    }
+
     static RenderPipeline.Builder noDepth(RenderPipeline.Builder builder) {
         return builder.withDepthStencilState(Optional.empty());
     }

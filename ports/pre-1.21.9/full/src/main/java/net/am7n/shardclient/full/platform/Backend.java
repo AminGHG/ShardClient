@@ -38,6 +38,10 @@ final class Backend {
         return builder.withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST).withDepthWrite(false);
     }
 
+    static RenderPipeline.Builder skyDepth(RenderPipeline.Builder builder) {
+        return depthTestNoWrite(builder);
+    }
+
     static RenderPipeline.Builder noDepth(RenderPipeline.Builder builder) {
         return builder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false);
     }

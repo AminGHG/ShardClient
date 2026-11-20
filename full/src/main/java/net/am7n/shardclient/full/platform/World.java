@@ -87,6 +87,10 @@ public final class World {
         draw(pose, CHAMS_WIRE, painter);
     }
 
+    public void sky(PoseStack pose, Asset texture, Consumer<Verts> painter) {
+        draw(pose, Glow.sky(texture), painter);
+    }
+
     public void text(PoseStack pose, float x, float y, Component text, boolean shadow, boolean seeThrough, int light,
                      int argb, int background, int outline) {
         collector.submitText(pose, x, y, text.getVisualOrderText(), shadow,

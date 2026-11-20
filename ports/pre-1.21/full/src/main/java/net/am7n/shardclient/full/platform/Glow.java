@@ -52,11 +52,23 @@ public final class Glow {
         Minecraft.getInstance().getTextureManager().register(Assets.id(asset), new Smooth(image));
     }
 
+    public static void uploadColor(Asset asset, int width, int height, int[] argb) {
+        NativeImage image = new NativeImage(width, height, false);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int c = argb[y * width + x];
+                image.setPixelRGBA(x, y, c & 0xFF00FF00 | (c & 0xFF) << 16 | c >>> 16 & 0xFF);
+            }
+        }
+        Minecraft.getInstance().getTextureManager().register(Assets.id(asset), new Smooth(image));
+    }
+
     public static void release(Asset asset) {
         Minecraft.getInstance().getTextureManager().release(Assets.id(asset));
         GUI_TYPES.remove(Assets.id(asset));
         TYPES.remove(asset);
         SEE_THROUGH_TYPES.remove(asset);
+        SKY_TYPES.remove(asset);
     }
 
     public static void gui(Gfx gfx, Asset texture, int x, int y, int width, int height, int uWidth, int vHeight,
@@ -83,6 +95,21 @@ public final class Glow {
                         .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
                         .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
                         .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .createCompositeState(false)));
+    }
+
+    private static final Map<Asset, RenderType> SKY_TYPES = new HashMap<>();
+
+    static RenderType sky(Asset texture) {
+        return SKY_TYPES.computeIfAbsent(texture, id -> RenderType.create("shardclient_sky",
+                DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 256, false, false,
+                RenderType.CompositeState.builder()
+                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader))
+                        .setTextureState(new RenderStateShard.TextureStateShard(Assets.id(id), true, false))
+                        .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                        .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .setCullState(RenderStateShard.NO_CULL)
                         .createCompositeState(false)));
     }
 

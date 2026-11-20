@@ -79,6 +79,7 @@ public final class Modules {
         modules.register(new AutoGG());
         modules.register(new CopyCoordinates());
         modules.register(Features.waypoints = new net.am7n.shardclient.full.modules.utility.Waypoints());
+        modules.register(Features.sky = new net.am7n.shardclient.full.modules.visual.sky.Sky());
         modules.register(Features.screenshotCopy = new net.am7n.shardclient.full.modules.utility.ScreenshotCopy());
         modules.register(new net.am7n.shardclient.full.discord.DiscordPresence());
     }
@@ -86,6 +87,7 @@ public final class Modules {
     public static void registerHooks(ModuleManager modules) {
         CombatTracker.register();
         new net.am7n.shardclient.full.modules.lyrics.WorldLyrics(Features.lyrics).register();
+        net.am7n.shardclient.full.platform.World.onRender(world -> Features.sky.render(world));
         net.am7n.shardclient.full.platform.World.onRender(
                 world -> Features.waypoints.render(world));
         net.am7n.shardclient.full.platform.World.onRender(

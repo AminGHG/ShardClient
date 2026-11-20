@@ -36,6 +36,11 @@ public final class Verts {
                 .normal(stack.last().normal(), nx, ny, nz).endVertex();
     }
 
+    public void sky(float x, float y, float z, float u, float v, int argb) {
+        out.vertex(stack.last().pose(), x, y, z).uv(u, v).color(argb >> 16 & 0xFF, argb >> 8 & 0xFF, argb & 0xFF, argb >>> 24)
+                .endVertex();
+    }
+
     public void part(ModelPart part, int light, int argb) {
         part.render(stack, out, light, OverlayTexture.NO_OVERLAY, (argb >> 16 & 0xFF) / 255f, (argb >> 8 & 0xFF) / 255f,
                 (argb & 0xFF) / 255f, (argb >>> 24) / 255f);

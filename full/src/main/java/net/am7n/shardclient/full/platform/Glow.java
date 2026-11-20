@@ -52,16 +52,39 @@ public final class Glow {
         Minecraft.getInstance().getTextureManager().register(Assets.id(asset), new Smooth(image));
     }
 
+    public static void uploadColor(Asset asset, int width, int height, int[] argb) {
+        NativeImage image = new NativeImage(width, height, false);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                image.setPixel(x, y, argb[y * width + x]);
+            }
+        }
+        Minecraft.getInstance().getTextureManager().register(Assets.id(asset), new Smooth(image));
+    }
+
     public static void release(Asset asset) {
         Minecraft.getInstance().getTextureManager().release(Assets.id(asset));
         TYPES.remove(asset);
         SEE_THROUGH_TYPES.remove(asset);
+        SKY_TYPES.remove(asset);
     }
 
     public static void gui(Gfx gfx, Asset texture, int x, int y, int width, int height, int uWidth, int vHeight,
                            int textureWidth, int textureHeight, int argb) {
         gfx.raw().blit(GUI, Assets.id(texture), x, y, 0, 0, width, height, uWidth, vHeight, textureWidth,
                 textureHeight, argb);
+    }
+
+    private static final RenderPipeline SKY = RenderPipelines.register(Backend.skyDepth(
+            RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+                    .withLocation(Assets.id(Asset.of("shardclient", "pipeline/sky")))
+                    .withCull(false))
+            .build());
+    private static final Map<Asset, RenderType> SKY_TYPES = new HashMap<>();
+
+    static RenderType sky(Asset texture) {
+        return SKY_TYPES.computeIfAbsent(texture, id -> RenderType.create("shardclient_sky",
+                RenderSetup.builder(SKY).withTexture("Sampler0", Assets.id(id)).createRenderSetup()));
     }
 
     static RenderType world(Asset texture, boolean seeThrough) {

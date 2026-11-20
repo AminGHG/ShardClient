@@ -32,6 +32,10 @@ public final class Verts {
         out.addVertex(stack.last(), x, y, z).setColor(argb).setNormal(stack.last(), nx, ny, nz);
     }
 
+    public void sky(float x, float y, float z, float u, float v, int argb) {
+        out.addVertex(stack.last(), x, y, z).setUv(u, v).setColor(argb);
+    }
+
     public void part(ModelPart part, int light, int argb) {
         part.render(stack, out, light, OverlayTexture.NO_OVERLAY, argb);
     }

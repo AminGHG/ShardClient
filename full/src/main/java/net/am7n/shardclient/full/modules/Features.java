@@ -13,6 +13,7 @@ import net.am7n.shardclient.full.modules.utility.ChatTimestamps;
 
 public final class Features {
     public static Fullbright fullbright;
+    public static net.am7n.shardclient.full.modules.visual.sky.Sky sky;
     public static Zoom zoom;
     public static Freelook freelook;
     public static NoHurtCam noHurtCam;

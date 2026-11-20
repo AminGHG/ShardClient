@@ -89,6 +89,10 @@ public final class World {
         draw(pose, WIRES.computeIfAbsent(Math.round(width * 10), World::wire), painter);
     }
 
+    public void sky(PoseStack pose, Asset texture, Consumer<Verts> painter) {
+        draw(pose, Glow.sky(texture), painter);
+    }
+
     public void text(PoseStack pose, float x, float y, Component text, boolean shadow, boolean seeThrough, int light,
                      int argb, int background, int outline) {
         Font font = Minecraft.getInstance().font;
