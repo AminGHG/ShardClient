@@ -1,8 +1,12 @@
 package net.am7n.shardclient.full.modules.visual.sky;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public final class SkyArt {
+    private static final int STAR_CANDIDATES = 9000;
+
     public enum Preset {
         NEBULA("Nebula"),
         GALAXY("Galaxy"),
@@ -45,12 +49,11 @@ public final class SkyArt {
     private static final class Painter {
         private final Preset preset;
         private final Noise noise;
-        private final Noise stars;
+        private double starDensity;
 
         Painter(Preset preset) {
             this.preset = preset;
             this.noise = new Noise(preset.ordinal() * 7919L + 17);
-            this.stars = new Noise(preset.ordinal() * 104729L + 3);
         }
 
         int color(double x, double y, double z) {
@@ -179,45 +182,110 @@ public final class SkyArt {
         }
 
         private double[] starField(double x, double y, double z, double density, double brightness) {
-            double total = 0;
-            double[] tint = {0, 0, 0};
-            for (int layer = 0; layer < 3; layer++) {
-                double scale = 70 + layer * 85;
-                double fx = x * scale;
-                double fy = y * scale;
-                double fz = z * scale;
-                long cx = (long) Math.floor(fx);
-                long cy = (long) Math.floor(fy);
-                long cz = (long) Math.floor(fz);
-                long h = hash(cx, cy, cz, layer);
-                double chance = (h & 0xFFFF) / 65535.0;
-                if (chance > 0.05 * density) {
-                    continue;
-                }
-                double px = cx + ((h >>> 16) & 0xFF) / 255.0;
-                double py = cy + ((h >>> 24) & 0xFF) / 255.0;
-                double pz = cz + ((h >>> 32) & 0xFF) / 255.0;
-                double d = Math.sqrt((fx - px) * (fx - px) + (fy - py) * (fy - py) + (fz - pz) * (fz - pz));
-                double size = 0.12 + ((h >>> 40) & 0xFF) / 255.0 * (0.3 - layer * 0.07);
-                double light = Math.max(0, 1 - d / size);
-                light = light * light * (0.5 + ((h >>> 48) & 0xFF) / 255.0 * 0.8) * brightness;
-                double temp = ((h >>> 56) & 0xFF) / 255.0;
-                double[] col = temp < 0.2 ? rgb(0xFFD2A0) : temp > 0.85 ? rgb(0xA8C8FF) : rgb(0xFFFFFF);
-                tint = add(tint, scale(col, light));
-                total += light;
-            }
-            return total > 0 ? scale(tint, 2.2) : tint;
+            starDensity = density * brightness;
+            return new double[]{0, 0, 0};
         }
+    }
 
-        private static long hash(long x, long y, long z, int layer) {
-            long h = x * 0x9E3779B97F4A7C15L ^ y * 0xC2B2AE3D27D4EB4FL ^ z * 0x165667B19E3779F9L ^ layer * 0x27D4EB2F165667C5L;
-            h ^= h >>> 33;
-            h *= 0xFF51AFD7ED558CCDL;
-            h ^= h >>> 33;
-            h *= 0xC4CEB9FE1A85EC53L;
-            h ^= h >>> 33;
-            return h;
+    public record Star(float x, float y, float z, float size, int argb) {
+    }
+
+    public static int[] thumbnail(Preset preset, int width, int height) {
+        Painter painter = new Painter(preset);
+        double pitch = Math.toRadians(28);
+        double fy = Math.sin(pitch);
+        double fz = -Math.cos(pitch);
+        double uy = Math.cos(pitch);
+        double uz = Math.sin(pitch);
+        double spanX = Math.tan(Math.toRadians(45));
+        double spanY = spanX * height / width;
+        double[] light = new double[width * height * 3];
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < width; i++) {
+                double u = ((i + 0.5) / width * 2 - 1) * spanX;
+                double v = (1 - (j + 0.5) / height * 2) * spanY;
+                double dx = u;
+                double dy = fy + uy * v;
+                double dz = fz + uz * v;
+                double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                int c = painter.color(dx / length, dy / length, dz / length);
+                int at = (j * width + i) * 3;
+                light[at] = (c >> 16 & 0xFF) / 255.0;
+                light[at + 1] = (c >> 8 & 0xFF) / 255.0;
+                light[at + 2] = (c & 0xFF) / 255.0;
+            }
         }
+        for (Star star : stars(preset)) {
+            double t = star.y() * fy + star.z() * fz;
+            if (t <= 0.05) {
+                continue;
+            }
+            double u = star.x() / t / spanX;
+            double v = (star.y() * uy + star.z() * uz) / t / spanY;
+            int i = (int) Math.floor((u + 1) / 2 * width);
+            int j = (int) Math.floor((1 - v) / 2 * height);
+            if (i < 0 || j < 0 || i >= width || j >= height) {
+                continue;
+            }
+            if (star.size() < 0.2) {
+                continue;
+            }
+            double strength = (star.argb() >>> 24) / 255.0 * (0.2 + star.size() * 1.4);
+            int at = (j * width + i) * 3;
+            light[at] += (star.argb() >> 16 & 0xFF) / 255.0 * strength;
+            light[at + 1] += (star.argb() >> 8 & 0xFF) / 255.0 * strength;
+            light[at + 2] += (star.argb() & 0xFF) / 255.0 * strength;
+        }
+        int[] out = new int[width * height];
+        for (int p = 0; p < out.length; p++) {
+            out[p] = 0xFF000000 | channel(light[p * 3]) << 16 | channel(light[p * 3 + 1]) << 8 | channel(light[p * 3 + 2]);
+        }
+        return out;
+    }
+
+    public static int[] normalThumbnail(int width, int height) {
+        int[] out = new int[width * height];
+        double[] top = rgb(0x6E9BFF);
+        double[] low = rgb(0xBCD5FF);
+        for (int j = 0; j < height; j++) {
+            double[] c = mix(low, top, Math.pow(1 - (j + 0.5) / height, 0.8));
+            int argb = 0xFF000000 | channel(c[0]) << 16 | channel(c[1]) << 8 | channel(c[2]);
+            for (int i = 0; i < width; i++) {
+                out[j * width + i] = argb;
+            }
+        }
+        return out;
+    }
+
+    private static int channel(double v) {
+        return (int) Math.max(0, Math.min(255, Math.round(v * 255)));
+    }
+
+    public static List<Star> stars(Preset preset) {
+        Painter painter = new Painter(preset);
+        Random random = new Random(preset.ordinal() * 31337L + 5);
+        List<Star> out = new ArrayList<>();
+        for (int i = 0; i < STAR_CANDIDATES; i++) {
+            double y = random.nextDouble() * 2 - 1;
+            double angle = random.nextDouble() * Math.PI * 2;
+            double ring = Math.sqrt(1 - y * y);
+            double x = ring * Math.cos(angle);
+            double z = ring * Math.sin(angle);
+            double roll = random.nextDouble();
+            double magnitude = random.nextDouble();
+            double temp = random.nextDouble();
+            painter.starDensity = 0;
+            painter.color(x, y, z);
+            if (roll > painter.starDensity * 0.28) {
+                continue;
+            }
+            double size = 0.17 + Math.pow(magnitude, 3) * 0.33;
+            double light = 0.65 + magnitude * 0.35;
+            double[] col = temp < 0.2 ? rgb(0xFFD2A0) : temp > 0.85 ? rgb(0xA8C8FF) : rgb(0xFFFFFF);
+            int argb = clamp(light) << 24 | clamp(col[0]) << 16 | clamp(col[1]) << 8 | clamp(col[2]);
+            out.add(new Star((float) x, (float) y, (float) z, (float) size, argb));
+        }
+        return out;
     }
 
     private static final class Noise {

@@ -2,6 +2,7 @@ package net.am7n.shardclient.full.platform;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ServerData;
@@ -58,5 +59,10 @@ public final class Servers {
     public static String dimension() {
         Minecraft mc = Minecraft.getInstance();
         return mc.level == null ? "" : mc.level.dimension().identifier().toString();
+    }
+
+    public static boolean overworldSky() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null && mc.level.dimensionType().skybox() == DimensionType.Skybox.OVERWORLD;
     }
 }

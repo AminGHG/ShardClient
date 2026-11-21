@@ -13,6 +13,7 @@ import net.am7n.shardclient.full.platform.Servers;
 import net.am7n.shardclient.full.platform.Verts;
 import net.am7n.shardclient.full.platform.World;
 import net.am7n.shardclient.shared.ShardClientRuntime;
+import net.am7n.shardclient.shared.platform.Gfx;
 import net.am7n.shardclient.shared.render.Asset;
 import net.am7n.shardclient.shared.render.Canvas;
 import net.am7n.shardclient.shared.render.Theme;
@@ -29,6 +30,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +40,10 @@ public final class Sky extends Module {
     private static final int WIDTH = 4096;
     private static final int HEIGHT = 2048;
     private static final String NORMAL = "Normal";
+    private static final int CACHE_VERSION = 2;
+    private static final int STAR_TEXTURE = 8;
+    private static final int THUMB_WIDTH = 192;
+    private static final int THUMB_HEIGHT = 108;
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(runnable -> {
         Thread thread = new Thread(runnable, "ShardClient-Sky");
         thread.setDaemon(true);
@@ -62,13 +69,19 @@ public final class Sky extends Module {
     private String wantedKey = "";
     private volatile String bakingKey = "";
     private volatile Asset texture;
+    private volatile List<SkyArt.Star> stars = List.of();
+    private Asset starTexture;
     private Asset pictureTexture;
+    private volatile int[][] thumbnails;
+    private boolean thumbnailsQueued;
+    private final Asset[] thumbnailAssets = new Asset[SkyArt.Preset.values().length + 1];
     private SkyPicture.Image uploadedPicture;
     private int counter;
 
     public Sky() {
         super("sky", "Sky", "Swap the sky for one of 10 skies or hang your own picture in it.", Category.VISUAL);
         sky.heading("Sky");
+        sky.showIf(() -> false);
         showPicture.heading("Picture");
         hideClouds.showIf(() -> preset() != null);
         hideFog.showIf(() -> preset() != null);
@@ -93,7 +106,7 @@ public final class Sky extends Module {
 
     public boolean hidesFog() {
         if (!isEnabled() || !hideFog.on() || preset() == null || mc.level == null || mc.player == null
-                || !"minecraft:overworld".equals(Servers.dimension())) {
+                || !Servers.overworldSky()) {
             return false;
         }
         return !mc.player.isEyeInFluid(FluidTags.WATER) && !mc.player.isEyeInFluid(FluidTags.LAVA)
@@ -154,12 +167,20 @@ public final class Sky extends Module {
                 pixels = pixels.clone();
                 SkyBaker.stamp(pixels, WIDTH, HEIGHT, image, size, direction, height, opacity);
             }
+            List<SkyArt.Star> kept = new ArrayList<>();
+            for (SkyArt.Star star : SkyArt.stars(preset)) {
+                if (image == null || SkyBaker.coverage(image, size, direction, height, opacity, star.x(), star.y(),
+                        star.z()) < 0.3) {
+                    kept.add(star);
+                }
+            }
             int[] done = pixels;
             mc.execute(() -> {
                 Asset next = Asset.of("shardclient", "sky/" + preset.name().toLowerCase(Locale.ROOT) + "_" + counter++);
                 Glow.uploadColor(next, WIDTH, HEIGHT, done);
                 Asset old = texture;
                 texture = next;
+                stars = List.copyOf(kept);
                 if (old != null) {
                     Glow.release(old);
                 }
@@ -172,8 +193,10 @@ public final class Sky extends Module {
     }
 
     private static int[] base(SkyArt.Preset preset) throws Exception {
-        Path file = FabricLoader.getInstance().getConfigDir().resolve("shardclient").resolve("sky")
-                .resolve("cache-" + preset.name().toLowerCase(Locale.ROOT) + "-1.png");
+        Path folder = FabricLoader.getInstance().getConfigDir().resolve("shardclient").resolve("sky");
+        String name = preset.name().toLowerCase(Locale.ROOT);
+        Files.deleteIfExists(folder.resolve("cache-" + name + "-1.png"));
+        Path file = folder.resolve("cache-" + name + "-" + CACHE_VERSION + ".png");
         if (Files.isRegularFile(file)) {
             BufferedImage cached = ImageIO.read(file.toFile());
             if (cached != null && cached.getWidth() == WIDTH && cached.getHeight() == HEIGHT) {
@@ -192,6 +215,7 @@ public final class Sky extends Module {
     protected void onDisable() {
         Asset old = texture;
         texture = null;
+        stars = List.of();
         wantedKey = "";
         if (old != null) {
             Glow.release(old);
@@ -199,7 +223,7 @@ public final class Sky extends Module {
     }
 
     public void render(World world) {
-        if (!isEnabled() || mc.level == null || mc.player == null || !"minecraft:overworld".equals(Servers.dimension())) {
+        if (!isEnabled() || mc.level == null || mc.player == null || !Servers.overworldSky()) {
             return;
         }
         if (mc.player.isEyeInFluid(FluidTags.WATER) || mc.player.isEyeInFluid(FluidTags.LAVA)) {
@@ -219,10 +243,61 @@ public final class Sky extends Module {
             Asset current = texture;
             if (current != null) {
                 world.sky(pose, current, out -> sphere(out, radius, argb));
+                drawStars(world, pose, radius, light);
             }
             return;
         }
         drawPicture(world, pose, radius, light);
+    }
+
+    private void drawStars(World world, PoseStack pose, float radius, float light) {
+        List<SkyArt.Star> current = stars;
+        if (current.isEmpty() || light <= 0.02f) {
+            return;
+        }
+        if (starTexture == null) {
+            starTexture = Asset.of("shardclient", "sky/star");
+            Glow.uploadColor(starTexture, STAR_TEXTURE, STAR_TEXTURE, starPixels());
+        }
+        float distance = radius * 0.99f;
+        float shade = Math.min(1f, light);
+        world.sky(pose, starTexture, out -> {
+            for (SkyArt.Star star : current) {
+                float x = star.x();
+                float y = star.y();
+                float z = star.z();
+                float length = (float) Math.sqrt(x * x + z * z);
+                float rx = length < 1.0e-3f ? 1 : -z / length;
+                float rz = length < 1.0e-3f ? 0 : x / length;
+                float ux = y * rz;
+                float uy = z * rx - x * rz;
+                float uz = -y * rx;
+                float half = (float) (distance * Math.tan(Math.toRadians(star.size()) / 2));
+                float cx = x * distance;
+                float cy = y * distance;
+                float cz = z * distance;
+                int c = star.argb();
+                int color = (c >>> 24) << 24 | Math.round((c >> 16 & 0xFF) * shade) << 16
+                        | Math.round((c >> 8 & 0xFF) * shade) << 8 | Math.round((c & 0xFF) * shade);
+                out.sky(cx + (-rx - ux) * half, cy - uy * half, cz + (-rz - uz) * half, 0, 0, color);
+                out.sky(cx + (-rx + ux) * half, cy + uy * half, cz + (-rz + uz) * half, 0, 1, color);
+                out.sky(cx + (rx + ux) * half, cy + uy * half, cz + (rz + uz) * half, 1, 1, color);
+                out.sky(cx + (rx - ux) * half, cy - uy * half, cz + (rz - uz) * half, 1, 0, color);
+            }
+        });
+    }
+
+    private static int[] starPixels() {
+        int[] pixels = new int[STAR_TEXTURE * STAR_TEXTURE];
+        double middle = (STAR_TEXTURE - 1) / 2.0;
+        for (int y = 0; y < STAR_TEXTURE; y++) {
+            for (int x = 0; x < STAR_TEXTURE; x++) {
+                double d = ((x - middle) * (x - middle) + (y - middle) * (y - middle)) / (middle * middle);
+                int alpha = (int) Math.round(Math.exp(-d * 3.2) * 255);
+                pixels[y * STAR_TEXTURE + x] = alpha << 24 | 0xFFFFFF;
+            }
+        }
+        return pixels;
     }
 
     private void drawPicture(World world, PoseStack pose, float radius, float light) {
@@ -283,7 +358,143 @@ public final class Sky extends Module {
 
     @Override
     public Element preview() {
-        return new PictureRow();
+        queueThumbnails();
+        return new Previews();
+    }
+
+    private void queueThumbnails() {
+        if (thumbnailsQueued) {
+            return;
+        }
+        thumbnailsQueued = true;
+        WORKER.execute(() -> {
+            try {
+                String[] options = names();
+                int[][] out = new int[options.length][];
+                out[0] = SkyArt.normalThumbnail(THUMB_WIDTH, THUMB_HEIGHT);
+                for (SkyArt.Preset preset : SkyArt.Preset.values()) {
+                    out[preset.ordinal() + 1] = SkyArt.thumbnail(preset, THUMB_WIDTH, THUMB_HEIGHT);
+                    thumbnails = out.clone();
+                }
+                thumbnails = out;
+            } catch (RuntimeException ex) {
+                ShardClientRuntime.LOGGER.warn("Couldn't paint the sky previews", ex);
+            }
+        });
+    }
+
+    private Asset thumbnail(int index) {
+        int[][] painted = thumbnails;
+        if (painted == null || painted[index] == null) {
+            return null;
+        }
+        if (thumbnailAssets[index] == null) {
+            thumbnailAssets[index] = Asset.of("shardclient", "sky/thumbnail_" + index);
+            Gfx.registerTexture(thumbnailAssets[index], THUMB_WIDTH, THUMB_HEIGHT, painted[index]);
+        }
+        return thumbnailAssets[index];
+    }
+
+    private final class Previews extends Container {
+        private final Picker picker = new Picker();
+        private final PictureRow pictureRow = new PictureRow();
+
+        Previews() {
+            add(picker);
+            add(pictureRow);
+        }
+
+        @Override
+        public Size measure() {
+            return new Size(170, picker.heightFor(width) + 6 + pictureRow.measure().height());
+        }
+
+        @Override
+        protected void layout() {
+            int pickerHeight = picker.heightFor(width);
+            picker.place(x, y, width, pickerHeight);
+            pictureRow.place(x, y + pickerHeight + 6, width, pictureRow.measure().height());
+        }
+    }
+
+    private final class Picker extends Element {
+        private static final int GAP = 4;
+
+        private int columns(int available) {
+            return available >= 250 ? 4 : 3;
+        }
+
+        int heightFor(int available) {
+            int room = available > 0 ? available : 280;
+            int cols = columns(room);
+            int tileWidth = (room - GAP * (cols - 1)) / cols;
+            int rows = (names().length + cols - 1) / cols;
+            return rows * (tileWidth * 9 / 16) + (rows - 1) * GAP;
+        }
+
+        private int tileWidth() {
+            int cols = columns(width);
+            return (width - GAP * (cols - 1)) / cols;
+        }
+
+        private int at(double mouseX, double mouseY) {
+            int cols = columns(width);
+            int tileWidth = tileWidth();
+            int tileHeight = tileWidth * 9 / 16;
+            String[] options = names();
+            for (int i = 0; i < options.length; i++) {
+                int tx = x + (i % cols) * (tileWidth + GAP);
+                int ty = y + (i / cols) * (tileHeight + GAP);
+                if (mouseX >= tx && mouseX < tx + tileWidth && mouseY >= ty && mouseY < ty + tileHeight) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        @Override
+        public Size measure() {
+            return new Size(170, heightFor(width));
+        }
+
+        @Override
+        public void render(Canvas canvas) {
+            int cols = columns(width);
+            int tileWidth = tileWidth();
+            int tileHeight = tileWidth * 9 / 16;
+            String[] options = names();
+            int hovered = at(canvas.mouseX(), canvas.mouseY());
+            for (int i = 0; i < options.length; i++) {
+                int tx = x + (i % cols) * (tileWidth + GAP);
+                int ty = y + (i / cols) * (tileHeight + GAP);
+                boolean selected = options[i].equals(sky.get());
+                Asset image = thumbnail(i);
+                if (image != null) {
+                    canvas.gfx().blit(image, tx, ty, 0, 0, tileWidth, tileHeight, THUMB_WIDTH, THUMB_HEIGHT,
+                            THUMB_WIDTH, THUMB_HEIGHT, canvas.tint(0xFFFFFFFF));
+                } else {
+                    canvas.fill(tx, ty, tileWidth, tileHeight, Theme.colors().inset());
+                }
+                int border = selected ? Theme.colors().accentStrong() : i == hovered ? 0xCCFFFFFF : 0x40FFFFFF;
+                canvas.frame(tx, ty, tileWidth, tileHeight, border);
+                if (selected) {
+                    canvas.frame(tx + 1, ty + 1, tileWidth - 2, tileHeight - 2, border);
+                }
+            }
+        }
+
+        @Override
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            if (button != 0) {
+                return false;
+            }
+            int index = at(mouseX, mouseY);
+            if (index < 0) {
+                return false;
+            }
+            sky.set(names()[index]);
+            return true;
+        }
     }
 
     private void choosePicture() {

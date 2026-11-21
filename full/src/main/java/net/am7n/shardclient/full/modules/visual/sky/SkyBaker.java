@@ -83,6 +83,23 @@ final class SkyBaker {
         }
     }
 
+    static double coverage(SkyPicture.Image image, float size, float direction, float pictureHeight, float opacity,
+                           double x, double y, double z) {
+        Frame f = frame(image, size, direction, pictureHeight);
+        double t = x * f.center[0] + y * f.center[1] + z * f.center[2];
+        if (t <= 1.0e-3) {
+            return 0;
+        }
+        double px = (x * f.right[0] + y * f.right[1] + z * f.right[2]) / t / f.halfWidth;
+        double py = (x * f.up[0] + y * f.up[1] + z * f.up[2]) / t / f.halfHeight;
+        if (px < -1 || px > 1 || py < -1 || py > 1) {
+            return 0;
+        }
+        int color = bilinear(image.argb(), image.width(), image.height(), (px + 1) / 2 * image.width() - 0.5,
+                (1 - py) / 2 * image.height() - 0.5);
+        return (color >>> 24) / 255.0 * opacity;
+    }
+
     private static int blend(int base, int over, double alpha) {
         return (int) Math.round(base + (over - base) * alpha);
     }

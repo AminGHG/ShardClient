@@ -1,41 +1,24 @@
 package net.am7n.shardclient.full.mixin.module;
 
 import net.am7n.shardclient.full.modules.Features;
+import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(FogRenderer.class)
 public abstract class FogMixin {
-    private static final float FAR_START = 1.0e6f;
-    private static final float FAR_END = 2.0e6f;
-
-    private static boolean shardclient$hide() {
-        return Features.sky != null && Features.sky.hidesFog();
-    }
-
-    @ModifyVariable(method = "updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V", at = @At("HEAD"),
-            ordinal = 0, argsOnly = true)
-    private float shardclient$environmentalStart(float value) {
-        return shardclient$hide() ? FAR_START : value;
-    }
-
-    @ModifyVariable(method = "updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V", at = @At("HEAD"),
-            ordinal = 1, argsOnly = true)
-    private float shardclient$environmentalEnd(float value) {
-        return shardclient$hide() ? FAR_END : value;
-    }
-
-    @ModifyVariable(method = "updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V", at = @At("HEAD"),
-            ordinal = 2, argsOnly = true)
-    private float shardclient$renderDistanceStart(float value) {
-        return shardclient$hide() ? FAR_START : value;
-    }
-
-    @ModifyVariable(method = "updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V", at = @At("HEAD"),
-            ordinal = 3, argsOnly = true)
-    private float shardclient$renderDistanceEnd(float value) {
-        return shardclient$hide() ? FAR_END : value;
+    @Redirect(method = "setupFog", at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD,
+            target = "Lnet/minecraft/client/renderer/fog/FogData;renderDistanceEnd:F"))
+    private void shardclient$hideFog(FogData fog, float value) {
+        fog.renderDistanceEnd = value;
+        if (Features.sky != null && Features.sky.hidesFog()) {
+            fog.environmentalStart = 1.0e6f;
+            fog.environmentalEnd = 2.0e6f;
+            fog.renderDistanceStart = 1.0e6f;
+            fog.renderDistanceEnd = 2.0e6f;
+        }
     }
 }

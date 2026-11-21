@@ -80,4 +80,9 @@ public final class Servers {
         Minecraft mc = Minecraft.getInstance();
         return mc.level == null ? "" : mc.level.dimension().location().toString();
     }
+
+    public static boolean overworldSky() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null && "minecraft:overworld".equals(mc.level.dimensionType().effectsLocation().toString());
+    }
 }

@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
@@ -63,9 +64,12 @@ final class SkyPicture {
         if (clipboardText != null) {
             String text = clipboardText.strip().replace("\"", "");
             if (!text.isEmpty() && text.length() < 1024) {
-                Path path = Path.of(text.startsWith("file://") ? text.substring(7) : text);
-                if (Files.isRegularFile(path)) {
-                    return path;
+                try {
+                    Path path = Path.of(text.startsWith("file://") ? text.substring(7) : text);
+                    if (Files.isRegularFile(path)) {
+                        return path;
+                    }
+                } catch (InvalidPathException ignored) {
                 }
             }
         }

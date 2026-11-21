@@ -77,6 +77,13 @@ final class SkyCheck {
         });
         after(1500, () -> shot(mc, "sky-normal-looking-away"));
         after(500, () -> {
+            set("sky", "sky", "Nebula");
+            mc.player.setXRot(-28);
+            ShardClientFull.get().openMenu(mc);
+        });
+        after(1200, SkyCheck::expandSky);
+        after(6000, () -> shot(mc, "sky-picker"));
+        after(500, () -> {
             ShardClientRuntime.LOGGER.info("[skycheck] done");
             mc.stop();
         });
@@ -101,6 +108,30 @@ final class SkyCheck {
                 }
             }
         });
+    }
+
+    private static void expandSky() {
+        try {
+            Object screen = Minecraft.getInstance().gui.screen();
+            Field rootField = net.am7n.shardclient.shared.ui.ShardScreen.class.getDeclaredField("root");
+            rootField.setAccessible(true);
+            Object view = rootField.get(screen);
+            Method query = view.getClass().getDeclaredMethod("query", String.class);
+            query.setAccessible(true);
+            query.invoke(view, "sky");
+            Field listField = view.getClass().getDeclaredField("list");
+            listField.setAccessible(true);
+            net.am7n.shardclient.shared.ui.Container list = (net.am7n.shardclient.shared.ui.Container) listField.get(view);
+            for (net.am7n.shardclient.shared.ui.Element card : list.children()) {
+                Field moduleField = card.getClass().getDeclaredField("module");
+                moduleField.setAccessible(true);
+                if (((Module) moduleField.get(card)).id().equals("sky")) {
+                    card.mouseClicked(card.x() + 4, card.y() + 4, 0);
+                }
+            }
+        } catch (ReflectiveOperationException ex) {
+            ShardClientRuntime.LOGGER.error("[skycheck] expand failed", ex);
+        }
     }
 
     private static boolean skyReady() {
