@@ -45,8 +45,15 @@ public final class ClientConfig {
 
     private final java.util.Map<String, RecentServer> recent = new java.util.HashMap<>();
 
+    private final Profiles profiles;
+
     public ClientConfig(ModuleManager modules) {
         this.modules = modules;
+        this.profiles = new Profiles(modules);
+    }
+
+    public Profiles profiles() {
+        return profiles;
     }
 
     public MenuStyle menuStyle() {
@@ -111,6 +118,7 @@ public final class ClientConfig {
 
     public void load() {
         if (!Files.isRegularFile(file)) {
+            profiles.load(null, null);
             apply();
             return;
         }
@@ -123,11 +131,14 @@ public final class ClientConfig {
                 Files.move(file, file.resolveSibling("full.json.broken"), StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException ignored) {
             }
+            profiles.load(null, null);
             apply();
             return;
         }
 
+        String profile = null;
         if (json.get("client") instanceof JsonObject client) {
+            profile = string(client.get("profile"));
             String look = string(client.get("look"));
             if (look != null) {
                 Theme.use(Theme.byId(look));
@@ -167,17 +178,7 @@ public final class ClientConfig {
                 }
             }
         }
-        if (json.get("modules") instanceof JsonObject stored) {
-            for (Module module : modules.all()) {
-                if (stored.get(module.id()) instanceof JsonObject moduleJson) {
-                    try {
-                        module.fromJson(moduleJson);
-                    } catch (RuntimeException ex) {
-                        ShardClientRuntime.LOGGER.warn("Ignoring broken settings of module {}", module.id(), ex);
-                    }
-                }
-            }
-        }
+        profiles.load(profile, json.get("modules") instanceof JsonObject stored ? stored : null);
         apply();
     }
 
@@ -192,6 +193,7 @@ public final class ClientConfig {
         JsonObject json = new JsonObject();
         json.addProperty("version", VERSION);
         JsonObject client = new JsonObject();
+        client.addProperty("profile", profiles.active());
         client.addProperty("look", Theme.look().id());
         client.addProperty("menuStyle", menuStyle == MenuStyle.VANILLA ? "vanilla" : "shard");
         client.addProperty("uiSounds", uiSounds);
@@ -215,6 +217,7 @@ public final class ClientConfig {
             stored.add(module.id(), module.toJson());
         }
         json.add("modules", stored);
+        profiles.save();
 
         try {
             Files.createDirectories(file.getParent());

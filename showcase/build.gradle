@@ -26,6 +26,13 @@ loom {
                 property 'shardclient.showcase.sky', 'true'
                 programArgs '--width', '1280', '--height', '720'
             }
+            if (project.hasProperty('blocksshot')) {
+                property 'shardclient.showcase.blocks', 'true'
+                property 'shardclient.showcase.pitch', (project.findProperty('pitch') ?: '-15') as String
+                property 'shardclient.showcase.yaw', (project.findProperty('yaw') ?: '0') as String
+                property 'shardclient.showcase.spots', (project.findProperty('spots') ?: '0,0,2') as String
+                programArgs '--width', '1920', '--height', '1080'
+            }
             if (project.hasProperty('menus')) {
                 property 'shardclient.showcase.menus', 'true'
             }

@@ -36,6 +36,7 @@ public final class ClickGuiScreen extends ShardScreen {
     private static final int SIDEBAR = 104;
     private static final int TAB_HEIGHT = 20;
     private static final int PADDING = 10;
+    private static final String PROFILES = "Profiles";
 
     private final ModuleManager modules;
     private final ClientConfig config;
@@ -81,6 +82,7 @@ public final class ClickGuiScreen extends ShardScreen {
             for (Category category : Category.values()) {
                 all.add(new Tab(category.displayName(), category));
             }
+            all.add(new Tab(PROFILES, null));
             all.add(new Tab("Settings", null));
             tabs = List.copyOf(all);
             tabHover = new Tween[tabs.size()];
@@ -133,7 +135,9 @@ public final class ClickGuiScreen extends ShardScreen {
             selected = index;
             list.children().clear();
             Tab tab = tabs.get(index);
-            if (tab.category() == null) {
+            if (PROFILES.equals(tab.label())) {
+                list.add(new ProfilesPage(config));
+            } else if (tab.category() == null) {
                 buildSettings();
             } else {
                 int i = 0;
@@ -181,8 +185,17 @@ public final class ClickGuiScreen extends ShardScreen {
                     button.height());
         }
 
+        private int tabStep() {
+            int room = height - PADDING - editHud.measure().height() - 6 - (PADDING + 30);
+            return Maths.clamp(room / tabs.size(), 16, TAB_HEIGHT + 2);
+        }
+
+        private int tabHeight() {
+            return tabStep() - 2;
+        }
+
         private int tabY(int index) {
-            return y + PADDING + 30 + index * (TAB_HEIGHT + 2);
+            return y + PADDING + 30 + index * tabStep();
         }
 
         @Override
@@ -200,32 +213,34 @@ public final class ClickGuiScreen extends ShardScreen {
 
             indicator.set(selected);
             float at = indicator.get();
-            int indicatorY = Math.round(tabY(0) + at * (TAB_HEIGHT + 2));
-            Theme.look().shape(canvas, x + PADDING - 2, indicatorY, SIDEBAR - PADDING * 2 + 4, TAB_HEIGHT, 5f, colors.ghostHovered());
-            Theme.look().shape(canvas, x + PADDING - 2, indicatorY + 5, 2, TAB_HEIGHT - 10, 1f, colors.accentStrong());
+            int indicatorY = Math.round(tabY(0) + at * tabStep());
+            Theme.look().shape(canvas, x + PADDING - 2, indicatorY, SIDEBAR - PADDING * 2 + 4, tabHeight(), 5f, colors.ghostHovered());
+            Theme.look().shape(canvas, x + PADDING - 2, indicatorY + 5, 2, tabHeight() - 10, 1f, colors.accentStrong());
             for (int i = 0; i < tabs.size(); i++) {
                 boolean active = i == selected;
                 boolean pointed = canvas.mouseX() >= x + PADDING - 2 && canvas.mouseX() < x + SIDEBAR - PADDING + 2
-                        && canvas.mouseY() >= tabY(i) && canvas.mouseY() < tabY(i) + TAB_HEIGHT;
+                        && canvas.mouseY() >= tabY(i) && canvas.mouseY() < tabY(i) + tabHeight();
                 tabFeedback[i].update(pointed && !active);
                 tabHover[i].set(pointed && !active ? 1 : 0);
                 float hover = tabHover[i].get();
                 if (hover > 0) {
                     canvas.pushAlpha(hover * 0.6f);
-                    Theme.look().shape(canvas, x + PADDING - 2, tabY(i), SIDEBAR - PADDING * 2 + 4, TAB_HEIGHT, 5f,
+                    Theme.look().shape(canvas, x + PADDING - 2, tabY(i), SIDEBAR - PADDING * 2 + 4, tabHeight(), 5f,
                             colors.ghostHovered());
                     canvas.popAlpha();
                 }
                 int nudge = net.am7n.shardclient.shared.ui.Hover.effects() ? Math.round(hover * 2) : 0;
                 int color = active ? colors.text() : Lerp.color(colors.textMuted(), colors.text(), hover);
                 canvas.text(Theme.text(Component.literal(tabs.get(i).label()), active), x + PADDING + 6 + nudge,
-                        tabY(i) + 6, color, shadow);
+                        tabY(i) + (tabHeight() - 8) / 2, color, shadow);
             }
 
             Tab tab = tabs.get(selected);
             String header = tab.label();
             if (results != null) {
                 header = results.isEmpty() ? "No modules found" : results.size() == 1 ? "1 module" : results.size() + " modules";
+            } else if (PROFILES.equals(tab.label())) {
+                header += "   using " + config.profiles().active();
             } else if (tab.category() != null) {
                 List<Module> inTab = modules.in(tab.category());
                 long on = inTab.stream().filter(Module::isEnabled).count();
@@ -243,7 +258,7 @@ public final class ClickGuiScreen extends ShardScreen {
             }
             if (mouseX >= x + PADDING && mouseX < x + SIDEBAR - PADDING) {
                 for (int i = 0; i < tabs.size(); i++) {
-                    if (mouseY >= tabY(i) && mouseY < tabY(i) + TAB_HEIGHT) {
+                    if (mouseY >= tabY(i) && mouseY < tabY(i) + tabHeight()) {
                         if (results != null) {
                             selected = i;
                             search.clear();

@@ -24,4 +24,5 @@ public final class Icons {
     public static final Asset BACK = icon("back");
     public static final Asset PLAY = icon("play");
     public static final Asset CHEVRON = icon("chevron");
+    public static final Asset COPY = icon("copy");
 }

@@ -23,6 +23,7 @@ import net.am7n.shardclient.shared.ui.Size;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.effect.MobEffects;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -47,6 +48,7 @@ public final class Sky extends Module {
     private final NumberSetting brightness = number("brightness", "Brightness", 100, 20, 100, 5, "%");
     private final BooleanSetting dayNight = bool("day_night", "Follow day and night", true);
     private final BooleanSetting hideClouds = bool("hide_clouds", "Hide clouds", true);
+    private final BooleanSetting hideFog = bool("hide_fog", "Hide distance fog", true);
     private final BooleanSetting showPicture = bool("picture", "Show picture", true);
     private final NumberSetting pictureSize = number("picture_size", "Picture size", 40, 5, 150, 1, "°");
     private final NumberSetting pictureDirection = number("picture_direction", "Picture direction", 0, 0, 359, 1, "°");
@@ -69,6 +71,7 @@ public final class Sky extends Module {
         sky.heading("Sky");
         showPicture.heading("Picture");
         hideClouds.showIf(() -> preset() != null);
+        hideFog.showIf(() -> preset() != null);
         pictureSize.showIf(this::pictureVisible);
         pictureDirection.showIf(this::pictureVisible);
         pictureHeight.showIf(this::pictureVisible);
@@ -86,6 +89,16 @@ public final class Sky extends Module {
 
     public boolean hidesClouds() {
         return isEnabled() && hideClouds.on() && preset() != null;
+    }
+
+    public boolean hidesFog() {
+        if (!isEnabled() || !hideFog.on() || preset() == null || mc.level == null || mc.player == null
+                || !"minecraft:overworld".equals(Servers.dimension())) {
+            return false;
+        }
+        return !mc.player.isEyeInFluid(FluidTags.WATER) && !mc.player.isEyeInFluid(FluidTags.LAVA)
+                && !mc.player.isInPowderSnow && !mc.player.hasEffect(MobEffects.BLINDNESS)
+                && !mc.player.hasEffect(MobEffects.DARKNESS);
     }
 
     private boolean pictureVisible() {

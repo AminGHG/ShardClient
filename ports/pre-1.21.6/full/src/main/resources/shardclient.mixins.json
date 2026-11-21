@@ -11,6 +11,7 @@
     "WorldSelectionListAccessor",
     "module.CameraMixin",
     "module.CloudsMixin",
+    "module.FogMixin",
     "module.CrosshairMixin",
     "module.ZoomMixin",
     "module.ChatComponentMixin",
